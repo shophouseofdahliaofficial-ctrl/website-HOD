@@ -1,5 +1,7 @@
 'use client';
 
+export const runtime = 'edge';
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProductsClient from '@/app/(customer)/products/ProductsClient';
