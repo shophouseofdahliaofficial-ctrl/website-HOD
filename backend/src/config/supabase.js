@@ -6,7 +6,11 @@ require('dotenv').config();
  * Used for authentication and database operations
  */
 
-const hasSupabaseConfig = !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
+const supabaseUrl = String(process.env.SUPABASE_URL || '').trim().replace(/^['"]|['"]$/g, '');
+const supabaseAnonKey = String(process.env.SUPABASE_ANON_KEY || '').trim().replace(/^['"]|['"]$/g, '');
+const supabaseServiceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim().replace(/^['"]|['"]$/g, '');
+
+const hasSupabaseConfig = !!(supabaseUrl && supabaseAnonKey);
 
 if (!hasSupabaseConfig) {
   console.error(
@@ -14,15 +18,15 @@ if (!hasSupabaseConfig) {
   );
 } else {
   console.log('[milko-backend] ✅ Supabase configured:', {
-    url: process.env.SUPABASE_URL,
-    hasAnonKey: !!process.env.SUPABASE_ANON_KEY,
-    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    url: supabaseUrl,
+    hasAnonKey: !!supabaseAnonKey,
+    hasServiceKey: !!supabaseServiceRoleKey,
   });
 }
 
 // Create Supabase client for Auth operations
 const supabase = hasSupabaseConfig
-  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+  ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: false,
@@ -31,10 +35,9 @@ const supabase = hasSupabaseConfig
   : null;
 
 // Create Supabase Admin client for server-side operations (if needed)
-// Note: This requires SUPABASE_SERVICE_ROLE_KEY (keep this secret!)
 const supabaseAdmin =
-  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  supabaseUrl && supabaseServiceRoleKey
+    ? createClient(supabaseUrl, supabaseServiceRoleKey, {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
