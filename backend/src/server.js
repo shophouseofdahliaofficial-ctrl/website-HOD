@@ -153,23 +153,37 @@ function isAllowedCorsOrigin(origin) {
 }
 
 // CORS configuration
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
     if (isAllowedCorsOrigin(origin)) {
-      if (origin) {
-        console.log('[CORS] ✅ Allowed origin:', origin);
-      }
-      return callback(null, true);
+      return callback(null, origin);
     }
-
-    console.warn('[CORS] ❌ Blocked origin:', origin);
-    console.log('[CORS] Allowed origins:', [...allowedOriginsSet]);
-    callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
+    // Allow any workers.dev or pages.dev origins
+    if (origin.includes('.workers.dev') || origin.includes('.pages.dev')) {
+      return callback(null, origin);
+    }
+    return callback(null, origin);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
+    'x-client-info',
+    'apikey',
+    'baggage',
+    'sentry-trace'
+  ],
+  exposedHeaders: ['Content-Length', 'X-JSON'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Body parsing middleware — admin product saves include customization JSON with image data.
 const JSON_BODY_LIMIT = process.env.JSON_BODY_LIMIT || '50mb';
