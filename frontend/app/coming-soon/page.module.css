@@ -1,0 +1,544 @@
+/* ================================================================
+   Coming Soon Page – Video Background with Radial Pink Overlay
+   ================================================================ */
+
+/* ── Wrapper ─────────────────────────────────────────────────── */
+.wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* ── Video background layer ──────────────────────────────────── */
+.videoBackground {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.bgVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  display: block;
+  filter: contrast(1.4) saturate(1.2);
+  transition: filter 0.8s ease, opacity 1.5s ease-in-out;
+}
+
+.bgVideoActive {
+  opacity: 0.6;
+}
+
+/* Higher contrast when the waitlist button has been clicked */
+.bgVideoLiked {
+  filter: contrast(2.2) saturate(4.0) brightness(0.95);
+}
+
+.bgVideoLiked.bgVideoActive {
+  opacity: 0.75;
+}
+
+/* ── Radial overlay: transparent centre → dark pink corners ─── */
+.radialOverlay {
+  position: absolute;
+  inset: 0;
+  /* Layer 1: deep dark vignette */
+  background:
+    radial-gradient(ellipse at center,
+      transparent 0%,
+      transparent 15%,
+      rgba(80, 0, 29, 0.904) 75%,
+      rgba(20, 0, 8, 0.97) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.radialOverlayActive {
+  opacity: 1;
+}
+
+/* Layer 2: extra corner punch via box-shadow trick on a pseudo element */
+.videoBackground::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 80% at center,
+      transparent 20%,
+      rgba(140, 0, 55, 0.60) 60%,
+      rgba(30, 0, 10, 0.90) 100%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.videoBackgroundActive::after {
+  opacity: 1;
+}
+
+/* ── Centre card (floats above the video) ────────────────────── */
+.centerCard {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 2.8rem 2.5rem;
+  background: rgb(255 255 255 / 0%);
+  backdrop-filter: blur(27px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 0;
+  border: 1px solid rgb(255 255 255 / 8%);
+  box-shadow: inset 0px 0px 48px 0px #ffffff2e;
+  width: 100%;
+  min-height: 100vh;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.centerCardActive {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Logo ────────────────────────────────────────────────────── */
+.logo {
+  max-width: 130px;
+  height: auto;
+  object-fit: contain;
+  animation: logoFadeIn 0.8s ease-out both;
+  filter: brightness(0) invert(1);
+}
+
+@keyframes logoFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Title ───────────────────────────────────────────────────── */
+.title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: white;
+  margin: 0;
+  letter-spacing: -0.8px;
+  line-height: 1.25;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1.8rem;
+  }
+}
+
+/* ── Actions row ─────────────────────────────────────────────── */
+.actionsRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.waitingBtn {
+  background: #ffffffad;
+  color: #000000;
+  border: none;
+  border-radius: 50px;
+  padding: 1.3rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  /* Smooth expand: max-width + padding transition lets width follow content */
+  transition:
+    background 0.3s ease,
+    transform 0.15s ease,
+    max-width 0.5s cubic-bezier(0.34, 1.10, 0.64, 1),
+    padding 0.5s cubic-bezier(0.34, 1.10, 0.64, 1);
+  outline: none;
+  position: relative;
+  overflow: hidden;
+  /* Start tight — just fits "I am waiting" + icon + counter */
+  max-width: 240px;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.waitingBtn:hover:not(:disabled) {
+  background: #ffffff;
+  transform: translateY(0px);
+}
+
+.waitingBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.waitingBtnLiked {
+  /* Expand smoothly to fit "See you soon!" */
+  background: #f0f0f0;
+  color: #888888;
+  cursor: default;
+  max-width: 320px;
+  padding: 1.3rem 2.4rem;
+}
+
+.waitingBtnIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.likeCounter {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  padding: 2px 7px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  min-width: 24px;
+  text-align: center;
+}
+
+.waitingBtnLiked .likeCounter {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ── Connect link ────────────────────────────────────────────── */
+.connectLink {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgb(230, 230, 230);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.connectLink:hover {
+  color: #ffffff;
+}
+
+/* ── Access link (bottom) ────────────────────────────────────── */
+.accessLink {
+  position: relative;
+  z-index: 10;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.068);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+  margin-top: 3rem;
+}
+
+.accessLink:hover {
+  color: #ffffff;
+}
+
+/* ================================================================
+   Modals
+   ================================================================ */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Connect modal */
+.connectModal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 2.25rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+@keyframes modalPop {
+  from {
+    transform: scale(0.9) translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.connectModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.connectModalTitle {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #111111;
+  margin: 0;
+  letter-spacing: -0.4px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.closeBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.connectModalDesc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #666666;
+  margin: 0;
+}
+
+.connectList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.connectItem {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  text-decoration: none;
+  background: #ffffff;
+  transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
+  box-sizing: border-box;
+}
+
+.connectItem:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: #fafafa;
+  transform: translateY(-2px);
+}
+
+.connectIconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.emailWrapper {
+  background: rgba(46, 125, 50, 0.07);
+  color: #2e7d32;
+}
+
+.connectItem:hover .emailWrapper {
+  background: rgba(46, 125, 50, 0.12);
+  transform: scale(1.05);
+}
+
+.instaWrapper {
+  background: rgba(225, 48, 108, 0.07);
+  color: #e1306c;
+}
+
+.connectItem:hover .instaWrapper {
+  background: rgba(225, 48, 108, 0.12);
+  transform: scale(1.05);
+}
+
+.connectIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.connectInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  text-align: left;
+}
+
+.connectLabel {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+}
+
+.connectValue {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+.connectArrow {
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.connectItem:hover .connectArrow {
+  color: #111111;
+  transform: translateX(4px);
+}
+
+/* Password modal */
+.modal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 2rem 2.25rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 1.5rem;
+  color: #111111;
+  letter-spacing: -0.3px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: #111111;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.input:disabled {
+  background: #f8f8f8;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.88rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.cancelBtn,
+.submitBtn {
+  flex: 1;
+  padding: 0.85rem 1.2rem;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn {
+  background: #ffffff;
+  color: #555555;
+  border: 1.5px solid #e0e0e0;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: #f8f8f8;
+  border-color: #cccccc;
+}
+
+.submitBtn {
+  background: #111111;
+  color: #ffffff;
+  border: none;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #333333;
+}
+
+.cancelBtn:disabled,
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

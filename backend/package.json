@@ -1,0 +1,52 @@
+{
+    "name":  "house-of-dahlia-backend",
+    "version":  "1.0.0",
+    "description":  "House Of Dahlia backend API",
+    "main":  "src/server.js",
+    "scripts":  {
+                    "db:dev-setup":  "node src/database/dev_setup.js",
+                    "db:migrate-supabase":  "node src/database/run_supabase_migration.js",
+                    "db:test-connection":  "node src/database/test_connection.js",
+                    "db:check-roles":  "node src/database/check_user_roles.js",
+                    "db:sync-users":  "node src/database/sync_users_from_supabase.js",
+                    "db:set-admin":  "node src/database/set_admin_role_supabase.js",
+                    "db:migrate-content":  "node src/database/run_site_content_migration.js",
+                    "db:migrate-selling-price":  "node src/database/run_selling_price_migration.js",
+                    "db:migrate-product-details":  "node src/database/run_product_details_migration.js",
+                    "db:migrate-variation-price":  "node src/database/run_variation_price_migration.js",
+                    "db:migrate-variation-compare-at":  "node src/database/run_variation_compare_at_migration.js",
+                    "db:migrate-coming-soon":  "node src/database/run_coming_soon_migration.js",
+                    "db:migrate-verifications":  "node src/database/run_verifications_migration.js",
+                    "dev":  "nodemon src/server.js",
+                    "start":  "node src/server.js",
+                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1"
+                },
+    "keywords":  [
+                     "milk",
+                     "delivery",
+                     "subscription"
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "dependencies":  {
+                         "@supabase/supabase-js":  "^2.90.0",
+                         "bcryptjs":  "^2.4.3",
+                         "cloudinary":  "^1.41.0",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.3.1",
+                         "express":  "^4.18.2",
+                         "express-validator":  "^7.0.1",
+                         "firebase-admin":  "^13.8.0",
+                         "googleapis":  "^172.0.0",
+                         "helmet":  "^7.1.0",
+                         "jsonwebtoken":  "^9.0.2",
+                         "multer":  "^1.4.5-lts.1",
+                         "nodemailer":  "^9.0.3",
+                         "pg":  "^8.11.3",
+                         "razorpay":  "^2.9.2",
+                         "twilio":  "^5.12.0"
+                     },
+    "devDependencies":  {
+                            "nodemon":  "^3.0.2"
+                        }
+}

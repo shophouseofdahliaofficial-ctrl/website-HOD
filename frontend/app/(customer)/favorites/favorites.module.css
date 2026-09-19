@@ -1,0 +1,108 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem 1.5rem;
+  /* Large top padding to clear fixed header */
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 2rem;
+  font-family: var(--font-inter), sans-serif;
+  letter-spacing: -0.8px;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ff0155;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  background: #ffffff;
+  border-radius: 20px;
+  text-align: center;
+
+}
+
+.emptyIcon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+
+}
+
+@keyframes heartbeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.emptyState h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+  font-size: 1rem;
+  color: #666;
+  max-width: 300px;
+  margin-bottom: 2rem;
+}
+
+.browseButton {
+  display: inline-block;
+  padding: 0.9rem 1.7rem;
+  background: #ff0040;
+  color: #ffffff;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0s ease;
+
+}
+
+.browseButton:hover {
+  background: #e6004b;
+
+}
+
+.browseButton:active {
+  transform: translateY(0);
+}

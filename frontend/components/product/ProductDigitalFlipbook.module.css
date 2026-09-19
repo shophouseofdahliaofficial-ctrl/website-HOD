@@ -1,0 +1,1016 @@
+.flipbookRoot {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.flipbookRootEmbedded {
+  overflow: visible;
+}
+
+.flipbookRootEmbedded .flipbookSection {
+  padding: 0;
+  margin: 0;
+}
+
+.flipbookRootEmbedded .flipbookLayout {
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0;
+  padding: 0;
+}
+
+.flipbookRootEmbedded .bookShell {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 0;
+}
+
+.flipbookRootEmbedded .pageIndicator {
+  grid-column: 1;
+  grid-row: 2;
+  margin-top: 0.75rem;
+}
+
+.bookSpreadSinglePage {
+  grid-template-columns: minmax(0, 1fr);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bookSpreadSinglePage .pageCellRight,
+.bookSpreadSinglePage .bookPageRight {
+  width: 100%;
+  max-width: 100%;
+  grid-column: 1 / -1;
+  border-radius: var(--book-radius);
+  justify-content: center;
+}
+
+.bookSpreadSinglePage .pageSurfaceRight .pageImage,
+.bookSpreadSinglePage .pageContentLayerRight .pageImage {
+  object-position: center center;
+  object-fit: cover;
+}
+
+.flipSheetSinglePage.flipSheetNext .flipFaceFront,
+.flipSheetSinglePage.flipSheetNext .flipFaceBack,
+.flipSheetSinglePage.flipSheetPrev .flipFaceFront,
+.flipSheetSinglePage.flipSheetPrev .flipFaceBack {
+  border-radius: var(--book-radius);
+}
+
+/* Photobook cover hinge: left gutter grows, right page fixed — book stays centred via margin auto. */
+.bookSpread.bookSpreadPhotobookHinge {
+  grid-template-columns: var(--left-column-width, 0px) minmax(0, var(--page-width));
+}
+
+.bookSpreadCoverTransition {
+  transition: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bookSpreadCoverTransition .pageCell,
+.bookSpreadCoverTransition .pageSurface,
+.bookSpreadCoverTransition .pageContentLayer,
+.bookSpreadCoverTransition .revealUnderlay {
+  height: var(--page-height);
+  max-height: var(--page-height);
+  min-height: unset;
+}
+
+.flipbookRootEmbedded .bookStageFlipping {
+  perspective: 2200px;
+  perspective-origin: 50% center;
+  transform-style: preserve-3d;
+  overflow: visible;
+}
+
+.flipbookRootEmbedded .bookViewportWrapFlipping,
+.flipbookRootEmbedded .bookViewportFlipping,
+.flipbookRootEmbedded .bookAssemblyFlipping {
+  overflow: visible;
+}
+
+.flipbookRootEmbedded .bookViewportWrap {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flipbookRootEmbedded .bookViewport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+  margin-left: auto;
+  margin-right: auto;
+  padding:
+    var(--cover-inset-y) var(--cover-inset-x) calc(12px + var(--cover-inset-y));
+}
+
+.flipbookRootEmbedded .bookStage {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.flipbookRootEmbedded .bookAssembly {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.flipbookRootNoHardcover .bookViewportNoHardcover {
+  padding: 0;
+}
+
+.flipbookRootEmbedded .bookSpreadSinglePage {
+  max-width: 100%;
+}
+
+.flipbookRootEmbedded .bookSpread {
+  min-height: unset;
+}
+
+.flipbookRootEmbedded .pageCell,
+.flipbookRootEmbedded .bookPageLeft,
+.flipbookRootEmbedded .bookPageRight {
+  min-height: unset;
+  height: var(--page-height, auto);
+  max-height: var(--page-height, none);
+}
+
+.flipbookRootEmbedded .pageSurface,
+.flipbookRootEmbedded .pageContentLayer {
+  width: var(--page-width, 100%);
+  height: var(--page-height, 100%);
+  max-width: var(--page-width, 100%);
+  max-height: var(--page-height, 100%);
+}
+
+.flipbookRootEmbedded .pageImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.flipbookSection {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.flipbookTitle {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 2.5rem auto 2.25rem;
+  padding: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: rgb(98 98 98);
+  text-align: center;
+  font-family: '__Instrument_Serif_1f5468';
+  letter-spacing: -0.2px;
+  font-style: italic;
+  box-sizing: border-box;
+}
+
+.sectionNav {
+  grid-column: 2;
+  grid-row: 1;
+  margin-bottom: 1.95rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.flipbookLayout {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  column-gap: 2rem;
+  row-gap: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+.sectionTrack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.sectionConnectorsLayer {
+  position: absolute;
+  top: calc((var(--section-dot-size, 9px) - 2px) / 2);
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sectionStepsRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--section-step-gap, 1rem);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.sectionStepsRow:has(.sectionStep:only-child) {
+  justify-content: center;
+}
+
+.sectionStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+}
+
+.sectionDot {
+  width: var(--section-dot-size, 9px);
+  height: var(--section-dot-size, 9px);
+  border-radius: 50%;
+  border: none;
+  background: #d1d5db;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sectionDot:hover {
+  transform: scale(1.15);
+}
+
+.sectionDotActive {
+  background: #111827;
+}
+
+.sectionConnector {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  background: #d1d5db;
+  display: block;
+  margin: 0;
+  transition: background 0.2s ease;
+}
+
+.sectionConnectorActive {
+  background: #111827;
+}
+
+.sectionLabel {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  transition: color 0.2s ease, background 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+  line-height: 1.25;
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: max-content;
+  max-width: none;
+}
+
+.sectionLabelActive {
+  color: #1f2937;
+  background: white;
+}
+
+.bookShell {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+.bookShellFlipping {
+  overflow: visible;
+}
+
+.bookViewportWrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.bookViewportWrapFlipping {
+  overflow: visible;
+}
+
+.bookViewport {
+  --cover-inset-y: 3px;
+  --cover-inset-x: 12px;
+
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding:
+    var(--cover-inset-y) var(--cover-inset-x) calc(18px + var(--cover-inset-y));
+  box-sizing: border-box;
+}
+
+.bookViewportFlipping {
+  overflow: visible;
+}
+
+.bookStage {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.bookStageFlipping {
+  overflow: visible;
+  perspective: 2200px;
+  perspective-origin: 50% center;
+  transform-style: preserve-3d;
+}
+
+.bookAssembly {
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.bookAssemblyFlipping {
+  transform-style: preserve-3d;
+  overflow: visible;
+  z-index: 2;
+}
+
+.bookHardcover {
+  --cover-inset-y: 3px;
+  --cover-inset-x: 12px;
+
+  position: absolute;
+  top: calc(-1 * var(--cover-inset-y));
+  right: calc(-1 * var(--cover-inset-x));
+  bottom: calc(-1 * var(--cover-inset-y));
+  left: calc(-1 * var(--cover-inset-x));
+  border-radius: 2px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--hardcover-color, #5f6b3d) 86%, white) 0%, var(--hardcover-color, #5f6b3d) 52%, color-mix(in srgb, var(--hardcover-color, #5f6b3d) 78%, black) 100%);
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.16),
+    0 4px 10px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  z-index: 0;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.bookSpread {
+  --spine-gap: 0px;
+  --book-radius: 1px;
+  --page-min-height: 360px;
+  --page-top: 0px;
+  --page-left: 0px;
+  --page-right: 0px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  column-gap: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: var(--page-min-height);
+  background: transparent;
+  border-radius: var(--book-radius);
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  transform-style: preserve-3d;
+}
+
+/* Must follow .bookSpread — higher specificity so cover spreads stay single-column. */
+.bookSpread.bookSpreadSinglePage {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bookSpreadFlipping {
+  overflow: visible;
+  transform-style: preserve-3d;
+  isolation: auto;
+}
+
+.staticPages {
+  z-index: 1;
+}
+
+.bookPageLeft,
+.bookPageRight,
+.pageCell {
+  position: relative;
+  min-width: 0;
+  min-height: var(--page-min-height);
+  height: var(--page-height, auto);
+  background: #fff;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  transform-style: preserve-3d;
+}
+
+.pageCellLeft,
+.bookPageLeft {
+  justify-content: flex-end;
+  border-radius: var(--book-radius) 0 0 var(--book-radius);
+}
+
+.pageCellRight,
+.bookPageRight {
+  justify-content: flex-start;
+  border-radius: 0 var(--book-radius) var(--book-radius) 0;
+}
+
+.bookPageTurning {
+  overflow: visible;
+  z-index: 30;
+  transform-style: preserve-3d;
+  isolation: auto;
+}
+
+.bookSpreadFlipNext .bookPageLeft {
+  z-index: 1;
+}
+
+.bookSpreadFlipPrev .bookPageRight {
+  z-index: 1;
+}
+
+.pageSurface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: var(--page-min-height);
+  box-sizing: border-box;
+  background: #fff;
+  overflow: hidden;
+}
+
+.pageContentLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  background: #fff;
+  overflow: hidden;
+}
+
+.pageContentLayerLeft {
+  justify-content: flex-end;
+}
+
+.pageContentLayerRight {
+  justify-content: flex-start;
+}
+
+.pageSurfaceHidden {
+  visibility: hidden;
+}
+
+.revealUnderlay {
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.flipSheetNext .flipFaceFront {
+  border-radius: 0 var(--book-radius) var(--book-radius) 0;
+}
+
+.flipSheetNext .flipFaceBack {
+  border-radius: var(--book-radius) 0 0 var(--book-radius);
+}
+
+.flipSheetPrev .flipFaceFront {
+  border-radius: var(--book-radius) 0 0 var(--book-radius);
+}
+
+.flipSheetPrev .flipFaceBack {
+  border-radius: 0 var(--book-radius) var(--book-radius) 0;
+}
+
+.pageImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-sizing: border-box;
+  background: #fff;
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  border-radius: inherit;
+}
+
+.pageSurfaceLeft .pageImage,
+.pageContentLayerLeft .pageImage {
+  object-position: right center;
+}
+
+.pageSurfaceRight .pageImage,
+.pageContentLayerRight .pageImage {
+  object-position: left center;
+}
+
+.blankPage {
+  width: 100%;
+  height: 100%;
+  min-height: var(--page-min-height);
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%);
+}
+
+.pagePlaceholder {
+  width: 100%;
+  height: 100%;
+  min-height: var(--page-min-height);
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 55%, #eceff3 100%);
+  animation: pagePlaceholderPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pagePlaceholderPulse {
+
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.bookPageLeft {
+  border-right: none;
+}
+
+.bookPageRight {
+  border-left: none;
+}
+
+.bookPageDraggable {
+  cursor: grab;
+}
+
+.bookSpreadDragging .bookPageDraggable {
+  cursor: grabbing;
+}
+
+.bookPageTurning.bookPageLeft {
+  border-radius: var(--book-radius) 0 0 var(--book-radius);
+}
+
+.bookPageTurning.bookPageRight {
+  border-radius: 0 var(--book-radius) var(--book-radius) 0;
+}
+
+.bookSpreadDragging {
+  user-select: none;
+}
+
+.flipSheet {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: var(--page-height, 100%);
+  max-height: var(--page-height, 100%);
+  min-height: unset;
+  z-index: 40;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  transform-style: preserve-3d;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.flipSheetNext {
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+.flipSheetPrev {
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+.flipSheetInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: unset;
+  transform-style: preserve-3d;
+  z-index: 11;
+}
+
+.flipSheetNext .flipSheetInner {
+  transform-origin: left center;
+}
+
+.flipSheetPrev .flipSheetInner {
+  transform-origin: right center;
+}
+
+.flipFace {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  background: #fff;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  box-shadow: none;
+  transform: translateZ(1px);
+}
+
+.flipFaceFront {
+  z-index: 2;
+}
+
+.flipFaceFront.flipFaceRight {
+  justify-content: flex-start;
+}
+
+.flipFaceFront.flipFaceLeft {
+  justify-content: flex-end;
+}
+
+.flipFaceBack {
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+.flipFaceBack.flipFaceRight {
+  justify-content: flex-start;
+}
+
+.flipFaceBack.flipFaceLeft {
+  justify-content: flex-end;
+}
+
+.flipFace>.pageSurface {
+  position: relative;
+  inset: auto;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  min-height: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.flipFace .pageImage {
+  border-radius: 0;
+}
+
+.pageCurlShadow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to left,
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0.04) 22%,
+      rgba(0, 0, 0, 0.015) 42%,
+      transparent 62%);
+  pointer-events: none;
+}
+
+.pageBackShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right,
+      rgba(0, 0, 0, 0.07) 0%,
+      rgba(0, 0, 0, 0.025) 24%,
+      transparent 52%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.bookShadow {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: -14px;
+  height: 18px;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.2) 0%, transparent 72%);
+  z-index: 0;
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+.bookNavLeft,
+.bookNavRight {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bookNavIcon {
+  width: 29px;
+  height: 29px;
+  display: block;
+}
+
+.bookNavLeft:hover:not(:disabled),
+.bookNavRight:hover:not(:disabled) {
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.055);
+  transform: scale(1.00);
+}
+
+.bookNavLeft:active:not(:disabled),
+.bookNavRight:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.bookNavLeft:disabled,
+.bookNavRight:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pageIndicator {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 1rem 0 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+@media (max-width: 968px) {
+  .flipbookTitle {
+    margin: 1.5rem auto 1.25rem;
+    padding: 0 1rem;
+    font-size: clamp(1.65rem, 7vw, 2.1rem);
+    max-width: 100%;
+  }
+
+  .flipbookSection {
+    max-width: 100%;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+  }
+
+  .flipbookLayout {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    padding: 0;
+  }
+
+  .sectionNav {
+    grid-column: 1;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    padding: 0 0.25rem 0.35rem;
+  }
+
+  .sectionNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sectionTrack {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .sectionStepsRow {
+    justify-content: flex-start;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .sectionLabel {
+    font-size: 0.78rem;
+    padding: 0.2rem 0.35rem;
+  }
+
+  .bookShell {
+    grid-column: 1;
+    padding: 0;
+  }
+
+  .pageIndicator {
+    grid-column: 1;
+  }
+
+  .bookNavLeft,
+  .bookNavRight {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+  }
+
+  .bookNavLeft {
+    left: 0.35rem;
+  }
+
+  .bookNavRight {
+    right: 0.35rem;
+  }
+
+  .bookNavIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bookViewport {
+    max-width: 100%;
+    padding:
+      var(--cover-inset-y, 3px) var(--cover-inset-x, 12px) calc(12px + var(--cover-inset-y, 3px));
+  }
+
+  .bookSpread {
+    --page-min-height: clamp(220px, 58vw, 340px);
+    min-height: var(--page-min-height);
+    --book-radius: 3px;
+  }
+
+  .bookPageLeft,
+  .bookPageRight,
+  .pageCell {
+    min-height: var(--page-min-height);
+  }
+
+  .pageIndicator {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    padding: 0 0.5rem;
+  }
+
+  .bookNavLeft:hover:not(:disabled),
+  .bookNavRight:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .bookNavLeft:active:not(:disabled),
+  .bookNavRight:active:not(:disabled) {
+    transform: translateY(-50%) scale(0.96);
+  }
+}
+
+@media (min-width: 969px) {
+  .bookViewport {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .bookViewportWrap {
+    max-width: 960px;
+  }
+}
+
+@media (max-width: 420px) {
+  .flipbookSection {
+    padding: 0 0.5rem;
+  }
+
+  .bookNavLeft,
+  .bookNavRight {
+    width: 34px;
+    height: 34px;
+  }
+
+  .bookSpread {
+    --page-min-height: clamp(200px, 62vw, 300px);
+  }
+}
+
+/* Dark Mode Compatibility for Navigation Buttons and Page Indicator */
+
+:global(.photobookEditorOverlayDark) .pageIndicator,
+[data-pb-theme="dark"] .pageIndicator {
+  color: #e2e8f0;
+}
+
+:global(.photobookEditorOverlayDark) .bookNavLeft,
+:global(.photobookEditorOverlayDark) .bookNavRight,
+[data-pb-theme="dark"] .bookNavLeft,
+[data-pb-theme="dark"] .bookNavRight {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1ede6 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+:global(.photobookEditorOverlayDark) .bookNavLeft:hover:not(:disabled),
+:global(.photobookEditorOverlayDark) .bookNavRight:hover:not(:disabled),
+[data-pb-theme="dark"] .bookNavLeft:hover:not(:disabled),
+[data-pb-theme="dark"] .bookNavRight:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (max-width: 968px) {
+
+  :global(.photobookEditorOverlayDark) .bookNavLeft,
+  :global(.photobookEditorOverlayDark) .bookNavRight,
+  [data-pb-theme="dark"] .bookNavLeft,
+  [data-pb-theme="dark"] .bookNavRight {
+    background: rgba(30, 30, 30, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+  }
+
+  :global(.photobookEditorOverlayDark) .bookNavLeft:hover:not(:disabled),
+  :global(.photobookEditorOverlayDark) .bookNavRight:hover:not(:disabled),
+  [data-pb-theme="dark"] .bookNavLeft:hover:not(:disabled),
+  [data-pb-theme="dark"] .bookNavRight:hover:not(:disabled) {
+    background: rgba(45, 45, 45, 0.95) !important;
+  }
+}

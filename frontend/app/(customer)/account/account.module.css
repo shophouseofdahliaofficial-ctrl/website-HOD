@@ -1,0 +1,450 @@
+/* Account page - mobile-focused account menu (profile + options list) */
+
+.container {
+  min-height: 100vh;
+  background: #F2F1F6;
+  padding: 1rem;
+  padding-top: 0.5rem;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #333;
+  text-decoration: none;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Hide back link on account page on mobile; show only when on an option page */
+@media (max-width: 768px) {
+  .backLink {
+    display: none !important;
+  }
+}
+
+.backLink:hover {
+  color: #000;
+}
+
+.backIcon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Profile card */
+.profileCard {
+  background: #ffffff00;
+  border-radius: 24px;
+  padding: 1.25rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0rem;
+  border: 0px solid #ddd;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center;
+}
+
+.avatar {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #555;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 0.25rem 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.7px;
+  display: flex;
+  justify-content: center;
+}
+
+.profileEmail {
+  font-size: 0.7rem;
+  color: #666;
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.profileUserIdRow {
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .profileUserIdRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+}
+
+.profileUserIdLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.profileUserIdLine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .profileUserIdLine {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.profileUserId {
+  font-size: 0.68rem;
+  color: #333;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileUserIdCopy {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  margin: 0;
+  border: none;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.profileUserIdCopy:hover {
+  background: #e4e4e4;
+  color: #111;
+}
+
+.profileUserIdCopy:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 2px;
+}
+
+.profileUserIdCopyIcon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* Options list */
+.optionsCard {
+  background: #fff;
+  border-radius: 24px;
+
+  overflow: hidden;
+  border: 0px solid #ddd;
+}
+
+/* Google review prompt — below options list */
+.googleReviewCard {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  padding: 1.25rem 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.googleReviewTitle {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.4px;
+}
+
+.googleReviewDescription {
+  margin: 0 0 0.6rem 0;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.googleReviewButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .85rem 1.05rem;
+  border-radius: 10px;
+  font-size: .95rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: black;
+  background: white;
+  border: 1px solid #a7a7a7;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+  border-radius: 37px;
+}
+
+.googleReviewButtonIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  display: block;
+}
+
+.googleReviewButton:hover {
+  background: #ebebeb73;
+}
+
+.googleReviewButton:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+/* User ID — below Google review card */
+.userIdFooterCard {
+  background: #fff;
+  border-radius: 24px;
+  border: 0px solid #ddd;
+  padding: 1rem 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.profileUserIdRowFooter {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1rem;
+  text-decoration: none;
+  color: #333;
+  font-size: 1rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0s;
+  border-bottom: 1px solid #f2f1f6;
+}
+
+.optionRow:last-child {
+  border-bottom: none;
+}
+
+.optionRow:hover {
+  background: #f8f8f8;
+}
+
+.optionRow:active {
+  background: #f0f0f0;
+}
+
+.optionIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #555;
+}
+
+.optionLabel {
+  flex: 1;
+  font-weight: 500;
+}
+
+.optionArrow {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #999;
+}
+
+/* Logout row - destructive */
+.optionRowLogout {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.optionRowLogout .optionIcon {
+  color: #dc3545;
+}
+
+.optionRowLogout .optionArrow {
+  display: none;
+}
+
+.optionRowLogout:hover {
+  background: #fef2f2;
+}
+
+
+
+.loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1rem;
+  color: transparent;
+  background: linear-gradient(90deg,
+      #999 0%,
+      #bbb 20%,
+      #e8e8e8 50%,
+      #bbb 80%,
+      #999 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: loadingShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes loadingShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+
+.optionLabelContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.optionSubLabel {
+  font-size: 0.72rem;
+  color: #a0aec0;
+  font-weight: 500;
+  margin-top: 0.15rem;
+  letter-spacing: 0.02em;
+}
+
+.labelContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  width: fit-content;
+}
+
+.infoButton {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0aec0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.infoButton:hover {
+  color: #718096;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 151%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #000000;
+  padding: .5rem .75rem;
+  border-radius: 12px;
+  font-size: .72rem;
+  line-height: 1.35;
+  width: 220px;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 4px 12px #00000026;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  pointer-events: none;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  animation: .2s cubic-bezier(.4, 0, .2, 1) account-module__BrnaCG__tooltipFadeIn;
+  border: 1px solid #d8d8d8;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 32%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #ffffff #0000 #0000;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

@@ -1,0 +1,780 @@
+/* Admin Dashboard Styles */
+
+.dashboard {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #F2F1F6;
+  min-height: calc(100vh - 60px);
+}
+
+.dashboardTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -1.6px;
+  margin-bottom: 2rem;
+  color: #1a1a1a;
+}
+
+.statsDesktop {
+  display: block;
+}
+
+.statsMobile {
+  display: none;
+}
+
+.mobileHideTitle {
+  display: block;
+}
+
+.statsMobileNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 0.45rem;
+  padding: 0 2px;
+}
+
+.statsMobileNote::before {
+  content: 'i';
+  width: 14px;
+  height: 14px;
+  border: 1px solid #818181;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #6b7280;
+}
+
+/* KPI Row */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-top: 30px;
+}
+
+.kpiCard,
+.metricCard {
+  background: white;
+  border-radius: 6px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.cardTopIcon {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardTopIcon::before {
+  content: '';
+  width: 22px !Important;
+  height: 22px !Important;
+  background: #6b7280;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+
+.cardTopIconDown::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'%3E%3Cpath d='M200-280v-80h264L200-624l56-56 264 264v-264h80v400H200Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'%3E%3Cpath d='M200-280v-80h264L200-624l56-56 264 264v-264h80v400H200Z'/%3E%3C/svg%3E");
+}
+
+.cardTopIconSales::before {
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  mask-image: none;
+  -webkit-mask-image: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='%23000'%3E%3Cpath d='M55 15c0-3.3086-2.6914-6-6-6s-6 2.6914-6 6c0 2.902 2.0709 5.3283 4.8124 5.881-2.8929 14.9008-7.5906 30.5594-10.3656 30.5594-1.3521 0-3.3027-5.0781-4.8701-9.1582l-.2197-.5713c-.6377-1.6572-1.1924-3.459-1.7295-5.2012-1.4668-4.7627-2.626-8.5234-5.1221-8.5234-2.718 0-6.7 9.1346-9.0449 15.2009-.4684-.1178-.9559-.1873-1.4604-.1873-3.3086 0-6 2.6914-6 6s2.6914 6 6 6 6-2.6914 6-6c0-2.0912-1.0768-3.9337-2.7036-5.008 2.5555-6.5809 5.9831-13.5909 7.2089-14.0057 1.0195 0 2.3384 4.2803 3.2109 7.1123.5464 1.7744 1.1118 3.6094 1.7739 5.3311l.2192.5693c2.415 6.2881 4.0107 10.4414 6.7373 10.4414 5.6334 0 10.7479-23.9513 12.3929-32.5062 2.9114-.4105 5.1603-2.9113 5.1603-5.9342ZM15 53c-2.2056 0-4-1.7939-4-4s1.7944-4 4-4 4 1.7939 4 4-1.7944 4-4 4Zm34-34c-2.2056 0-4-1.7939-4-4s1.7944-4 4-4 4 1.7939 4 4-1.7944 4-4 4Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.kpiLabel {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.kpiValue {
+  font-size: 2rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1.2px;
+}
+
+.kpiChange {
+  font-size: 0.875rem;
+}
+
+.positiveChange {
+  color: #009b68;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #ddffef;
+  border: 0px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 4px 7px 4px 7px;
+  width: -moz-fit-content;
+  width: fit-content;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.negativeChange {
+  border-radius: 8px !important;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #fef2f2;
+  border-radius: 999px;
+  padding: 4px 7px 4px 7px;
+  width: fit-content;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+/* Metrics Row */
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.metricLabel {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.metricValue {
+  font-size: 2rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1.2px;
+}
+
+.metricChange {
+  font-size: 0.875rem;
+}
+
+.metricReportLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.95rem;
+  border-radius: 6px;
+  border: 0px solid #e5e5e5;
+  background: #f0f0f0;
+
+  color: #111;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.metricReportLink:hover {
+  background: #f0f0f0;
+  border-color: #d6d6d6;
+}
+
+/* Bottom Section */
+.bottomSection {
+  display: grid;
+  grid-template-columns: 2fr 0.97fr;
+  gap: 0.5rem;
+}
+
+/* Chart Card */
+.chartCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chartHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.chartFilters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterButton {
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.filterButton:hover {
+  background: #e5e5e5;
+}
+
+.activeFilter {
+  padding: 0.5rem 1rem;
+  background: #1a1a1a;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: white;
+  font-weight: 500;
+}
+
+.chartContainer {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  height: 300px;
+  flex: 1;
+  min-height: 240px;
+}
+
+.chartYAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-right: 1rem;
+  min-width: 60px;
+  flex-shrink: 0;
+  height: 100%;
+  min-height: 0;
+}
+
+.yAxisLabel {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: right;
+}
+
+.chartBars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 0.5rem;
+  padding-bottom: 2rem;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  .mobileHideTitle {
+    display: none;
+  }
+
+  .statsDesktop {
+    display: none;
+  }
+
+  .statsMobile {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-top: 0px;
+  }
+
+  .statsMobileHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .statsMobile .kpiLabel,
+  .statsMobile .metricLabel {
+    margin-bottom: 0;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .statsMobile .cardTopIcon {
+    position: static;
+    flex: 0 0 auto;
+  }
+
+  .kpiRow,
+  .metricsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bottomSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard {
+    padding: 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .kpiCard,
+  .metricCard,
+  .chartCard,
+  .insightCard {
+    padding: 1rem;
+    box-shadow: none;
+    border: 0px solid #ddd;
+    border-radius: 12px;
+  }
+
+  .chartContainer {
+    /* Fixed height so bar % heights resolve; stretch so Y-axis spans full plot area */
+    height: 220px;
+    min-height: 220px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    /* prevent any child from forcing page width */
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .chartYAxis {
+    min-width: 44px;
+    flex: 0 0 44px;
+    padding-right: 0.5rem;
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+
+  .barLabel {
+    max-width: 44px;
+    font-size: 0.625rem;
+  }
+
+  /* Make chart usable under 500px (many bars like 12 months) */
+  .chartHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .chartFilters {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filterButton,
+  .activeFilter {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.75rem;
+  }
+
+  .chartBars {
+    height: 100%;
+    min-height: 0;
+    align-self: stretch;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0rem;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    /* allow flex child to shrink */
+    max-width: 100%;
+    padding-right: 0.25rem;
+  }
+
+  .barWrapper {
+    flex: 0 0 auto;
+    min-width: 48px;
+    scroll-snap-align: start;
+  }
+
+  .bar {
+    max-width: 44px;
+  }
+
+  .barStack {
+    max-width: 44px;
+  }
+
+  .chartCard {
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+.barWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  min-height: 0;
+  justify-content: flex-end;
+  cursor: pointer;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.barWrapper:focus-visible {
+  outline: 2px solid #0070f3;
+  outline-offset: 2px;
+}
+
+.barWrapperSelected {
+  background: linear-gradient(0deg, #ffffff, #e0f5ff);
+}
+
+.barStack {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Portaled to document.body — not clipped by chart overflow */
+.barTooltipFloating {
+  position: fixed;
+  z-index: 10060;
+  box-sizing: border-box;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  padding: 0.4rem 0.7rem;
+  background: #fff;
+  border: 1px solid #d3d3d3;
+  border-radius: 8px;
+  box-shadow: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.bar {
+  width: 100%;
+  max-width: 60px;
+  margin-top: auto;
+  background: linear-gradient(180deg, #91d6ff 0%, #ffffff 100%);
+  border-radius: 4px 4px 0 0;
+  transition: opacity 0.1s ease;
+  cursor: pointer;
+  min-height: 4px;
+  box-shadow: none;
+}
+
+.barWrapper:hover .bar {
+  opacity: 0.92;
+}
+
+.barLabel {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Insights Column */
+.insightsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.insightCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: none;
+}
+
+.insightCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+}
+
+.insightItems {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.insightItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.insightIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  color: #555;
+}
+
+.insightIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.insightLabel {
+  font-size: 0.875rem;
+  color: #353535;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.insightValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.125rem;
+}
+
+.insightSubtext {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* Top Customers */
+.topCustomersList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.topCustomerItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.topCustomerItem:hover {
+  background: white;
+}
+
+.customerAvatar {
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  background: #ededed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #161616;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.customerInfo {
+  flex: 1;
+}
+
+.customerName {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+  font-size: 14px;
+}
+
+.customerDetails {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.customerSpent {
+  font-weight: 600;
+  color: #10b981;
+  font-size: 0.875rem;
+}
+
+.noData {
+  text-align: center;
+  color: #999;
+  padding: 1rem;
+  font-size: 0.875rem;
+}
+
+/* Customer Retention */
+.retentionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.retentionValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.retentionBar {
+  width: 100%;
+  height: 8px;
+  background: #e5e5e5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.retentionFill {
+  height: 100%;
+  background: linear-gradient(90deg, #6bffce 0%, #00a975 100%);
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+
+.retentionChange {
+  font-size: 0.875rem;
+}
+
+/* Promotions */
+.promotionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0px;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.promotionItem+.promotionItem {
+  margin-top: 0.5rem;
+}
+
+.promotionInfo {
+  flex: 1;
+}
+
+.promotionName {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+  font-size: 14px;
+}
+
+.promotionDetails {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.promotionBadge {
+  padding: 0.25rem 0.75rem;
+  background: #ddffef;
+  color: #009b68;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.promotionBadgeExpired {
+  padding: 0.25rem 0.75rem;
+  background: #fef2f2;
+  color: #ef4444;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .bottomSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablet-only chart height (avoid overriding narrow-phone grid rules in max-width:520px) */
+@media (max-width: 768px) and (min-width: 521px) {
+  .chartContainer {
+    height: 220px;
+    min-height: 220px;
+  }
+
+  .barLabel {
+    font-size: 0.625rem;
+  }
+}
+
+/* Keep 2 cards per row on small screens too */
+@media (max-width: 400px) {
+  .statsMobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpiRow,
+  .metricsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

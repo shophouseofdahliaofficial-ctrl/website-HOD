@@ -1,0 +1,82 @@
+/* Loading Spinner Styles */
+
+.spinnerContainer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  animation: rotate 1s linear infinite;
+  width: 100%;
+  height: 100%;
+}
+
+.path {
+  stroke-dasharray: 90, 150;
+  stroke-dashoffset: 0;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+/* Sizes */
+.small {
+  width: 20px;
+  height: 20px;
+}
+
+.medium {
+  width: 40px;
+  height: 40px;
+}
+
+.large {
+  width: 60px;
+  height: 60px;
+}
+
+/* Loading with Text */
+.loadingWithText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loadingText {
+  color: #000000;
+  font-size: 0.95rem;
+  letter-spacing: -1px;
+}
+
+/* Dark theme variant for admin */
+.dark {
+  color: #b1dbff;
+}
+
+.dark .loadingText {
+  color: #ccc;
+}

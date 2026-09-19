@@ -1,0 +1,149 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.scrollHost {
+  width: 100%;
+  min-width: 0;
+  min-height: 18rem;
+  max-height: min(32rem, 64vh);
+}
+
+.gridWrap {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  max-height: min(32rem, 64vh);
+  min-height: 18rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 12px;
+  border: 0px solid var(--pb-lightgray, #e8e6ef);
+  background: #2c2c2c00;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.tile:hover:not(:disabled) {
+  background: var(--pb-white, #ffffff);
+}
+
+:global([data-pb-theme='light']) .tile {
+  background: #f2f1f600;
+  border: 1px solid #e8e2e600;
+}
+
+:global([data-pb-theme='light']) .tile:hover:not(:disabled) {
+  background: #f2f1f6;
+  border-color: #f2f1f6;
+}
+
+:global([data-pb-theme='light']) .tileSpinner {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.tile:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tileImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.22s ease;
+}
+
+.tileImgDimmed {
+  opacity: 0.42;
+}
+
+.tileSpinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.78);
+  opacity: 1;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+}
+
+.tileSpinnerOut {
+  opacity: 0;
+}
+
+.sentinel {
+  width: 100%;
+  height: 1px;
+}
+
+.status,
+.empty,
+.error,
+.count {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.status,
+.empty {
+  color: var(--pb-darkgray, #6b7280);
+}
+
+.error {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.count {
+  color: var(--pb-darkgray, #6b7280);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 420px) {
+  .grid {
+    gap: 0.4rem;
+  }
+
+  .tile {
+    border-radius: 10px;
+    padding: 0.35rem;
+  }
+}

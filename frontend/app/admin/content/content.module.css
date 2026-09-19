@@ -1,0 +1,138 @@
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+.contentCard {
+  background: white;
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform 0.02s, box-shadow 0.02s;
+  border: 0px solid #d7d7d7;
+}
+
+.contentCard:hover {}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.cardIcon {
+  width: 34px;
+  height: 29px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f1f100;
+  border: 0px solid #cbcbcb;
+  color: #232323;
+}
+
+.cardIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.activeBadge {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.inactiveBadge {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.lastUpdated {
+  color: #666;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.editButton,
+.viewButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 60px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.02s;
+}
+
+.editButton {
+  background: #ffdeea;
+  color: #c1002b;
+}
+
+.editButton:hover {
+  background: #ffc0c89c;
+}
+
+.viewButton {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+
+.viewButton:hover {
+  background: #e5e5e5;
+}
+
+.toggleButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 0px solid #d7d7d7;
+  border-radius: 60px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  transition: all 0.2s;
+}
+
+.toggleButton:hover:not(:disabled) {
+  background: #e5e5e5;
+  border-color: #bbb;
+}
+
+.toggleButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

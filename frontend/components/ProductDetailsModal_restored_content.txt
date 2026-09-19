@@ -1,0 +1,82 @@
+Created At: 2026-06-01T07:22:18Z
+Completed At: 2026-06-01T07:22:18Z
+File Path: `file:///c:/Users/GOPES/OneDrive/Desktop/scribble/milko-frontend-main%20%284%29/milko-frontend-main/components/ProductDetailsModal.tsx`
+Total Lines: 2815
+Total Bytes: 138054
+Showing lines 926 to 1725
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+926: 
+927:   // Reviews should only show real, approved customer reviews
+928:   const reviews = (displayProduct.reviews || []).filter((r: ProductReview) => r.isApproved);
+929:   const isTrialMode = mode === 'trial';
+930: 
+931:   // Get feedback aggregates (from order feedback)
+932:   const feedback = displayProduct.feedbackAggregates;
+933: 
+934:   // Calculate average rating from "Quality of the product" only (for circular badge)
+935:   const qualityRating = feedback?.qualityStars ?? null;
+936: 
+937:   // Calculate average rating from reviews (fallback for product header display)
+938:   const averageRating = reviews.length > 0
+939:     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+940:     : (qualityRating ?? 0);
+941: 
+942:   // Helper function to render stars (similar to HowWasItModal, but non-interactive)
+943:   const renderStars = (rating: number | null) => {
+944:     const avgRating = rating ?? 0;
+945:     const fullStars = Math.floor(avgRating);
+946:     const hasHalfStar = avgRating % 1 >= 0.5 && avgRating > 0 && fullStars < 5;
+947:     const roundedRating = Math.round(avgRating);
+948: 
+949:     return (
+950:       <div
+951:         className={howWasItStyles.stars}
+952:         data-level={avgRating >= 1 && avgRating <= 5 ? roundedRating : undefined}
+953:         style={{ pointerEvents: 'none' }}
+954:       >
+955:         {[1, 2, 3, 4, 5].map((n) => {
+956:           const isFull = n <= fullStars;
+957:           const isHalf = n === fullS
+<truncated 45281 bytes>
+            </button>
+1685:                         </div>
+1686:                       ) : null}
+1687:                     </div>
+1688:                   </div>
+1689:                 </h1>
+1690:                 {reviews.length > 0 && (
+1691:                   <div className={styles.productRating}>
+1692:                     <RatingBadge rating={averageRating} size="md" />
+1693:                     <span className={styles.reviewCount}>({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+1694:                   </div>
+1695:                 )}
+1696:               </div>
+1697: 
+1698:               {/* Price Section */}
+1699:               <div className={styles.priceSection}>
+1700:                 <div className={styles.priceContainer}>
+1701:                   {originalUnitPrice !== null && unitOff > 0 && (
+1702:                     <div className={styles.originalPrice}>
+1703:                       ₹{originalUnitPrice.toFixed(0)} <span className={styles.priceUnit}>/{unitLabel}</span>
+1704:                     </div>
+1705:                   )}
+1706:                   <div className={styles.currentPrice}>
+1707:                     ₹{unitPrice.toFixed(0)} <span className={styles.priceUnit}>/{unitLabel}</span>
+1708:                   </div>
+1709:                 </div>
+1710:                 {originalUnitPrice !== null && unitOff > 0 && (
+1711:                   <div className={styles.discountBadge}>
+1712:                     ₹{unitOff.toFixed(0)} OFF
+1713:                   </div>
+1714:                 )}
+1715:               </div>
+1716: 
+1717:               {/* Stock Status */}
+1718:               {(() => {
+1719:                 const hasVariations = variations && variations.length > 0;
+1720:                 const isInStock = !isProductOutOfStock && (
+1721:                   hasVariations
+1722:           
+<truncated 303 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.

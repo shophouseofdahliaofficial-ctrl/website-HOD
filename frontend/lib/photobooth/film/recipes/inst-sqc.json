@@ -1,0 +1,45 @@
+{
+  "id": "film",
+  "name": "Inst SQC",
+  "version": "3.2.0",
+  "description": "Baseline rebuild — neutral camera, staged color science.",
+  "stages": {
+    "hdrDestroyer": true,
+    "microcontrastDestroyer": true,
+    "creamHighlights": true,
+    "luminanceGrain": true,
+    "pastelDyeMapper": false,
+    "shadowPollution": false,
+    "developmentVariation": false,
+    "chromaticAberration": false,
+    "edgeDevelopment": false,
+    "filmLatitude": false
+  },
+  "camera": {
+    "dynamicRange": 0.38,
+    "highlightRoll": 0.55,
+    "shadowLoss": 0.35,
+    "midtonePriority": 0.28,
+    "microcontrastReduction": 0.45,
+    "edgeSoftness": 0.30,
+    "chromaticAberration": 0.0,
+    "fieldCurvature": 0.0
+  },
+  "film": {
+    "creamHighlight": 0.42,
+    "creamWarmth": 0.06,
+    "pastelStrength": 0.0,
+    "shadowPollution": 0.0,
+    "shadowGradeHue": 159,
+    "latitudeBrightDesat": 0.0,
+    "latitudeDarkMuddy": 0.0
+  },
+  "print": {
+    "grainAmount": 0.18,
+    "grainSize": 1.1,
+    "developmentVariation": 0.0,
+    "edgeWeakness": 0.0,
+    "cornerCool": 0.0,
+    "bottomWarm": 0.0
+  }
+}

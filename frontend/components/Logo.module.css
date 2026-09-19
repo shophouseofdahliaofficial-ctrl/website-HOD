@@ -1,0 +1,47 @@
+.logoImage {
+  height: auto;
+  max-height: 48px;
+  display: block;
+  width: var(--logo-width-mobile);
+  object-fit: contain;
+}
+
+@keyframes logoSkeletonShimmer {
+  0% {
+    background-color: #e5e7eb;
+    opacity: 0.8;
+  }
+
+  50% {
+    background-color: #ffd4e9;
+    opacity: 1;
+  }
+
+  100% {
+    background-color: #fff5fa;
+    opacity: 0.8;
+  }
+}
+
+.logoSkeleton {
+  display: block;
+  height: 32px;
+  width: var(--logo-width-mobile, 105px);
+  border-radius: 60px;
+  background-color: #ffdaeb !important;
+  filter: none !important;
+  animation: logoSkeletonShimmer 0.4s ease-in-out infinite;
+  margin: 0 auto;
+}
+
+/* Desktop: use desktop width */
+@media (min-width: 768px) {
+  .logoImage {
+    width: var(--logo-width-desktop);
+  }
+
+  .logoSkeleton {
+    width: var(--logo-width-desktop, 120px);
+    height: 44px;
+  }
+}

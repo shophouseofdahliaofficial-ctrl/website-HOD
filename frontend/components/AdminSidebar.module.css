@@ -1,0 +1,366 @@
+/* Admin Sidebar Styles */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 260px;
+  background: #F2F1F6;
+  border-right: 0px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Logo Section */
+.logoSection {
+  padding: 0.96rem 1.25rem;
+  border-bottom: 0px solid #e5e7eb;
+  background: #F2F1F6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #1f2937;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logoText {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #000000;
+}
+
+.logoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoImage {
+  height: 20px;
+  width: auto;
+  max-width: 140px;
+  margin-left: 4px;
+}
+
+.logoTextFallback {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #000;
+}
+
+.logoAdmin {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 17px;
+}
+
+/* Navigation */
+.nav {
+  flex: 1;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-y: auto;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #6b7280;
+  text-decoration: none;
+  border-radius: 24px;
+  transition: all 0.02s;
+  font-size: 0.95rem;
+  font-weight: 500;
+  position: relative;
+}
+
+.navItem:hover {
+  background: #f9f9f9;
+  color: #1f2937;
+}
+
+.navItemActive {
+  background: white;
+  color: black;
+  font-weight: 600;
+}
+
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: #eff6ff;
+  border-radius: 0 2px 2px 0;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.navLabel {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.navBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #dc2626;
+  color: white;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.navDot {
+  width: 8px;
+  height: 8px;
+  background: #dc2626;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* User Section */
+.userSection {
+  padding: 1rem 0.75rem;
+  border-top: 0px solid #e5e7eb;
+  background: #F2F1F6;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.userDropdown {
+  position: relative;
+}
+
+.userButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 204px;
+  cursor: pointer;
+  transition: background 0.02s;
+  text-align: left;
+}
+
+.userButton:hover {
+  background: white;
+}
+
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  color: #e3e3e3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+  box-shadow: 0px 1px 1px 0px rgb(0 0 0 / 20%);
+  border: 1px solid #ddd;
+}
+
+.userInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRole {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+.dropdownArrow {
+  width: 23px;
+  height: 23px;
+  flex-shrink: 0;
+  color: #6b7280;
+  transition: transform 0.2s;
+  margin-right: 8px;
+}
+
+.dropdownArrowOpen {
+  transform: rotate(180deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 0.75rem;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: dropdownSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #4b5563;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  text-align: left;
+}
+
+.dropdownItem:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.logoutItem:hover {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+}
+
+.dropdownItem svg {
+  flex-shrink: 0;
+  color: #9ca3af;
+  transition: color 0.15s ease-in-out;
+}
+
+.dropdownItem:hover svg {
+  color: #4b5563;
+}
+
+.logoutItem:hover svg {
+  color: #ef4444 !important;
+}
+
+/* Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .logoText,
+  .navLabel,
+  .userInfo,
+  .dropdownMenu {
+    display: none;
+  }
+
+  .logo {
+    justify-content: center;
+  }
+
+  .navItem {
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  .userButton {
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .userAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+}
+
+/* On mobile we use a bottom nav + mobile header */

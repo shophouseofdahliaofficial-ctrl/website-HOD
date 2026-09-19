@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+*/node_modules/
+.pnp
+.pnp.js
+
+# Environment variables & secrets
+.env
+.env.*
+.env.local
+.env*.local
+!.env.example
+google-service-account-key.json
+*/google-service-account-key.json
+src/config/google-service-account-key.json
+*.pem
+
+# Build outputs & cache
+.next/
+*/.next/
+out/
+dist/
+build/
+.cache/
+*.tsbuildinfo
+
+# Vercel & IDE
+.vercel
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files & archives
+tmp/
+*/tmp/
+milko-frontend-main/
+milko-backend-main/
+*/milko-frontend-main/
+*/milko-backend-main/

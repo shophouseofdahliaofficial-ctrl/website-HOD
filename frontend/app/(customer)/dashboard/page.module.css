@@ -1,0 +1,963 @@
+/* Dashboard - My Account: profile + addresses. Mobile-first. */
+
+.container {
+  min-height: 100vh;
+  background: #F2F1F6;
+  padding: 1rem;
+  padding-bottom: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ---- Layout: sidebar + main ---- */
+.layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 24px;
+  border: 0px solid #ddd;
+
+  padding: 0.5rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0s;
+  text-decoration: none;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  border-radius: 15px;
+}
+
+.sidebarItem:hover {
+  background: #f5f5f5;
+  color: #000;
+}
+
+.sidebarItemActive {
+  background: #ffe2e996;
+  color: #fe1160;
+}
+
+.sidebarItemActive:hover {
+  background: #ffcad8;
+  color: #fe1160;
+}
+
+.sidebarIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.sidebarItemActive .sidebarIcon {
+  color: #fe1160;
+}
+
+.sidebarLabel {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.sidebarLogout {
+  margin-top: 0rem;
+  border-top: 0px solid #eee;
+  padding-top: 0.75rem;
+  color: #dc3545;
+}
+
+.sidebarLogout:hover {
+  background: #fee;
+  color: #dc3545;
+}
+
+/* ---- Main content ---- */
+.mainContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1rem;
+  color: transparent;
+  background: linear-gradient(90deg,
+      #999 0%,
+      #bbb 20%,
+      #e8e8e8 50%,
+      #bbb 80%,
+      #999 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: loadingShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes loadingShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ---- Page title ---- */
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 1.25rem 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -1px;
+}
+
+/* ---- Profile card ---- */
+.profileCard {
+  background: #fff;
+  border-radius: 24px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  border: 0px solid #EAEAEA;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #555;
+  flex-shrink: 0;
+  border: 2px solid #f0f0f0;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profileMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 0.15rem 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.3px;
+}
+
+.profileTitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0 0 0.1rem 0;
+}
+
+.profileLocation {
+  font-size: 0.8rem;
+  color: #999;
+  margin: 0;
+}
+
+/* Edit icon button (pencil + "Edit") */
+.editIconButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+
+  color: #999;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 9px 12px 9px 10px;
+  border-radius: 60px;
+  transition: color 0s, background 0s;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  border: 1px solid #cdcdcd;
+}
+
+.editIconButton:hover {
+  color: #333;
+  background: #e1e1e1;
+  border: 1px solid #e1e1e1;
+}
+
+
+
+/* ---- Info card (Personal Information & Address) ---- */
+.infoCard {
+  background: #fff;
+  border-radius: 24px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+
+}
+
+.infoCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.infoCardTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.3px;
+}
+
+.userIdFooterCard {
+  background: #fff;
+  border-radius: 24px;
+  border: 0px solid #ddd;
+  padding: 1rem 1rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.profileUserIdRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.profileUserIdRowFooter {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+@media (min-width: 769px) {
+  .profileUserIdRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+}
+
+.profileUserIdLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.profileUserIdLine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .profileUserIdLine {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.profileUserId {
+  font-size: 0.68rem;
+  color: #333;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileUserIdCopy {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  margin: 0;
+  border: none;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.profileUserIdCopy:hover {
+  background: #e4e4e4;
+  color: #111;
+}
+
+.profileUserIdCopy:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 2px;
+}
+
+.profileUserIdCopyIcon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.labelContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  width: fit-content;
+}
+
+.infoButton {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0aec0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.infoButton:hover {
+  color: #718096;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 151%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #000000;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  width: 220px;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  pointer-events: none;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  animation: tooltipFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #d8d8d8;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 32%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Two-column grid for info fields */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 2rem;
+}
+
+.infoField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.infoFieldLabel {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #999;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.infoFieldValue {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.infoFieldInput {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid #f7f7f7;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  background: #f7f7f7;
+}
+
+.infoFieldInput:focus {
+  outline: none;
+  border-color: #1a1a1a;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+  background: #fff;
+}
+
+.infoForm {
+  /* wrapper for edit mode */
+}
+
+.infoFormActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+/* Password section inside personal info */
+.passwordSection {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #EAEAEA;
+}
+
+.changePasswordBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid #EAEAEA;
+  color: #555;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.changePasswordBtn:hover {
+  background: #f9f9f9;
+  border-color: #ccc;
+}
+
+.passwordFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn {
+  padding: 0.65rem 1.25rem;
+  border-radius: 80px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0s, opacity 0s;
+  border: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: #ff0054;
+  color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #c9006e;
+}
+
+.btnSecondary {
+  background: #f0f0f0;
+  color: #000;
+  border: 1px solid #f0f0f0;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+.btnText {
+  background: transparent;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+  font-weight: 500;
+}
+
+.btnText:hover:not(:disabled) {
+  background: rgba(0, 102, 204, 0.06);
+}
+
+.btnDanger {
+  background: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+/* ---- Section card ---- */
+.sectionCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0px 1px 1px 0px rgb(0 0 0 / 20%);
+  border: 1px solid #EAEAEA;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.3px;
+}
+
+/* ---- Addresses ---- */
+.addressesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.addressCard {
+  border: 1px solid #f2f1f6;
+  border-radius: 24px;
+  padding: 1.25rem;
+  background: #f2f1f6;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.addressCardDefault {
+  background: #f2f1f6;
+  border-color: #f2f1f6;
+}
+
+.addressCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.addressCardTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.defaultBadge {
+  padding: 0.2rem 0.55rem;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.addressCardBody {
+  margin-bottom: 0;
+}
+
+.addressInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 2rem;
+}
+
+.addressCardActions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.deleteIconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.deleteIconButton:hover {
+  color: #dc3545;
+  background: #fef2f2;
+}
+
+.liveLocationAdded {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.emptyAddresses {
+  color: #999;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.emptyAddresses p {
+  margin: 0 0 0.75rem 0;
+}
+
+/* Add/Edit address form */
+.addressForm {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 0;
+  margin-bottom: 3rem;
+  border: 1px solid #ffffff;
+}
+
+.formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.formFieldLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.formFieldInput {
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.formFieldInput:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+.formRow {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.formCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  margin-top: 19px;
+}
+
+.formCheckbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: #000;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* ---- Subscriptions ---- */
+.subscriptionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.subscriptionCard {
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.subscriptionCardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 0.5rem 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.subscriptionCardMeta {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0.2rem 0;
+}
+
+.subscriptionCardLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.subscriptionCardLink:hover {
+  text-decoration: underline;
+}
+
+/* ---- Mobile: single column, tighter spacing ---- */
+@media (max-width: 767px) {
+  .container {
+    padding: 1rem 0.85rem;
+    padding-bottom: 2rem;
+  }
+
+  .layout {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    display: none !important;
+  }
+
+  .sidebarNav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(26, 24, 20, 0.28) #ffffff;
+  }
+
+  .sidebarNav::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .sidebarNav::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+
+  .sidebarNav::-webkit-scrollbar-thumb {
+    background-color: rgba(26, 24, 20, 0.28);
+    border-radius: 4px;
+  }
+
+  .sidebarNav::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(26, 24, 20, 0.45);
+  }
+
+  .sidebarItem {
+    flex-shrink: 0;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.82rem;
+    gap: 0.4rem;
+  }
+
+  .sidebarLabel {
+    white-space: nowrap;
+  }
+
+  .sidebarLogout {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0.55rem;
+    border-left: 0px solid #eee;
+    padding-left: 0.85rem;
+    margin-left: 0.25rem;
+  }
+
+  .pageTitle {
+    font-size: 1.35rem;
+    margin-bottom: 1rem;
+  }
+
+  .profileCard {
+    padding: 0.25rem 1rem 1rem 1rem;
+  }
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1.3rem;
+  }
+
+  .profileName {
+    font-size: 1.1rem;
+  }
+
+  .infoCard {
+    padding: 1.25rem;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .addressInfoGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .addressCard {
+    padding: 1rem;
+  }
+
+  .addressForm {
+    padding: 1rem;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Desktop: more spacing ---- */
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem 1.5rem;
+    padding-bottom: 3rem;
+  }
+
+  .pageTitle {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar {
+    width: 240px;
+  }
+
+  .profileCard {
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .infoCard {
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sectionCard {
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}

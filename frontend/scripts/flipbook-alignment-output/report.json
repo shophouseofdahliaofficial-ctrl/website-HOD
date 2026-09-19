@@ -1,0 +1,21 @@
+{
+  "beforeDrag": {
+    "phase": "idle",
+    "imageLeft": 550,
+    "centerSeam": 550,
+    "offsetFromSeam": 0
+  },
+  "duringDrag": {
+    "missing": true,
+    "selector": "[data-testid=\"flip-front-image\"]"
+  },
+  "afterRelease": {
+    "phase": "idle",
+    "imageLeft": 550,
+    "centerSeam": 550,
+    "offsetFromSeam": 0
+  },
+  "idleBeforeAfterDeltaPx": 0,
+  "passSeamAlignment": true,
+  "passIdleStable": true
+}

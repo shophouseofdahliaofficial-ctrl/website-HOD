@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: milko-backend
+    # Monorepo: backend lives under milko-backend-main/ in milkoofficial/milko-frontend
+    rootDir: milko-backend-main
+    env: node
+    region: oregon  # Change to your preferred region
+    plan: starter  # or free for development
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000  # Render sets this automatically, but this is a fallback
+      # Add your other environment variables in Render dashboard:
+      # - SUPABASE_URL
+      # - SUPABASE_ANON_KEY
+      # - SUPABASE_SERVICE_ROLE_KEY
+      # - SUPABASE_DB_URL (or DATABASE_URL)
+      # - JWT_SECRET
+      # - FRONTEND_URL
+      # - ADMIN_URL
+      # - CLOUDINARY_CLOUD_NAME
+      # - CLOUDINARY_API_KEY
+      # - CLOUDINARY_API_SECRET
+      # - RAZORPAY_KEY_ID
+      # - RAZORPAY_KEY_SECRET
+      # - RAZORPAY_WEBHOOK_SECRET
+
+databases:
+  - name: milko-postgres
+    databaseName: milko
+    user: milko
+    plan: starter  # or free for development
+    # Note: You can also use your existing Supabase database
+    # In that case, skip this database section and use SUPABASE_DB_URL

@@ -1,0 +1,1042 @@
+/* Subscription details — aligned with order details: shell + white card */
+
+.container {
+  min-height: 100vh;
+  background: #F2F1F6;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.content {
+  max-width: 750px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem 1rem;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.2);
+  border: 1px solid #ddd;
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  font-size: 1.1rem;
+  color: transparent;
+  background: linear-gradient(90deg,
+      #999 0%,
+      #bbb 20%,
+      #e8e8e8 50%,
+      #bbb 80%,
+      #999 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: loadingShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes loadingShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: #dc3545;
+  font-size: 1rem;
+}
+
+.backLink {
+  display: inline-block;
+  margin: 1rem auto;
+  text-align: center;
+  color: #0070f3;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+/* Trial + COD: prominent pay-on-delivery label above the notice */
+.trialCodPaymentTitle {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #0f172a;
+}
+
+/* COD checkout: pending until delivery / payment collected */
+.codPendingNotice {
+  margin: 0 0 1rem;
+  padding: 15px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #5c4a00;
+  background: #fffcf0;
+  border: 0px solid #f5e6a3;
+  border-radius: 12px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.headerBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.customerTrialBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  display:none;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+  flex: 1;
+  letter-spacing: -1.1px;
+}
+
+.statusBadge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.statusBadgeActive {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Trial with DB status active (deliveries running) — not the same as full “Active” after conversion */
+.statusBadgeTrialOngoing {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusBadgePaused {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.statusBadgePending {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.statusBadgeExpired {
+  background: #ffdfdf;
+  color: #a70000;
+}
+
+.statusBadgeEndingSoon {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.statusBadgeCancelled,
+.statusBadgeFailed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.statusBadgeTick {
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+  margin: -7px -6px -7px -8px;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  margin: 0 0 1.75rem 0;
+}
+
+.metaText {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.metaMuted {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #757070;
+  margin-left: 4px;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+}
+
+/* Product row */
+.productRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.productThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f0f0f0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.productThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.productThumbPlaceholder {
+  font-size: 1.5rem;
+}
+
+.productBlockName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 0.25rem 0;
+}
+
+.productBlockMeta {
+  font-size: 0.85rem;
+  color: #999;
+  margin: 0;
+}
+
+/* Order details grid (same feel as orders) */
+.detailsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 400;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  color: #000;
+  font-weight: 500;
+  text-align: right;
+}
+
+.copyValueBtn {
+  border: 0px solid #e5e5e5;
+  background: #f1f1f1ab;
+  color: #000;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  max-width: min(100%, 220px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyValueBtn:hover {
+  background: #f0f0f0;
+}
+
+/* Calendar */
+.calendarHint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.5rem;
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.calendarHintItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #efefef91;
+  padding: 2px 7px;
+  border-radius: 5px;
+
+}
+
+.calendarHintDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Match calendar cell colours */
+.calendarHintDotDelivered {
+  background: #059669;
+}
+
+.calendarHintDotScheduled {
+  background: #0284c7;
+}
+
+.calendarHintDotCancelled {
+  background: #dc2626;
+}
+
+.calendarHintDotPaused {
+  background: #9ca3af;
+}
+
+.calendarHintDotShifted {
+  background: #fde047;
+}
+
+.calendarShiftNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+
+
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #713f12;
+  line-height: 1.45;
+}
+
+.calendarShiftNoteMeta {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #854d0e;
+  line-height: 1.45;
+}
+
+.calendarShiftNoteDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.35em;
+  background: #fde047;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.calendarList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 5px;
+}
+
+.calendarCard {
+  border-radius: 12px;
+  padding: 8px 0;
+
+}
+
+.calendarMonth {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.weekLabels {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+  margin-bottom: 0.3rem;
+}
+
+.weekLabels span {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #666;
+  font-weight: 700;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.dayCell {
+  min-height: 32px;
+    border-radius: 8px;
+    border: 1px solid #f3f3f3;
+    font-size: .78rem;
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f3f3;
+}
+.dayMuted {
+  opacity: 0.38;
+  background: #fafafa !important;
+  border-color: #fafafa !important;
+  color: #aaa !important;
+}
+
+/* In-month but outside subscription start–end */
+.dayOutOfRange {
+  background: #ffffff;
+    border-color: #f3f4f600;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.dayDelivered {
+  background: #d1fae5;
+  border-color: #d1fae5;
+  color: #065f46;
+  font-weight: 700;
+}
+
+.dayPending {
+  background: #e0f2fe;
+  border-color: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.dayCancelled {
+  background: #fee2e2;
+  border-color: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.dayPaused {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.dayToday {
+  box-shadow: inset 0 0 0 2px #111;
+}
+
+/* First delivery day (start) when slot-shift applied — not the bonus day at end (that stays scheduled blue). */
+.dayShifted {
+  background: #fef9c3 !important;
+  border-color: #fef9c3 !important;
+  color: #713f12 !important;
+  font-weight: 700;
+
+}
+
+.dayToday.dayShifted {
+  box-shadow: inset 0 0 0 2px #111, inset 0 0 0 4px #fde047;
+}
+
+.autoPayText {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.autopayFailureNote {
+  margin: 0 0 0.75rem;
+  color: #cf4e00;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  font-weight: 800;
+}
+
+
+.nextAutopayDateLine {
+  margin: 0.65rem 0 0.35rem;
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.nextAutopayDateStrong {
+  font-weight: 600;
+}
+
+.nextAutopayDateHint {
+  font-weight: 400;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.autopayPolicyNote {
+  margin: 0 0 0.85rem;
+  color: #666;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.deleteAutopayButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #991b1b;
+  background: #fff;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.deleteAutopayButton:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.deleteAutopayButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.autoPayActions {
+  margin-top: 1rem;
+}
+
+.autoPayButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: 0px solid #008f3f;
+  background: linear-gradient(166deg, #007940, #007940);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-size: 0.9rem;
+}
+
+.autoPayButton:hover {
+  background: #00582f;
+}
+
+.autoPayButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #94a3a8;
+}
+
+.autoPayButton:disabled:hover {
+  background: #94a3a8;
+}
+
+.trialInfoBullets {
+  margin: 0 0 1.5rem 0;
+  padding: 0 0 0 1.25rem;
+  list-style-type: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.trialInfoBullets li {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.4;
+  padding-left: 0.25rem;
+}
+
+.trialInfoBullets li::marker {
+  color: #383838;
+}
+
+.lightningIcon {
+  width: 12px;
+  height: 16px;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.autopayPendingHint {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.helpButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #ffffff;
+  color: #000000;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.helpButton:hover {
+  background: #f1f1f1;
+}
+
+.deliveredActionBtnIcon {
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+  margin-right: 0.35rem;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.secondaryButton,
+.dangerButton {
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid #afafaf;
+  background: #fff;
+  color: #111;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.dangerButton {
+  color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.secondaryButton:disabled,
+.dangerButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actionBtnIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.deliveryAddressBlock {
+  background: white;
+  border: 0px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0rem;
+}
+
+.deliveryAddressName {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.deliveryAddressLine {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.confirmModal {
+  width: min(100%, 460px);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border: 1px solid #e5e5e5;
+  position: relative;
+}
+
+.confirmModalScrollable {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.confirmTitle {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #111;
+  text-align: center;
+}
+
+.confirmIconWrap {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 0.6rem;
+}
+
+.confirmIcon {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+.confirmText {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  padding: 5px 11px;
+  text-align: center;
+}
+
+.confirmTextStrong {
+  margin: 0.65rem 0 0;
+  color: #111;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.confirmActions {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.confirmProceedBtn {
+  border-radius: 10px;
+  padding: 0.62rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+
+.confirmProceedBtn {
+  background: linear-gradient(184deg, black, #272727);
+  color: #fff;
+}
+
+.confirmProceedBtn:hover:not(:disabled) {
+  background: #333;
+}
+
+.confirmProceedBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmDangerBtn {
+  border-radius: 10px;
+  padding: 0.72rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid #a20000;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  background: #8f0000;
+  color: #fff;
+}
+
+.confirmDangerBtn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.confirmDangerBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.breakupToggle {
+  width: 100%;
+  margin-top: 0.55rem;
+  border: 0px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.breakupToggle:hover {
+  background: #f9fafb;
+}
+
+.breakupArrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+  margin-left: 5px;
+}
+
+.breakupArrowOpen {
+  transform: rotate(180deg);
+}
+
+.breakupPanel {
+  margin-top: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 0.55rem 0.65rem;
+}
+
+.breakupNote {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.breakupRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: 0.84rem;
+  color: #374151;
+}
+
+.breakupRow strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.breakupRowTotal {
+  border-top: 1px dashed #d1d5db;
+  margin-top: 0.2rem;
+  padding-top: 0.5rem;
+}
+
+.confirmCloseBtn {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.confirmCloseBtn:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.confirmCloseBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.stateInner {
+  max-width: 750px;
+  width: 100%;
+  margin: 2rem 1rem;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+@media (min-width: 640px) {
+  .calendarList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 15px;
+  }
+}
+
+/* Mobile: white page background */
+@media (max-width: 767px) {
+  .container {
+    background: #fff;
+  }
+
+  .content {
+    margin: 0;
+    border-radius: 0;
+    padding: 1.5rem 1rem;
+    min-height: 100vh;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+  }
+
+  .pageTitle {
+    font-size: 1.25rem;
+  }
+
+  .statusBadge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .metaText,
+  .metaMuted {
+    font-size: 0.85rem;
+  }
+
+  .detailLabel,
+  .detailValue {
+    font-size: 0.85rem;
+  }
+
+  .detailRow {
+    padding: 0.75rem 0;
+  }
+
+  .productThumb {
+    width: 56px;
+    height: 56px;
+  }
+
+  .actionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .stateInner {
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+    border: none;
+    box-shadow: none;
+  }
+
+  .confirmProceedBtn {
+    width: 100%;
+  }
+}
+
+.autopayWarning {
+  margin-top: 0rem;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+  padding: 0px 6px;
+  border-radius: 8px;
+}

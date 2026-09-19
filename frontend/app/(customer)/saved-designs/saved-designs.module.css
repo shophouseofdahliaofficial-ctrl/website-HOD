@@ -1,0 +1,308 @@
+.savedDesignsPage {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f0f0f;
+  margin: 0 0 0.35rem;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.autoDeleteNote {
+  margin: 1.95rem auto 0;
+  max-width: 34rem;
+  text-align: center;
+  color: #555555;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.card {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.deleteIconBtn {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.92);
+  color: #374151;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.deleteIconBtn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  transform: scale(1.04);
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(0px);
+}
+
+.previewWrap {
+  aspect-ratio: 1;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 6px;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.previewPlaceholder {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.body {
+  padding: 1rem;
+}
+
+.productName {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0 0 0.25rem;
+}
+
+.projectName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.85rem;
+}
+
+.statusDraft {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.statusCart {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.statusPurchased {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+}
+
+.openBtn {
+  flex: 1;
+  border-radius: 16px;
+  padding: 0.95rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #e5e5e5a6;
+  color: #1a1a1a;
+}
+
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.emptyTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.35rem;
+}
+
+/* Custom Confirmation Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 400px;
+  padding: 1.75rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 1.25rem;
+}
+
+.modalTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.modalDescription {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 102px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.cancelBtn:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.confirmDeleteBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 120px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #dc2626;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.confirmDeleteBtn:hover {
+  background: #b91c1c;
+}
+
+.confirmDeleteBtn:active {
+  transform: scale(0.98);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(12px) scale(0.96);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}

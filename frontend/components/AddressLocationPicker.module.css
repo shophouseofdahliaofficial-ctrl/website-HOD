@@ -1,0 +1,295 @@
+.wrap {
+  margin: 0.5rem 0 1rem;
+}
+
+.label {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.helpText {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.searchWrap {
+  position: relative;
+  z-index: 8;
+  margin: 0 0 0.55rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.68rem;
+  top: 0.62rem;
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.searchIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.62rem 0.75rem 0.62rem 2.15rem;
+  font-size: 0.86rem;
+  color: #111827;
+  outline: none;
+  background: #fff;
+}
+
+.searchInputBusy {
+  padding-right: 5.25rem;
+}
+
+.searchInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.searchStatus {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.searchingInline {
+  position: absolute;
+  right: 0.72rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  color: #6b7280;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.searchResults {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  margin-top: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff85;
+  max-height: 190px;
+  overflow: auto;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .18);
+  z-index: 7;
+  backdrop-filter: blur(8px);
+}
+
+.searchResultItem {
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 0px solid #f3f4f6;
+  background: #fff;
+  color: #1f2937;
+  font-size: 0.82rem;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+}
+
+.searchResultItem:last-child {
+  border-bottom: none;
+}
+
+.searchResultItem:hover {
+  background: #f9fafb;
+}
+
+.mapWrap {
+  position: relative;
+  z-index: 1;
+}
+
+.mapToolbar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.mapToolbarSpacer {
+  min-width: 0;
+}
+
+.dragMapHint {
+  justify-self: center;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  padding: 0.53rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.452);
+  border: 1px solid #e2e8f0;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.mapToolbarRight {
+  justify-self: end;
+  pointer-events: auto;
+}
+
+.mapToolbar .mapToolbarLocate {
+  position: static;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.map {
+  width: 100%;
+  height: 260px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  touch-action: auto;
+}
+
+/* Tip of pin sits on geographic centre of map; map drags underneath */
+.centerPin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -100%);
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+  z-index: 3;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.22));
+}
+
+.centerPinSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mapBottomBadge {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 4;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0f172a;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.14);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.coords {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+.collapsedWrap {
+  margin: 0.5rem 0 1rem;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  text-align: left;
+}
+
+.expandButton:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.expandButtonIcon {
+  font-size: 1.15rem;
+  margin-right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease;
+}
+
+.expandButton:hover .expandButtonIcon {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.expandButtonText {
+  flex-grow: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.expandButtonChevron {
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease;
+}
+
+.expandButton:hover .expandButtonChevron {
+  transform: translateX(2px);
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.hideButton {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.hideButton:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}

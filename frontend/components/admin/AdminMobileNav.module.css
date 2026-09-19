@@ -1,0 +1,47 @@
+.nav {
+  position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    background: linear-gradient(0deg, #ffffff, white, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(0.7px);
+    border-top: 0px solid #e5e7eb;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    z-index: 1002;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-decoration: none;
+  color: #6b7280;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  line-height: 1;
+}
+
+.active {
+  color: #0070f3;
+}
+
+@media (min-width: 769px) {
+  .nav {
+    display: none;
+  }
+}
+

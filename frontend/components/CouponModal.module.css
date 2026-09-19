@@ -1,0 +1,301 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContainer {
+  background: #F2F1F6;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .modalContainer {
+    width: 450px;
+    height: auto;
+    max-height: 80vh;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modalHeader {
+  padding: 1rem 1.25rem;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+  border-radius: 0;
+}
+
+@media (min-width: 768px) {
+  .modalHeader {
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cartTotalText {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+  padding-left: 0.25rem;
+}
+
+/* Coupon Card Styling */
+.couponCard {
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 00s, box-shadow 0.2s;
+  border: 1px solid #ddd;
+}
+
+.couponCard:hover {
+  transform: translateY(0px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.couponLeft {
+  background: #00b3a5;
+  /* Primary Orange */
+  width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Diagonal Flash Effect only for Best Coupons */
+.bestCouponLeft::before {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(45deg,
+      transparent 45%,
+      rgba(255, 255, 255, 0.1) 48%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0.1) 52%,
+      transparent 55%);
+  transform: rotate(0deg);
+  pointer-events: none;
+  animation: flash 3s infinite linear;
+}
+
+@keyframes flash {
+  0% {
+    transform: translate(-100%, -100%) rotate(0deg);
+  }
+
+  20% {
+    transform: translate(100%, 100%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(100%, 100%) rotate(0deg);
+  }
+}
+
+/* Cheese Hole (Bite Style) Notches on the left edge */
+.couponLeft::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 10%;
+  bottom: 10%;
+  width: 12px;
+  background-image: radial-gradient(circle at 0px 50%, #F2F1F6 6px, transparent 6px);
+  background-size: 12px 21px;
+  background-repeat: repeat-y;
+  background-position: left;
+  z-index: 2;
+}
+
+.discountText {
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  transform: rotate(-90deg);
+  white-space: nowrap;
+  letter-spacing: 1px;
+  z-index: 3;
+}
+
+.couponRight {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.couponCode {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.applyText {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #FF6B35;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 7px;
+}
+
+.applyText:hover {
+
+  background-color: #ffdfba6b
+}
+
+.savingsText {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00B386;
+  /* Green text as requested */
+  margin-top: -13px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px dashed #eee;
+  margin: 0.25rem 0;
+}
+
+.couponDetails {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.moreText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+/* "More offers" specific styles */
+.lockedCard {
+  opacity: 0.8;
+  filter: grayscale(0.5);
+}
+
+.lockedCard .applyText {
+  color: #999;
+}
+
+.unlockText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #FF6B35;
+  margin: 0;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 0.9rem;
+}

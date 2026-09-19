@@ -1,0 +1,42 @@
+.adminLayout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.contentWrapper {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s;
+}
+
+.mobileHeader {
+  display: none;
+}
+
+.mainContent {
+  flex: 1;
+  margin-top: 60px;
+  background: #f2f1f6;
+  min-height: calc(100vh - 70px);
+}
+
+@media (max-width: 768px) {
+  .contentWrapper {
+    margin-left: 0;
+  }
+
+  .mobileHeader {
+    display: block;
+    background:linear-gradient(180deg, #d4e8ff, #f5f5f5);
+    border-bottom: 0px solid #e5e7eb;
+}
+
+
+  .mainContent {
+    margin-top: 0;
+    padding-bottom: 72px; /* space for bottom nav */
+    min-height: calc(100vh - 64px);
+  }
+}

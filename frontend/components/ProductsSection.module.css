@@ -1,0 +1,1233 @@
+.productsSection {
+  padding: 4rem 1rem;
+  background: #F2F1F6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sectionTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.4rem;
+}
+
+.leftSpacer {
+  width: 130px;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 3.5rem;
+  color: black;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  letter-spacing: -1px;
+}
+
+.sectionTitleRow .sectionTitle {
+  margin-bottom: 0 !important;
+}
+
+.filterWrapper {
+  position: relative;
+  width: 130px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.filterButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.6rem 1.1rem;
+  background: white;
+  color: #1a1a1a;
+  border: 1px solid #e2e8f0;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.filterButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.filterDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  min-width: 160px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filterOption {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filterOption:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.filterOptionActive {
+  background: #007cff;
+  color: white !important;
+}
+
+.filterOptionActive:hover {
+  background: #007cff;
+}
+
+@media (max-width: 600px) {
+  .sectionTitleRow {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .leftSpacer {
+    display: none;
+  }
+
+  .filterWrapper {
+    width: auto;
+    justify-content: center;
+  }
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: transparent;
+  background: linear-gradient(90deg,
+      #999 0%,
+      #bbb 20%,
+      #e8e8e8 50%,
+      #bbb 80%,
+      #999 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: loadingShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes loadingShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Shimmer Loading Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg,
+      #ffffff 0%,
+      #f3f4f6 50%,
+      #ffffff 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Override generic .shimmer radius where the real card uses different shapes */
+.imageShimmerFill.shimmer {
+  border-radius: 0;
+}
+
+.assuredBadgeShimmer.shimmer {
+  border-radius: 6px;
+}
+
+.ratingShimmer.shimmer {
+  border-radius: 999px;
+}
+
+.addButtonShimmer.shimmer {
+  border-radius: 50%;
+}
+
+/* Product card skeleton — mirrors .productCard layout (image + badge, category, title row, discount, pill row) */
+.productCardShimmer {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+.productImageShimmer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #f0f0f0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.assuredBadgeShimmer {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 74px;
+  height: 24px;
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.imageShimmerFill {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+
+.productInfoShimmer {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.categoryShimmer {
+  height: 11px;
+  width: 38%;
+  max-width: 100px;
+  border-radius: 4px;
+  margin-bottom: 0.35rem;
+}
+
+.titleRowShimmer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+  min-width: 0;
+}
+
+.nameShimmer {
+  height: 20px;
+  flex: 1;
+  min-width: 0;
+  border-radius: 6px;
+}
+
+.ratingShimmer {
+  width: 68px;
+  height: 20px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.discountOffShimmer {
+  height: 14px;
+  width: 92px;
+  border-radius: 4px;
+  margin-bottom: 0.3rem;
+}
+
+.addToCartRowShimmer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f5f5f5;
+  border-radius: 100px;
+  padding: 10px 11px 10px 23px;
+  margin-top: auto;
+  gap: 1rem;
+}
+
+.priceShimmerGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.priceAmountShimmer {
+  height: 22px;
+  width: 52px;
+  border-radius: 6px;
+}
+
+.priceUnitShimmer {
+  height: 12px;
+  width: 36px;
+  border-radius: 4px;
+}
+
+.addButtonShimmer {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .assuredBadgeShimmer {
+    top: 5px;
+    right: 5px;
+    width: 58px;
+    height: 19px;
+    border-radius: 5px;
+  }
+
+  .assuredBadgeShimmer.shimmer {
+    border-radius: 5px;
+  }
+
+  .productInfoShimmer {
+    padding: 0.75rem;
+  }
+
+  .categoryShimmer {
+    height: 9px;
+    width: 44%;
+    max-width: 88px;
+    margin-bottom: 0.25rem;
+  }
+
+  .titleRowShimmer {
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .nameShimmer {
+    height: 16px;
+  }
+
+  .ratingShimmer {
+    width: 56px;
+    height: 16px;
+  }
+
+  .discountOffShimmer {
+    height: 12px;
+    width: 76px;
+    margin-bottom: 0.25rem;
+  }
+
+  .addToCartRowShimmer {
+    padding: 8px 10px 8px 16px;
+    margin-top: 0.5rem;
+    gap: 0.75rem;
+  }
+
+  .priceAmountShimmer {
+    height: 18px;
+    width: 46px;
+  }
+
+  .priceUnitShimmer {
+    height: 10px;
+    width: 32px;
+  }
+
+  .addButtonShimmer {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .7rem;
+  margin-bottom: 0rem;
+}
+
+@keyframes blurInFromBottom {
+  0% {
+    opacity: 0;
+    filter: blur(14px);
+    transform: translateY(30px) scale(0.96);
+  }
+
+  60% {
+    filter: blur(3px);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+.productsGrid>.productCard {
+  animation: blurInFromBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, filter, transform;
+}
+
+.productsGrid>.productCard:nth-child(1) {
+  animation-delay: 0.02s;
+}
+
+.productsGrid>.productCard:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.productsGrid>.productCard:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.productsGrid>.productCard:nth-child(4) {
+  animation-delay: 0.11s;
+}
+
+.productsGrid>.productCard:nth-child(5) {
+  animation-delay: 0.14s;
+}
+
+.productsGrid>.productCard:nth-child(6) {
+  animation-delay: 0.17s;
+}
+
+.productsGrid>.productCard:nth-child(7) {
+  animation-delay: 0.20s;
+}
+
+.productsGrid>.productCard:nth-child(8) {
+  animation-delay: 0.23s;
+}
+
+.productsGrid>.productCard:nth-child(9) {
+  animation-delay: 0.26s;
+}
+
+.productsGrid>.productCard:nth-child(10) {
+  animation-delay: 0.29s;
+}
+
+.productsGrid>.productCard:nth-child(11) {
+  animation-delay: 0.32s;
+}
+
+.productsGrid>.productCard:nth-child(12) {
+  animation-delay: 0.35s;
+}
+
+.productsGrid>.productCard:nth-child(13) {
+  animation-delay: 0.38s;
+}
+
+.productsGrid>.productCard:nth-child(14) {
+  animation-delay: 0.41s;
+}
+
+.productsGrid>.productCard:nth-child(15) {
+  animation-delay: 0.44s;
+}
+
+.productsGrid>.productCard:nth-child(16) {
+  animation-delay: 0.47s;
+}
+
+.productsGrid>.productCard:nth-child(17) {
+  animation-delay: 0.50s;
+}
+
+.productsGrid>.productCard:nth-child(18) {
+  animation-delay: 0.53s;
+}
+
+.productsGrid>.productCard:nth-child(19) {
+  animation-delay: 0.56s;
+}
+
+.productsGrid>.productCard:nth-child(20) {
+  animation-delay: 0.59s;
+}
+
+.productCard {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 2px 13px rgb(0 0 0 / 0%);
+  transition: 0.03s;
+  cursor: pointer;
+  border: 0px solid #dddddd;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.productCardOutOfStock {
+  border-color: #fecaca;
+}
+
+.productCard:hover {
+  transform: translateY(0px);
+}
+
+.productImage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: transparent;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.discountBadge {
+  background: #c5ffd9;
+  color: #006616;
+  padding: 0.25rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.assuredBadge {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  background: rgb(219 255 244);
+  color: #059669;
+  padding: 0.3rem 0.55rem 0.3rem 0.3rem;
+  border-radius: 60px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  z-index: 2;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  letter-spacing: 0.3px;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.customizableBadge {
+  background: #ffe5ee !important;
+  color: #ff0155 !important;
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  justify-content: center;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s ease;
+  border-radius: 50% !important;
+}
+
+.customizableBadge span {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-left 0.3s ease;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.customizableBadge:hover {
+  width: 112px;
+  padding: 0px 0px 0px 12px !important;
+  border-radius: 60px !important;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.customizableBadge:hover span {
+  width: 78px;
+  opacity: 1;
+  margin-left: 2px;
+}
+
+.outOfStockBadge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  background: #dc2626;
+  color: #fff;
+  padding: 0.32rem 0.58rem;
+  border-radius: 60px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  z-index: 2;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  letter-spacing: 0.25px;
+
+}
+
+.verifiedIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #ff0457;
+}
+
+.placeholderImage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 1.5rem;
+}
+
+.placeholderLogo {
+  max-width: 35%;
+  max-height: 35%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(100%);
+  opacity: 0.9;
+}
+
+.productInfo {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.productCategory {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+  text-transform: capitalize;
+
+
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.productCategory::before {
+  content: "In ";
+}
+
+.productTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  gap: 0.75rem;
+  min-width: 0;
+  /* Allows flex child to shrink */
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-weight: 600;
+}
+
+.productName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: black;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  letter-spacing: -0.5px;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  /* Allows text truncation */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productPrice {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.discountOff {
+  font-size: 0.85rem;
+  color: #059669;
+
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.2px;
+  font-weight: 800;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.productRating {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+}
+
+.starsContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.reviewCount {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 500;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  white-space: nowrap;
+}
+
+.starIcon {
+  width: 18px;
+  height: 18px;
+  color: #ffc107;
+  flex-shrink: 0;
+}
+
+/* Separate class for empty star icons - completely independent styling */
+.starIconEmpty {
+  width: 18px;
+  height: 18px;
+  color: #cbd5e1;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: -4px;
+  margin-right: 0px;
+
+}
+
+.productDescription {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.addToCartRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-radius: 100px;
+  padding: 9px 0px 0 0;
+  margin-top: auto;
+  gap: 1rem;
+}
+
+.addToCartRowOutOfStock {
+  background: #e5e7eb;
+  opacity: 0.72;
+}
+
+.priceDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.priceAmount {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #000;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  flex-shrink: 0;
+}
+
+.priceUnit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productCard .priceUnit {
+  display: none;
+}
+
+.priceFromLabel {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #888;
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0px 0 0;
+  margin-top: auto;
+  gap: 0.5rem;
+}
+
+.startCreatingButton {
+  height: 36px;
+  padding: 0 0.85rem;
+  border-radius: 18px;
+  background: #ffe5ee;
+  color: #ff0155;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.06s ease;
+  flex-shrink: 0;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.startCreatingButton:hover {
+  background: #ffd5e3;
+  transform: scale(1.05);
+}
+
+.startCreatingButton:active {
+  transform: scale(0.95);
+}
+
+.startCreatingButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addToCartButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.02s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.addToCartButton:hover {
+  background: #161616;
+  transform: scale(1.05);
+  box-shadow: 0 0 12px 5px #a3a3a394;
+}
+
+.addToCartButton:active {
+  transform: scale(0.95);
+}
+
+.addToCartButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.addToCartButton:disabled:hover {
+  background: #000;
+  transform: none;
+}
+
+.viewDetailsButton {
+  flex: 1;
+  padding: 0.65rem 0.85rem;
+  background: transparent;
+  color: #0070f3;
+  border: 1.5px solid #0070f3;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.06s ease;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  cursor: pointer;
+}
+
+.viewDetailsButton:hover {
+  background: #d9eaff;
+  color: #0070f3;
+}
+
+.buyNowButton {
+  flex: 1;
+  padding: 0.65rem 0.85rem;
+  background: #0070f3;
+  color: white;
+  border: 1.5px solid #0070f3;
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.06s ease;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.buyNowButton:hover {
+  background: #005bb5;
+  border-color: #005bb5;
+}
+
+.buttonIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-bottom: -1px;
+}
+
+.viewAllLink {
+  text-align: center;
+  margin-top: 2.5rem;
+}
+
+.viewAllButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 12px 19px 12px 21px;
+  background: #ff0448;
+  color: white;
+  text-decoration: none;
+  border-radius: 80px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.06s ease;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  border: none;
+  cursor: pointer;
+}
+
+.viewAllButton:hover {
+  background: #bd0032;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.viewAllButton:active {
+  transform: translateY(0);
+}
+
+.viewAllButton svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.viewAllButton:hover svg {
+  transform: translateX(4px);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .productsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+  }
+}
+
+@media (max-width: 968px) {
+  .productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.7rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .productsSection {
+    padding: 2rem 0.5rem;
+  }
+
+  .productImage {
+    border-radius: 12px;
+  }
+
+  .sectionTitle {
+    font-size: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .viewAllButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    gap: 0.5rem;
+  }
+
+  .viewAllButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.35rem;
+  }
+
+  .productCard {
+    border-radius: 12px;
+  }
+
+  .productInfo {
+    padding: 0.85rem 0.85rem;
+    background: #ffffff;
+
+  }
+
+  .productCategory {
+    font-size: 0.65rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .productName {
+    font-size: 3vw;
+  }
+
+  .productTitleRow {
+    margin-bottom: 0.2rem;
+    gap: 0.5rem;
+  }
+
+  .productRating {
+    gap: 0.3rem;
+  }
+
+  .discountOff {
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .addToCartRow {
+    padding: 8px 10px 8px 16px;
+    margin-top: 0.5rem;
+    gap: 0.75rem;
+  }
+
+  .priceAmount {
+    font-size: 1rem;
+  }
+
+  .priceUnit {
+    font-size: 0.65rem;
+  }
+
+  .addToCartButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .addToCartButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .startCreatingButton {
+    height: 30px;
+    padding: 0 0.55rem;
+    font-size: 0.65rem;
+    gap: 4px;
+  }
+
+  .startCreatingButton svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .assuredBadge {
+    font-size: 0.55rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.3rem;
+    top: 5px;
+    right: 5px;
+  }
+
+  .outOfStockBadge {
+    top: 5px;
+    left: 5px;
+    font-size: 0.54rem;
+    padding: 0.25rem 0.45rem;
+    border-radius: 50px;
+  }
+
+  .verifiedIcon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .reviewCount {
+    font-size: 0.7rem;
+  }
+}
+
+/* Custom Redesigned Product Card Styles */
+.productPrice {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #000;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.favoriteButton {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 50%;
+  width: 31px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #555555;
+  padding: 0;
+  backdrop-filter: blur(10px);
+}
+
+.favoriteButton:hover {
+  transform: scale(1.1);
+  background: white;
+  color: #ef4444;
+  ;
+}
+
+.favoriteButtonActive {
+  background: white !important;
+  color: #ff0155 !important;
+
+}
+
+.favoriteButton svg {
+  width: 17px;
+  height: 17px;
+  transition: transform 0.2s ease;
+}
+
+.favoriteButton:active svg {
+  transform: scale(0.85);
+}
+
+.productCategoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.productRatingCompact {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.starIconSmall {
+  width: 14px;
+  height: 14px;
+  color: #ffc107;
+  flex-shrink: 0;
+}
+
+.productFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  gap: 1rem;
+}
+
+.discountPlaceholder {
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .productPrice {
+    font-size: 3vw;
+  }
+
+  .favoriteButton {
+    width: 32px;
+    height: 32px;
+    bottom: 8px;
+    right: 8px;
+  }
+
+  .favoriteButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .productCategoryRow {
+    margin-bottom: 0rem;
+  }
+
+  .productRatingCompact {
+    font-size: 0.75rem;
+  }
+
+  .productFooterRow {
+    padding-top: 0.5rem;
+  }
+}

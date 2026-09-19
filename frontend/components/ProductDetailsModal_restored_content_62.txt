@@ -1,0 +1,74 @@
+Created At: 2026-06-01T07:27:49Z
+Completed At: 2026-06-01T07:27:49Z
+File Path: `file:///c:/Users/GOPES/OneDrive/Desktop/scribble/milko-frontend-main%20%284%29/milko-frontend-main/components/ProductDetailsModal.tsx`
+Total Lines: 2815
+Total Bytes: 138054
+Showing lines 1335 to 1416
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1335:       );
+1336:     }
+1337: 
+1338:     return (
+1339:       <div className={styles.photobookEditorOverlay} role="dialog" aria-label="Photobook editor">
+1340:         <header className={styles.photobookTopbar}>
+1341:           <div className={styles.photobookBrand}>Odd Giraffe</div>
+1342:           <div className={styles.photobookTitle}>Medium Photobook</div>
+1343:           <div className={styles.photobookActions}>
+1344:             <span className={styles.photobookProjectDot}>My Project</span>
+1345:             <button type="button" className={styles.photobookIconButton} aria-label="Save project">⌘</button>
+1346:             <button type="button" className={styles.photobookIconButton} aria-label="Preview project">▷</button>
+1347:             <button type="button" className={styles.photobookCartButton}>
+1348:               Save / Add to cart
+1349:               <span aria-hidden="true">›</span>
+1350:             </button>
+1351:             <button
+1352:               type="button"
+1353:               className={styles.photobookCloseButton}
+1354:               onClick={() => setPhotobookEditorState('idle')}
+1355:               aria-label="Close editor"
+1356:             >
+1357:               ×
+1358:             </button>
+1359:           </div>
+1360:         </header>
+1361: 
+1362:         <div className={styles.photobookWorkspace}>
+1363:           <aside className={styles.photobookUploadPanel}>
+1364:             <div className={styles.photobookUploadTitle}>Upload
+<truncated 1048 bytes>
+age}>
+1383:                     <span className={styles.photobookSafeArea}>safe-area</span>
+1384:                     <div className={page === 6 ? styles.photobookTwoSlots : styles.photobookOneSlot}>
+1385:                       <div className={styles.photobookPhotoSlot} />
+1386:                       {page === 6 && <div className={styles.photobookPhotoSlot} />}
+1387:                     </div>
+1388:                     <div className={styles.photobookCaptionLine}>Add photo caption here or delete if you prefer</div>
+1389:                   </div>
+1390:                   <div className={styles.photobookPageLabel}>Page {page}</div>
+1391:                 </div>
+1392:               ))}
+1393:             </div>
+1394:             <button type="button" className={`${styles.photobookPageNav} ${styles.photobookPageNavRight}`} aria-label="Next page">›</button>
+1395:             <div className={styles.photobookFilmstrip}>
+1396:               {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((page) => (
+1397:                 <div key={page} className={`${styles.photobookThumb} ${page === 6 || page === 7 ? styles.photobookThumbActive : ''}`}>
+1398:                   <div className={styles.photobookThumbArt} />
+1399:                   <span>Page {page}</span>
+1400:                 </div>
+1401:               ))}
+1402:             </div>
+1403:           </main>
+1404: 
+1405:           <aside className={styles.photobookToolRail}>
+1406:             <button type="button" aria-label="Images">▧</button>
+1407:             <button type="button" aria-label="Text">A</button>
+1408:             <button type="button" aria-label="Layouts">▦</button>
+1409:             <button type="button" aria-label="Background">⌁</button>
+1410:           </aside>
+1411:         </div>
+1412:       </div>
+1413:     );
+1414:   };
+1415: 
+1416:   return (
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

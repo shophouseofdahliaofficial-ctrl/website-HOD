@@ -1,0 +1,32 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #1a1a1a;
+}
+
+.content {
+  line-height: 1.8;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.content p {
+  margin-bottom: 1rem;
+}
+
+.content ul, .content ol {
+  list-style-position: inside;
+  padding-left: 0;
+  margin-bottom: 1.5rem;
+}
+
+.content li {
+  margin-bottom: 0.5rem;
+}

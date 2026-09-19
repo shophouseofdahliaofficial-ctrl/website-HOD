@@ -1,0 +1,346 @@
+/* Connectors page stylesheet matching dashboard styles */
+
+.container {
+  min-height: 100vh;
+  background: #F2F1F6;
+  padding: 1rem;
+  padding-bottom: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 24px;
+  padding: 0.5rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  border-radius: 15px;
+}
+
+.sidebarItem:hover {
+  background: #f5f5f5;
+  color: #000;
+}
+
+.sidebarItemActive {
+  background: #ffe2e996;
+  color: #fe1160;
+}
+
+.sidebarItemActive:hover {
+  background: #ffcad8;
+  color: #fe1160;
+}
+
+.sidebarIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.sidebarItemActive .sidebarIcon {
+  color: #fe1160;
+}
+
+.sidebarLabel {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.sidebarLogout {
+  color: #dc3545;
+}
+
+.sidebarLogout:hover {
+  background: #fee;
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.backLink {
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+
+}
+
+.backIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 1.25rem 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -1px;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1rem;
+  color: #666;
+}
+
+.infoCard {
+  background: #ffffff00;
+  border-radius: 24px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.infoCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.infoCardTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.connectorsList {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.connectorCard {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  padding: 2rem;
+  border: 1px solid #f2f1f6;
+  border-radius: 24px;
+  background: white;
+  gap: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.connectorCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.connectorInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.connectorLogoWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.connectorDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.connectorTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.connectorName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.connectorCategory {
+  font-size: 0.62rem;
+  color: #6e6e6e;
+  font-weight: 500;
+  background: #f1f1f1;
+  padding: 0.1rem 0.45rem;
+  border-radius: 23px;
+  text-transform: capitalize;
+}
+
+.connectorDesc {
+  font-size: 0.82rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.connectorStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.badge {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 60px;
+  text-transform: capitalize;
+}
+
+.badgeConnected {
+  background: #e2fff2;
+  color: #047857;
+  border: 1.5px solid #e2fff2;
+}
+
+.badgeDisconnected {
+  background: #ffd9d9;
+  color: #bb0000;
+  border: 1.5px solid #ffd9d9;
+}
+
+.btn {
+  padding: 0.55rem 1.1rem;
+  border-radius: 80px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.btnConnect {
+  background: #1a1814;
+  color: #fff;
+}
+
+.btnConnect:hover {
+  background: #333;
+}
+
+.btnConnect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnDisconnect {
+  background: #b10011;
+  color: #fff3f4;
+  border: 1.5px solid #b10011;
+}
+
+.btnDisconnect:hover {
+  background: #fca5a5;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding: 1rem 0.85rem;
+  }
+
+  .backLink {
+    display: inline-flex;
+  }
+
+  .layout {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    display: none !important;
+  }
+
+  .connectorCard {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+  }
+
+  .connectorInfo {
+    align-items: flex-start;
+  }
+
+  .connectorStatus {
+    margin-top: 0.5rem;
+    justify-content: space-between;
+    width: 100%;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem 1.5rem;
+  }
+
+  .sidebar {
+    width: 240px;
+  }
+}

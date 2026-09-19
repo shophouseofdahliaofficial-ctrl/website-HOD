@@ -1,0 +1,1053 @@
+.pageHeader {
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.8px;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pageSubtitle {
+  font-size: 1.05rem;
+  color: #666;
+  margin: 0;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+/* Tabs */
+.tabsHeader {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 0px solid #eaeaea;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabsHeader::-webkit-scrollbar {
+  display: none;
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #777;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: #111;
+  background: #f5f5f5;
+}
+
+.tabBtnActive {
+  color: black;
+  background: white;
+}
+
+/* Content Container & Grid */
+.tabContent {
+  animation: fadeIn 0.35s ease;
+}
+
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 1024px) {
+  .twoColumnGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cardContainer {
+  background: #fff;
+  border-radius: 24px;
+  padding: 2rem;
+  border: 1px solid #f0f0f0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.3px;
+}
+
+.sectionDesc {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
+}
+
+/* Form Styles */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.input {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  border: 1.5px solid #eaeaea;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #ff0040;
+  box-shadow: 0 0 0 4px rgba(255, 0, 64, 0.1);
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  border: 1.5px solid #eaeaea;
+  font-size: 0.95rem;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #ff0040;
+  box-shadow: 0 0 0 4px rgba(255, 0, 64, 0.1);
+}
+
+/* Theme Selector Card Buttons */
+.themeSelector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .themeSelector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.themeCardBtn {
+  background: #ffffff;
+  border: 1px solid #eaeaea;
+  border-radius: 16px;
+  padding: 0.6rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.themeCardBtn:hover {
+  border-color: #ff0040;
+
+}
+
+.themeCardBtnActive {
+  border-color: #ff8d9c;
+  background: #fff0f2;
+}
+
+.themeThumbnail {
+  width: 100%;
+  aspect-ratio: 1.6 / 1;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.themeLabelName {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.2;
+}
+
+.themeCardBtnActive .themeLabelName {
+  color: #ff0040;
+}
+
+/* Micro illustrations inside thumbnails */
+.microCircle {
+  position: absolute;
+  top: 9px;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  background: #ff0040;
+  border-radius: 50%;
+}
+
+.microLine {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  width: 30px;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+}
+
+/* Gold Emblem illustration */
+.microEmblem {
+  width: 6px;
+  height: 6px;
+  background: #111111;
+  border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+
+.microEmblemLine {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  width: 14px;
+  height: 2px;
+  background: #111111;
+  border-radius: 1px;
+  opacity: 0.6;
+}
+
+/* Pink Wavy illustration */
+.microWavy {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: rgba(255, 255, 255, 0.15);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.microWavyDot {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 6px;
+  height: 6px;
+  background: #ffffff;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+
+/* Buttons */
+.primaryButton {
+  background: #ff0040;
+  color: white;
+  border: none;
+  padding: 0.9rem 1rem;
+  border-radius: 104px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0s ease;
+  text-align: center;
+
+}
+
+.primaryButton:hover {
+  background: #e60039;
+
+}
+
+.primaryButton:active {
+  transform: translateY(0);
+}
+
+/* Success Box */
+.successBox {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #e6f9f0;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.successBox h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.successBox p {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+/* Preview Column Styling */
+.previewContainer {
+  position: sticky;
+  top: 100px;
+}
+
+.previewTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 1rem 0;
+}
+
+/* Digital Card Live Preview */
+.digitalCardPreview {
+  width: 100%;
+  aspect-ratio: 1.6 / 1;
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.35s ease;
+}
+
+.digitalCardPreview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.previewCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.previewBrand {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
+
+.previewValue {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.previewCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.previewCardTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.previewRecipient {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.95;
+}
+
+.previewRecipient span {
+  font-weight: 700;
+}
+
+.previewMessage {
+  font-size: 0.8rem;
+  margin: 0;
+  opacity: 0.8;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.previewCardFooter {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.pvcChip {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(0deg, #ff00a1, #ff0018);
+  border-radius: 50%;
+}
+
+.pvcContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+}
+
+.pvcLogoText {
+  font-size: 1.15rem;
+  font-weight: 100;
+  letter-spacing: -0.3px;
+}
+
+.pvcEngraved {
+  font-size: 0.85rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: italic;
+  color: inherit;
+  opacity: 0.9;
+  margin: 0.25rem 0 0 0;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shine {
+  from {
+    transform: translate(-30%, -30%) rotate(-45deg);
+  }
+
+  to {
+    transform: translate(30%, 30%) rotate(-45deg);
+  }
+}
+
+.amountGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .amountGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.amountBtn {
+  background: #f5f5f7;
+  border: 1.5px solid #eaeaea;
+  padding: 1rem 0.5rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.amountBtn:hover {
+  border-color: #ff0040;
+  background: #fff5f7;
+}
+
+.amountBtnActive {
+  background: #fff5f7;
+  border-color: #ff0040;
+  color: #ff0040;
+  box-shadow: 0 4px 12px rgba(255, 0, 64, 0.08);
+}
+
+.accordionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordionNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #eaeaea;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.accordionNumberActive {
+  background: #ff0040;
+  color: white;
+}
+
+.accordionTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111;
+  display: flex;
+  align-items: center;
+}
+
+.accordionContent {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.25s ease-out, margin 0.2s ease-out;
+  margin-top: 0;
+}
+
+.accordionContentActive {
+  max-height: 2000px;
+  opacity: 1;
+  margin-top: 1.5rem;
+  overflow: visible;
+}
+
+.chevronIcon {
+  transition: transform 0.25s ease;
+  color: #888;
+}
+
+.chevronIconRotated {
+  transform: rotate(180deg);
+  color: #ff0040;
+}
+
+/* Smooth drag toolbar expand/collapse wrapper */
+.dragToolbarWrapper {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-top: 0;
+  margin-bottom: 0;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dragToolbarWrapperActive {
+  max-height: 120px;
+  opacity: 1;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 6px;
+}
+
+/* 3D Flip Card Container */
+.pvcCardWrapper {
+  perspective: 1000px;
+  width: 100%;
+  aspect-ratio: 1.6 / 1;
+  margin-bottom: 1.5rem;
+}
+
+.pvcCardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.pvcCardInnerFlipped {
+  transform: rotateY(180deg);
+}
+
+.pvcCardFace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  padding: 1.75rem;
+  color: white;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+
+
+/* Front Face specific */
+.pvcCardFront {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+
+/* Back Face specific */
+.pvcCardBack {
+  transform: rotateY(180deg);
+}
+
+/* Signature Panel / Code info */
+.pvcCardBackContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.pvcSignaturePanel {
+  background: #fff;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  align-self: flex-start;
+  padding: 0 0.85rem;
+  color: #111;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+.pvcBackText {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  opacity: 0.75;
+  margin: 0;
+}
+
+/* Preview controls */
+.previewControls {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.controlBtn {
+  background: white;
+  border: 1px solid #eaeaea;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s ease;
+  box-shadow: 0px 1px 0px 0px #bebebec4;
+}
+
+.controlBtn:hover {
+  background: #fff;
+  border-color: #ff0040;
+  color: #ff0040;
+
+}
+
+.controlBtnActive {
+  background: #fff5f7;
+  border-color: #ff0040;
+  color: #ff0040;
+
+}
+
+.infoBox {
+  background: #ffffff;
+  border: 1.5px solid #d3d3d3;
+  border-radius: 23px;
+  padding: 1rem;
+  margin-top: 1rem;
+  position: relative;
+  animation: page_fadeIn__FIH3P 0.25s ease-out;
+}
+
+.infoText {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #404040;
+  margin: 0;
+  padding-right: 1.5rem;
+}
+
+.closeInfoBtn {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #666666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.pvcCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  z-index: 10;
+  margin-top: -0.35rem;
+}
+
+.pvcLogoContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pvcBrandText {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: inherit;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-transform: uppercase;
+}
+
+.pvcLogoImage {
+  height: 24px;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+.pvcCardAmount {
+  font-family: 'Inter', var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: inherit;
+  line-height: 1;
+  margin-top: 0rem;
+}
+
+.pvcCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+/* Oyster card solid design stripes */
+.oysterStripes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+
+.stripeBlack {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: #000000;
+}
+
+.stripeBlue {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: #0045ad;
+}
+
+.stripeCyan {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: #00bfff;
+}
+
+.stripeYellow {
+  position: absolute;
+  bottom: 45px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: #ffd300;
+}
+
+.stripeGreen {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: #008000;
+}
+
+/* History Tab Styles */
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #eaeaea;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.historyItem:hover {
+  border-color: #d1d1d6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.historyItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.historyBadge {
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 00px;
+}
+
+.historyBadgeCreated {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.historyBadgeRedeemed {
+  background: #fff0f2;
+  color: #ff0040;
+}
+
+.historyCodeBox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #e5e5e585;
+  padding: 0.35rem 0.75rem;
+  border-radius: 100px;
+  border: 0px solid #e5e5e585;
+}
+
+.historyCode {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #111;
+  letter-spacing: 0.5px;
+}
+
+.historyCopyBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.historyCopyBtn:hover {
+  color: #ff0040;
+}
+
+.historyItemRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.historyAmount {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.historyDate {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+@media (max-width: 600px) {
+  .historyItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .historyItemRight {
+    align-items: flex-start;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px dashed #eee;
+    padding-top: 0.5rem;
+  }
+}
+
+.stripeRed {
+  position: absolute;
+  bottom: 75px;
+  left: 105px;
+  right: -10px;
+  height: 180px;
+  border-bottom: 17px solid #e60000;
+  border-left: 17px solid #e60000;
+  border-bottom-left-radius: 49px;
+}
+
+.stripePink {
+  position: absolute;
+  bottom: 92px;
+  left: 88px;
+  right: -10px;
+  height: 180px;
+  border-bottom: 17px solid #ff8da1;
+  border-left: 17px solid #ff8da1;
+  border-bottom-left-radius: 32px;
+}
+
+/* Micro Oyster selector thumbnail designs */
+.microOysterStripes {
+  position: absolute;
+  inset: 0;
+  background: #dcdcdc;
+}
+
+.microStripePink {
+  position: absolute;
+  bottom: 15px;
+  left: 34px;
+  right: -5px;
+  height: 35px;
+  border-bottom: 5px solid #ff8da1;
+  border-left: 5px solid #ff8da1;
+  border-bottom-left-radius: 8px;
+}
+
+.microStripeRed {
+  position: absolute;
+  bottom: 10px;
+  left: 39px;
+  right: -5px;
+  height: 35px;
+  border-bottom: 5px solid #e60000;
+  border-left: 5px solid #e60000;
+  border-bottom-left-radius: 13px;
+}
+
+.microStripeCyan {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #00bfff;
+}
