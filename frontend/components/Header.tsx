@@ -21,9 +21,7 @@ import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/uti
 import { useCategoryMap } from '@/hooks/useCategoryMap';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import gsap from 'gsap';
 import { SITE_NAME } from '@/lib/seo';
-import { useEnterpriseTransition } from '@/components/EnterpriseTransition';
 
 /**
  * User Dropdown Component
@@ -605,7 +603,6 @@ export default function Header() {
   const { isAuthenticated, user, logout, isAdmin, loading } = useAuth();
   const { itemCount, items, addItem } = useCart();
   const { showToast } = useToast();
-  const { triggerEnterpriseTransition } = useEnterpriseTransition();
   const router = useRouter();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
@@ -1774,14 +1771,12 @@ export default function Header() {
                         <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </span>
-                    <span className={`${styles.navLink} ${styles.navLinkHighlight}`}>Try PhotoBooth</span>
                     <span className={styles.othersButton}>
                       Others
                       <svg className={styles.dropdownArrow} viewBox="0 0 24 24" fill="none">
                         <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </span>
-                    <span className={styles.navLink}>Enterprise</span>
                   </div>
 
                   <nav
@@ -1820,13 +1815,6 @@ export default function Header() {
                           </svg>
                         </button>
                       </div>
-                      <Link
-                        href="/photobooth"
-                        className={`${styles.navLink} ${styles.navLinkHighlight} ${isHeaderNavActive(pathname, '/photobooth') ? styles.navLinkActive : ''}`}
-                        onClick={() => setExpandedDropdown(null)}
-                      >
-                        Try PhotoBooth
-                      </Link>
                       <div className={styles.othersDropdown}>
                         <button
                           type="button"
@@ -1844,17 +1832,6 @@ export default function Header() {
                           </svg>
                         </button>
                       </div>
-                      <Link
-                        href="/enterprise"
-                        className={`${styles.navLink} ${isHeaderNavActive(pathname, '/enterprise') ? styles.navLinkActive : ''}`}
-                        onClick={(e) => {
-                          setExpandedDropdown(null);
-                          e.preventDefault();
-                          triggerEnterpriseTransition(e);
-                        }}
-                      >
-                        Enterprise
-                      </Link>
                     </div>
 
                     {/* In-Pill Infinite Marquee Sub-Menu Section */}
@@ -2255,17 +2232,6 @@ export default function Header() {
                             </div>
                           )}
                         </div>
-                        <Link
-                          href="/enterprise"
-                          className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/enterprise') ? styles.mobileNavLinkActive : ''}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            closeMobileMenu();
-                            triggerEnterpriseTransition(e);
-                          }}
-                        >
-                          Enterprise
-                        </Link>
                       </nav>
 
                       {/* Bottom Linear Gradient Scroll Fade (Transparent to White) */}

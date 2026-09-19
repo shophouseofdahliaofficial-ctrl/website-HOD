@@ -1,9 +1,5 @@
 import type { Product } from '@/types';
 import type { CartItem } from '@/lib/utils/cart';
-import {
-  PRINT_DELIVERY_FEE,
-  PRINT_PRICE_PER_POLAROID,
-} from '@/lib/photobooth/purchaseConstants';
 
 export type CartItemPriceDetails = {
   unitPrice: number;
@@ -11,75 +7,21 @@ export type CartItemPriceDetails = {
   unitOff: number;
 };
 
-export function getPhotoboothCartProject(it: CartItem) {
-  return it.customizations?.photoboothProject ?? null;
-}
-
-export function isOrphanPhotoboothProductItem(it: CartItem, p?: Product | null): boolean {
-  if (getPhotoboothCartProject(it)) return false;
-  return p?.name === 'Photobooth Print';
-}
-
-/** Include in price summary rows — skip bare catalog photobooth lines without a project. */
 export function shouldShowCartPriceLine(it: CartItem, p?: Product | null): boolean {
-  return !isOrphanPhotoboothProductItem(it, p);
-}
-
-export function getPhotoboothPrintsSubtotal(it: CartItem): number {
-  const photobooth = getPhotoboothCartProject(it);
-  if (!photobooth) return 0;
-  return photobooth.polaroidCount * PRINT_PRICE_PER_POLAROID * it.quantity;
-}
-
-export function getPhotoboothDeliveryForItem(it: CartItem): number {
-  const photobooth = getPhotoboothCartProject(it);
-  if (!photobooth) return 0;
-  return PRINT_DELIVERY_FEE * it.quantity;
-}
-
-export function sumPhotoboothDeliveryFees(items: CartItem[]): number {
-  return items.reduce((sum, it) => sum + getPhotoboothDeliveryForItem(it), 0);
-}
-
-export function getPhotoboothPrintsLabel(it: CartItem): string | null {
-  const photobooth = getPhotoboothCartProject(it);
-  if (!photobooth) return null;
-
-  const unit = photobooth.projectType === 'strip' ? 'strip' : 'polaroid';
-  const count = photobooth.polaroidCount;
-  const unitLabel = count === 1 ? unit : `${unit}s`;
-  return `${count} × ₹${PRINT_PRICE_PER_POLAROID} ${unitLabel}`;
-}
-
-/** @deprecated Use getPhotoboothPrintsLabel — delivery is shown on the Delivery row. */
-export function getPhotoboothPriceBreakdownLabel(it: CartItem): string | null {
-  return getPhotoboothPrintsLabel(it);
+  return true;
 }
 
 export function getCartItemCheckoutLineLabel(it: CartItem, p?: Product | null): string {
-  const photobooth = getPhotoboothCartProject(it);
-  if (photobooth) {
-    return getPhotoboothPrintsLabel(it) ?? 'Photobooth print';
-  }
-
   const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
   return `${it.quantity} × ${p?.name || 'Product'}${v ? ` (${v.size})` : ''}`;
 }
 
-/** Amount shown on the item line in price summary (prints only for photobooth). */
 export function getCartItemPriceLineAmount(it: CartItem, p?: Product | null): number {
-  if (getPhotoboothCartProject(it)) {
-    return getPhotoboothPrintsSubtotal(it);
-  }
   const { unitPrice } = getCartItemPriceDetails(it, p);
   return unitPrice * it.quantity;
 }
 
-/** Full line contribution to order subtotal (prints + photobooth delivery). */
 export function getCartItemOrderSubtotalContribution(it: CartItem, p?: Product | null): number {
-  if (getPhotoboothCartProject(it)) {
-    return getPhotoboothPrintsSubtotal(it) + getPhotoboothDeliveryForItem(it);
-  }
   const { unitPrice } = getCartItemPriceDetails(it, p);
   const base = unitPrice * it.quantity;
   const giftWrapFee = it.customizations?.giftWrap ? it.customizations.giftWrap.price : 0;
@@ -87,15 +29,6 @@ export function getCartItemOrderSubtotalContribution(it: CartItem, p?: Product |
 }
 
 export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartItemPriceDetails {
-  const photobooth = getPhotoboothCartProject(it);
-  if (photobooth) {
-    return {
-      unitPrice: photobooth.polaroidCount * PRINT_PRICE_PER_POLAROID,
-      originalUnitPrice: null,
-      unitOff: 0,
-    };
-  }
-
   if (!p) {
     return { unitPrice: 0, originalUnitPrice: null, unitOff: 0 };
   }

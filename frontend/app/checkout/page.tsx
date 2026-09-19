@@ -15,16 +15,8 @@ import {
   getCartItemOrderSubtotalContribution,
   getCartItemPriceDetails,
   getCartItemPriceLineAmount,
-  getPhotoboothCartProject,
-  getPhotoboothPrintsLabel,
   shouldShowCartPriceLine,
-  sumPhotoboothDeliveryFees,
 } from '@/lib/utils/cartPricing';
-import {
-  collectPhotobookProjectIdsFromCart,
-  finalizePhotobookProjectsAfterPayment,
-} from '@/lib/photobook/postPurchase';
-import { getPhotobookCartProject } from '@/lib/photobook/cartHelpers';
 import Link from 'next/link';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { readCheckoutCouponCode, saveCheckoutCouponCode } from '@/lib/utils/checkoutCoupon';
@@ -704,7 +696,6 @@ export default function CheckoutPage() {
     if (!shouldShowCartPriceLine(it, p)) return sum;
     return sum + getCartItemOrderSubtotalContribution(it, p);
   }, 0);
-  const photoboothDeliveryTotal = sumPhotoboothDeliveryFees(items);
   const subscriptionSubtotal = subscriptionCartItem?.totalAmount || 0;
   const subtotal = itemsSubtotal + subscriptionSubtotal;
   const totalGiftWrapFee = items.reduce((sum, it) => {
@@ -745,7 +736,7 @@ export default function CheckoutPage() {
   const activeDeliveryCharges = backendDeliveryCharges !== null ? backendDeliveryCharges : fallbackDeliveryCharges;
   const activePlatformFee = backendPlatformFee !== null ? backendPlatformFee : platformFee;
 
-  const displayedDeliveryCharges = photoboothDeliveryTotal + activeDeliveryCharges;
+  const displayedDeliveryCharges = activeDeliveryCharges;
   const total = subtotal - discount + activeDeliveryCharges + activePlatformFee;
 
   const walletExtraToPay =

@@ -19,8 +19,6 @@ export { adminOrdersApi } from './adminOrders';
 export { walletApi } from './wallet';
 export { apiClient } from './client';
 export { trackCartEvent } from './analytics';
-export { photoboothApi } from './photobooth';
-export { photobookApi } from './photobook';
 export { connectorsApi } from './connectors';
 export type { ConnectorScope, ConnectorStatus, ConnectorStatusResponse } from './connectors';
 export { creatorsApi, adminCreatorsApi } from './creators';

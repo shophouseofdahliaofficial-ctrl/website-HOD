@@ -18,23 +18,17 @@ const addressRoutes = require('./routes/addresses');
 const orderRoutes = require('./routes/orders');
 const orderController = require('./controllers/orderController');
 const walletRoutes = require('./routes/wallet');
-const analyticsRoutes = require('./routes/analytics');
-const photoboothRoutes = require('./routes/photobooth');
-const photobookRoutes = require('./routes/photobook');
 const connectorRoutes = require('./routes/connectors');
-const enterpriseRoutes = require('./routes/enterprise');
 const feedbackRoutes = require('./routes/feedback');
 const creatorRoutes = require('./routes/creators');
+const analyticsRoutes = require('./routes/analytics');
 const deliveryTrackingController = require('./controllers/deliveryTrackingController');
-
 
 // Import middleware
 const { authenticate } = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 const { startSubscriptionExpiryJob } = require('./jobs/subscriptionExpiryJob');
-const { startPhotoboothCleanupJob } = require('./jobs/photoboothCleanupJob');
-const { startPhotobookCleanupJob } = require('./jobs/photobookCleanupJob');
 const productModel = require('./models/product');
 
 const app = express();
@@ -206,10 +200,7 @@ app.use('/api/verify', verifyRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/photobooth', photoboothRoutes);
-app.use('/api/photobook', photobookRoutes);
 app.use('/api/connectors', connectorRoutes);
-app.use('/api/enterprise', enterpriseRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/creators', creatorRoutes);
 
@@ -238,12 +229,10 @@ app.listen(PORT, () => {
   console.log(`📡 API available at http://localhost:${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(
-    '[scribble-studios-backend] Routes: coupons (public) GET/POST /api/coupons, /api/coupons/validate; ' +
+    '[house-of-dahlia-backend] Routes: coupons (public) GET/POST /api/coupons, /api/coupons/validate; ' +
       'delivery (auth) GET /api/deliveries, POST /api/mark-delivered'
   );
   startSubscriptionExpiryJob();
-  startPhotoboothCleanupJob();
-  startPhotobookCleanupJob();
   productModel.ensureAllProductColumns().catch((error) => {
     console.warn('[milko-backend] Product schema ensure failed on startup:', error.message);
   });

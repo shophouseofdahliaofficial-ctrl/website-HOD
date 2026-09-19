@@ -15,45 +15,6 @@ const {
   assertSubscriptionPostalCodeServiceable,
 } = require('../services/productDeliverabilityService');
 const shiprocketService = require('../services/shiprocketService');
-const photoboothProjectModel = require('../models/photoboothProject');
-const photobookProjectModel = require('../models/photobookProject');
-
-async function lockPhotobookProjectsForItems(items, userId) {
-  for (const it of items || []) {
-    if (it.photobookProjectId) {
-      await photobookProjectModel.markProjectPurchased(it.photobookProjectId, userId);
-    }
-  }
-}
-
-function resolvePhotobookImageCheckUrl(project) {
-  if (!project) return null;
-  if (project.preview_url) return project.preview_url;
-
-  let assetPaths = project.asset_paths;
-  if (typeof assetPaths === 'string') {
-    try {
-      assetPaths = JSON.parse(assetPaths);
-    } catch {
-      assetPaths = [];
-    }
-  }
-  if (Array.isArray(assetPaths)) {
-    const asset = assetPaths.find((entry) => entry?.url && (entry.type === 'image' || entry.type === 'preview'));
-    if (asset?.url) return asset.url;
-  }
-
-  let projectJson = project.project_json;
-  if (typeof projectJson === 'string') {
-    try {
-      projectJson = JSON.parse(projectJson);
-    } catch {
-      projectJson = null;
-    }
-  }
-  const uploaded = projectJson?.uploadedImages?.find((img) => img?.bunnyUrl);
-  return uploaded?.bunnyUrl || null;
-}
 
 async function incrementCouponUsageByCode(couponCode) {
   const code = (couponCode || '').toString().trim().toUpperCase();
@@ -141,88 +102,6 @@ const createOrder = async (req, res, next) => {
       );
       if (productRes.rows.length === 0) throw new ValidationError('Product not found');
       const p = productRes.rows[0];
-
-      const photoboothProjectId = raw?.customizations?.photoboothProject?.projectId;
-      if (photoboothProjectId) {
-        const project = await photoboothProjectModel.getProjectById(photoboothProjectId, userId);
-        if (!project) throw new ValidationError('Photobooth project not found');
-        const lineTotal = parseFloat(project.price);
-        subtotal += lineTotal;
-        computedItems.push({
-          productId,
-          variationId,
-          productName: `${p.name} (${project.quantity} ${project.project_type === 'strip' ? 'strips' : 'polaroids'})`,
-          variationSize: null,
-          unitPrice: lineTotal,
-          quantity: 1,
-          lineTotal,
-          isSubscription: false,
-          isItemNationwide: true,
-          isPhotobooth: true,
-          photoboothProjectId,
-          weight: 0.1,
-          customizations: raw?.customizations || null,
-          giftWrap: raw?.customizations?.giftWrap || raw?.giftWrap || null,
-        });
-        continue;
-      }
-
-      const photobookProjectId = raw?.customizations?.photobookProject?.projectId;
-      if (photobookProjectId) {
-        const project = await photobookProjectModel.getProjectById(photobookProjectId, userId);
-        if (!project) throw new ValidationError('Photobook project not found');
-        if (project.is_locked) throw new ValidationError('This photobook design has already been purchased');
-
-        let variation = null;
-        const pbVariationId = variationId || project.variation_id;
-        if (pbVariationId) {
-          const varRes = await query(
-            `
-            SELECT id, size, price_multiplier, price, compare_at_price, weight
-            FROM product_variations
-            WHERE id = $1 AND product_id = $2
-            `,
-            [pbVariationId, productId],
-          );
-          if (varRes.rows.length === 0) throw new ValidationError('Invalid product variation');
-          variation = varRes.rows[0];
-        }
-
-        const basePrice = p.selling_price !== null && p.selling_price !== undefined
-          ? parseFloat(p.selling_price)
-          : parseFloat(p.price_per_litre);
-
-        const mult = variation?.price_multiplier !== null && variation?.price_multiplier !== undefined
-          ? parseFloat(variation.price_multiplier)
-          : 1;
-
-        const unitPrice = variation?.price !== null && variation?.price !== undefined
-          ? parseFloat(variation.price)
-          : basePrice * mult;
-
-        const qty = project.quantity || quantity || 1;
-        const lineTotal = unitPrice * qty;
-        subtotal += lineTotal;
-
-        computedItems.push({
-          productId,
-          variationId: pbVariationId,
-          productName: `${p.name} (${project.project_name || 'Custom design'})`,
-          variationSize: variation?.size || null,
-          unitPrice,
-          quantity: qty,
-          lineTotal,
-          isSubscription: false,
-          isItemNationwide: Boolean(p.is_nationwide_delivery),
-          isPhotobook: true,
-          photobookProjectId,
-          photobookImageCheckUrl: resolvePhotobookImageCheckUrl(project),
-          weight: variation?.weight != null ? parseFloat(variation.weight) : (p.weight != null ? parseFloat(p.weight) : 0.5),
-          customizations: raw?.customizations || null,
-          giftWrap: raw?.customizations?.giftWrap || raw?.giftWrap || null,
-        });
-        continue;
-      }
 
       let isItemNationwide = false;
       if (p.is_nationwide_delivery) {
@@ -636,16 +515,12 @@ const createOrder = async (req, res, next) => {
           `,
           [
             id, it.productId, it.variationId, it.productName, it.variationSize,
-            it.unitPrice, it.quantity, it.lineTotal, it.photoboothProjectId || null, it.photobookProjectId || null,
-            it.photobookImageCheckUrl || null,
+            it.unitPrice, it.quantity, it.lineTotal, null, null,
+            null,
           ]
         );
 
-        if (it.photoboothProjectId) {
-          await photoboothProjectModel.markProjectOrdered(it.photoboothProjectId, userId);
-        }
-
-        if (!it.isSubscription && !it.isPhotobooth && !it.isPhotobook) {
+        if (!it.isSubscription) {
           await client.query(
             `
             UPDATE products
@@ -678,7 +553,6 @@ const createOrder = async (req, res, next) => {
       if (hasSubscriptionItem) {
         await subscriptionService.createFromCheckoutOrder(id);
       }
-      await lockPhotobookProjectsForItems(computedItems, userId);
       await incrementCouponUsageByCode(normalizedCouponCode);
       await notifyAdminsForOrder(
         {
@@ -821,13 +695,6 @@ const verifyPayment = async (req, res, next) => {
     await subscriptionService.createFromCheckoutOrder(orderId);
     if (!wasAlreadyPaid) {
       await incrementCouponUsageByCode(couponCodeUsed);
-      const pbItemsRes = await query(
-        `SELECT photobook_project_id FROM order_items WHERE order_id = $1 AND photobook_project_id IS NOT NULL`,
-        [orderId],
-      );
-      for (const row of pbItemsRes.rows) {
-        await photobookProjectModel.markProjectPurchased(row.photobook_project_id, userId);
-      }
     }
     const orderSummaryRes = await query(
       'SELECT id, order_number, total, delivery_address FROM orders WHERE id = $1',

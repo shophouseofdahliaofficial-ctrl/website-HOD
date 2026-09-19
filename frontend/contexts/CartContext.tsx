@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback, useMemo } from 'react';
-import { finalizePendingPhotoboothCartItemsSafe } from '@/lib/photobooth/guestPurchase';
 import { getCartStorage, CartItem, CartMutationResult, mergeGuestCartIntoUserCart } from '@/lib/utils/cart';
 import { trackCartEvent } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,19 +50,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     if (prevUserId === undefined) {
       if (userId) mergeGuestCartIntoUserCart(userId);
       refreshCart();
-      if (userId) {
-        void finalizePendingPhotoboothCartItemsSafe(userId).then(() => refreshCart());
-      }
     } else if (!prevUserId && userId) {
       mergeGuestCartIntoUserCart(userId);
       refreshCart();
-      void finalizePendingPhotoboothCartItemsSafe(userId).then(() => refreshCart());
-    } else {
+    } else if (prevUserId && !userId) {
+      refreshCart();
+    } else if (prevUserId !== userId) {
       refreshCart();
     }
 
     prevUserIdRef.current = userId;
-  }, [cart, refreshCart, user?.id]);
+  }, [user?.id, refreshCart]);
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {

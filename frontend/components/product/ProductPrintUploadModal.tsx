@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import boothStyles from '@/app/photobooth/page.module.css';
-import FrameOptionsScrollRow from '@/components/photobooth/FrameOptionsScrollRow';
 import headerStyles from '@/components/Header.module.css';
 import styles from './ProductPrintUploadModal.module.css';
 import { useToast } from '@/contexts/ToastContext';
@@ -17,8 +15,8 @@ import {
   getFramePreviewClassName,
   getFramePreviewLabel,
   getPolaroidFrameClassName,
-  PHOTOBOOTH_CAPTURE_FILTERS,
-} from '@/lib/photobooth/captureFilters';
+  PRINT_CAPTURE_FILTERS,
+} from '@/lib/product/printFilters';
 import {
   isGooglePickerConfigured,
   pickGoogleDriveImages,
@@ -1540,16 +1538,16 @@ export default function ProductPrintUploadModal({
           {items.length > 0 ? (
             <div ref={filterStripRef} className={styles.bottomStrip}>
               <div
-                className={`${boothStyles.filterStrip} ${isStylePanelOpen ? boothStyles.filterStripOpen : ''} ${styles.dialogFilterStrip}`}
+                className={`${styles.filterStrip} ${isStylePanelOpen ? styles.filterStripOpen : ''} ${styles.dialogFilterStrip}`}
                 data-lenis-prevent
               >
                 {openStylePanel === 'capture' ? (
                   <>
-                    <div className={boothStyles.filterStripHeader}>
-                      <span className={boothStyles.filterStripTitle}>Choose Your Capture Style</span>
+                    <div className={styles.filterStripHeader}>
+                      <span className={styles.filterStripTitle}>Choose Your Capture Style</span>
                       <button
                         type="button"
-                        className={boothStyles.filterStripCloseBtn}
+                        className={styles.filterStripCloseBtn}
                         onClick={() => setOpenStylePanel(null)}
                         aria-label="Close capture styles"
                       >
@@ -1559,29 +1557,29 @@ export default function ProductPrintUploadModal({
                         </svg>
                       </button>
                     </div>
-                    <FrameOptionsScrollRow>
-                      {PHOTOBOOTH_CAPTURE_FILTERS.map((filter) => (
+                    <div className={styles.optionsScrollRow}>
+                      {PRINT_CAPTURE_FILTERS.map((filter) => (
                         <button
                           key={filter.id}
                           type="button"
-                          className={`${boothStyles.filterItem} ${activeFilterId === filter.id ? boothStyles.filterItemActive : ''}`}
+                          className={`${styles.filterItem} ${activeFilterId === filter.id ? styles.filterItemActive : ''}`}
                           onClick={() => void applyFilterToItems(filter.id)}
                         >
-                          <div className={boothStyles.filterPreviewContainer}>
+                          <div className={styles.filterPreviewContainer}>
                             {filter.id === 'original' ? (
-                              <span className={boothStyles.filterOriginalMuted} />
+                              <span className={styles.filterOriginalMuted} />
                             ) : (
                               <img
                                 src={FILTER_PREVIEW_SAMPLE_IMAGE}
                                 alt=""
-                                className={boothStyles.filterPreviewImg}
+                                className={styles.filterPreviewImg}
                                 style={{ filter: filter.filterCss, display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
                               />
                             )}
                             {activeFilterId === filter.id ? (
-                              <div className={boothStyles.filterCheckIndicator}>
+                              <div className={styles.filterCheckIndicator}>
                                 {filter.id === 'original' ? (
-                                  <span className={boothStyles.filterCheckText}>original</span>
+                                  <span className={styles.filterCheckText}>original</span>
                                 ) : (
                                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" width="12" height="12">
                                     <polyline points="20 6 9 17 4 12" />
@@ -1590,22 +1588,22 @@ export default function ProductPrintUploadModal({
                               </div>
                             ) : null}
                           </div>
-                          <span className={boothStyles.filterLabel}>{filter.name}</span>
+                          <span className={styles.filterLabel}>{filter.name}</span>
                         </button>
                       ))}
-                    </FrameOptionsScrollRow>
+                    </div>
                   </>
                 ) : null}
 
                 {openStylePanel === 'border' ? (
-                  <div className={boothStyles.frameStripContainer}>
-                    <div className={boothStyles.filterStripHeader}>
-                      <span className={boothStyles.filterStripTitle}>
+                  <div className={styles.frameStripContainer}>
+                    <div className={styles.filterStripHeader}>
+                      <span className={styles.filterStripTitle}>
                         {mode === 'polaroid' ? 'Polaroid Frame Options' : 'Strip Frame Options'}
                       </span>
                       <button
                         type="button"
-                        className={boothStyles.filterStripCloseBtn}
+                        className={styles.filterStripCloseBtn}
                         onClick={() => setOpenStylePanel(null)}
                         aria-label="Close border styles"
                       >
@@ -1615,28 +1613,28 @@ export default function ProductPrintUploadModal({
                         </svg>
                       </button>
                     </div>
-                    <FrameOptionsScrollRow>
+                    <div className={styles.optionsScrollRow}>
                       {Array.from({ length: 9 }).map((_, idx) => (
                         <button
                           key={idx}
                           type="button"
-                          className={`${boothStyles.frameItem} ${activeFrameId === idx ? boothStyles.frameItemActive : ''}`}
+                          className={`${styles.frameItem} ${activeFrameId === idx ? styles.frameItemActive : ''}`}
                           onClick={() => applyFrameToItems(idx)}
                         >
-                          <div className={boothStyles.framePreviewContainer}>
-                            <div className={getFramePreviewClassName(idx, boothStyles)} />
+                          <div className={styles.framePreviewContainer}>
+                            <div className={getFramePreviewClassName(idx, styles)} />
                             {activeFrameId === idx ? (
-                              <div className={boothStyles.frameCheckIndicator}>
+                              <div className={styles.frameCheckIndicator}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" width="10" height="10">
                                   <polyline points="20 6 9 17 4 12" />
                                 </svg>
                               </div>
                             ) : null}
                           </div>
-                          <span className={boothStyles.frameLabel}>{getFramePreviewLabel(idx)}</span>
+                          <span className={styles.frameLabel}>{getFramePreviewLabel(idx)}</span>
                         </button>
                       ))}
-                    </FrameOptionsScrollRow>
+                    </div>
                   </div>
                 ) : null}
               </div>

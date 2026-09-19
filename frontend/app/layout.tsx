@@ -21,8 +21,7 @@ import NativeGoogleBridge from '@/components/NativeGoogleBridge';
 import FaviconManager from '@/components/FaviconManager';
 import HelpFab from '@/components/HelpFab';
 import BottomBlurStrip from '@/components/BottomBlurStrip';
-import SmoothScroll from '@/components/photobooth/SmoothScroll';
-import { EnterpriseTransitionProvider } from '@/components/EnterpriseTransition';
+import SmoothScroll from '@/components/SmoothScroll';
 import { DEFAULT_KEYWORDS, GA_MEASUREMENT_ID, SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from '@/lib/seo';
 
 const inter = Inter({
@@ -104,26 +103,24 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <ToastProvider>
-              <EnterpriseTransitionProvider>
-                <SmoothScroll>
-                  <Suspense fallback={null}>
-                    <OAuthErrorHandler />
-                  </Suspense>
-                  <FaviconManager />
-                  <NativeGoogleBridge />
-                  <ConditionalHeader />
-                  {children}
-                  <ConditionalFooter />
+              <SmoothScroll>
+                <Suspense fallback={null}>
+                  <OAuthErrorHandler />
+                </Suspense>
+                <FaviconManager />
+                <NativeGoogleBridge />
+                <ConditionalHeader />
+                {children}
+                <ConditionalFooter />
 
-                  <HelpFab />
-                  <Toast />
-                  <Analytics />
-                  <SpeedInsights />
-                  <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} />
-                  <MetaPixel pixelId="1610748856653453" />
-                  <BottomBlurStrip />
-                </SmoothScroll>
-              </EnterpriseTransitionProvider>
+                <HelpFab />
+                <Toast />
+                <Analytics />
+                <SpeedInsights />
+                <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} />
+                <MetaPixel pixelId="1610748856653453" />
+                <BottomBlurStrip />
+              </SmoothScroll>
             </ToastProvider>
           </CartProvider>
         </AuthProvider>

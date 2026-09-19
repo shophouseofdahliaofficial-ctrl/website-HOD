@@ -27,11 +27,8 @@ import {
   getCartItemOrderSubtotalContribution,
   getCartItemPriceDetails,
   getCartItemPriceLineAmount,
-  getPhotoboothPrintsLabel,
   shouldShowCartPriceLine,
-  sumPhotoboothDeliveryFees,
 } from '@/lib/utils/cartPricing';
-import { getPhotobookCartProject } from '@/lib/photobook/cartHelpers';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
 import { saveCheckoutCouponCode } from '@/lib/utils/checkoutCoupon';
 import { useToast } from '@/contexts/ToastContext';
@@ -277,12 +274,6 @@ export default function CartPage() {
     }
   };
 
-
-  const photoboothDeliveryTotal = useMemo(
-    () => sumPhotoboothDeliveryFees(items),
-    [items],
-  );
-
   /** Same basis as checkout `itemsSubtotal` + subscription — coupons and totals match checkout. */
   const subtotalAlignedWithCheckout = useMemo(() => {
     const itemsPart = items.reduce((sum, it) => {
@@ -316,7 +307,7 @@ export default function CartPage() {
     return Math.min(d, subtotalAlignedWithCheckout);
   }, [appliedCouponData, subtotalAlignedWithCheckout]);
 
-  const displayedDeliveryCharges = photoboothDeliveryTotal;
+  const displayedDeliveryCharges = 0;
   const total = subtotalAlignedWithCheckout - couponDiscount + platformFee;
   const totalItemCount = items.filter((it) => shouldShowCartPriceLine(it, products[it.productId])).length
     + (subscriptionCartItem ? 1 : 0);

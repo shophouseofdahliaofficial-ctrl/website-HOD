@@ -7,24 +7,6 @@ export interface CartItem {
   customizations?: {
     selectedOptions?: Record<string, string>; // groupId -> valueId
     textPersonalization?: Record<string, string>; // `${groupId}_${valId}` -> text
-    photoboothProject?: {
-      projectId?: string;
-      clientPendingId?: string;
-      pendingFinalize?: boolean;
-      projectType: 'polaroid' | 'strip';
-      previewUrl: string;
-      polaroidCount: number;
-      price: number;
-      label: string;
-    };
-    photobookProject?: {
-      projectId: string;
-      previewUrl: string;
-      projectName: string;
-      pageCount: number;
-      productId: string;
-      variationId?: string;
-    };
     giftWrap?: {
       comment: string;
       price: number;
@@ -74,7 +56,7 @@ function getProductTotal(items: CartItem[], productId: string) {
   return items.reduce((sum, item) => (item.productId === productId ? sum + item.quantity : sum), 0);
 }
 
-/** Move guest cart lines into the logged-in user's cart (keeps photobooth items). */
+/** Move guest cart lines into the logged-in user's cart. */
 export function mergeGuestCartIntoUserCart(userId: string): void {
   const guestKey = scopedCartKey(null);
   const userKey = scopedCartKey(userId);
@@ -85,14 +67,7 @@ export function mergeGuestCartIntoUserCart(userId: string): void {
   const merged = [...userItems];
 
   for (const guestItem of guestItems) {
-    const guestPb = guestItem.customizations?.photoboothProject;
     const existsIdx = merged.findIndex((x) => {
-      if (guestPb?.clientPendingId) {
-        return x.customizations?.photoboothProject?.clientPendingId === guestPb.clientPendingId;
-      }
-      if (guestPb?.projectId) {
-        return x.customizations?.photoboothProject?.projectId === guestPb.projectId;
-      }
       return (
         x.productId === guestItem.productId
         && (x.variationId || '') === (guestItem.variationId || '')
@@ -134,34 +109,14 @@ export function getCartStorage(userId: string | null) {
 
   return {
     storageKey,
- 
+
     get(): CartItem[] {
       return read();
     },
 
     add(item: CartItem, maxQuantity?: number): CartMutationResult {
       const qty = Math.max(1, Math.min(99, item.quantity));
-      let items = read();
-      const photoboothProjectId = item.customizations?.photoboothProject?.projectId;
-      const clientPendingId = item.customizations?.photoboothProject?.clientPendingId;
-      const photobookProjectId = item.customizations?.photobookProject?.projectId;
-      if (photoboothProjectId || clientPendingId || photobookProjectId) {
-        items = items.filter((x) => {
-          if (x.productId === item.productId && !x.customizations?.photoboothProject && !x.customizations?.photobookProject) {
-            return false;
-          }
-          if (photoboothProjectId && x.customizations?.photoboothProject?.projectId === photoboothProjectId) {
-            return false;
-          }
-          if (clientPendingId && x.customizations?.photoboothProject?.clientPendingId === clientPendingId) {
-            return false;
-          }
-          if (photobookProjectId && x.customizations?.photobookProject?.projectId === photobookProjectId) {
-            return false;
-          }
-          return true;
-        });
-      }
+      const items = read();
       const effectiveMax =
         Number.isFinite(maxQuantity) && Number(maxQuantity) > 0
           ? Math.max(1, Math.min(99, Number(maxQuantity)))
