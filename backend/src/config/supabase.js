@@ -6,9 +6,9 @@ require('dotenv').config();
  * Used for authentication and database operations
  */
 
-const supabaseUrl = String(process.env.SUPABASE_URL || '').trim().replace(/^['"]|['"]$/g, '');
-const supabaseAnonKey = String(process.env.SUPABASE_ANON_KEY || '').trim().replace(/^['"]|['"]$/g, '');
-const supabaseServiceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim().replace(/^['"]|['"]$/g, '');
+const supabaseUrl = String(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/^['"]|['"]$/g, '');
+const supabaseAnonKey = String(process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim().replace(/^['"]|['"]$/g, '');
+const supabaseServiceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '').trim().replace(/^['"]|['"]$/g, '');
 
 const hasSupabaseConfig = !!(supabaseUrl && supabaseAnonKey);
 
