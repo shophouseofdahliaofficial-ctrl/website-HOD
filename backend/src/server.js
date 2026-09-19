@@ -128,7 +128,7 @@ function isAllowedCorsOrigin(origin) {
     return true;
   }
 
-  if (origin.includes('.vercel.app')) {
+  if (origin.includes('.vercel.app') || origin.includes('.workers.dev') || origin.includes('.pages.dev')) {
     return true;
   }
 
@@ -136,11 +136,13 @@ function isAllowedCorsOrigin(origin) {
     const { hostname, protocol } = new URL(origin);
     if (protocol !== 'http:' && protocol !== 'https:') return false;
 
-    if (hostname === 'myscribble.in' || hostname.endsWith('.myscribble.in')) {
-      return true;
-    }
-
-    if (hostname === 'milko.in' || hostname.endsWith('.milko.in')) {
+    if (
+      hostname.includes('workers.dev') ||
+      hostname.includes('pages.dev') ||
+      hostname.includes('houseofdahlia') ||
+      hostname.includes('myscribble') ||
+      hostname.includes('milko')
+    ) {
       return true;
     }
   } catch {
