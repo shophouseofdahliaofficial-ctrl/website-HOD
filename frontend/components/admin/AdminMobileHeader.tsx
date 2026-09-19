@@ -93,7 +93,7 @@ export default function AdminMobileHeader() {
             <Logo
               imageClassName={sidebarStyles.logoImage}
               textClassName={sidebarStyles.logoTextFallback}
-              fallbackText="Scribble Studios"
+              fallbackText="House Of Dahlia"
             />
           </span>
         </Link>

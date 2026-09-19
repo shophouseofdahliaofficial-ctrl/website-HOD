@@ -1,18 +1,19 @@
-export const SITE_NAME = 'Scribble Studios';
-export const SITE_ALTERNATE_NAME = 'Scribble Studios';
+export const SITE_NAME = 'House Of Dahlia';
+export const SITE_ALTERNATE_NAME = 'House Of Dahlia';
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
 export const GA_MEASUREMENT_ID = (
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-QKZXGGXZGQ'
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''
 ).trim();
 export const SITE_DESCRIPTION =
-  'Premium digital creation, design, and development services by Scribble Studios.';
+  'House Of Dahlia — Fine Art Photo Prints, Custom Keepsakes, Photo Booth Strips & Floral Boutique.';
 
 export const DEFAULT_KEYWORDS = [
-  'scribble studios',
-  'design studio',
-  'digital agency',
-  'development services',
-  'creative agency',
+  'house of dahlia',
+  'photo prints',
+  'polaroids',
+  'photo booth',
+  'keepsakes',
+  'fine art photography',
 ];
 
 export const PUBLIC_SITEMAP_ROUTES = [

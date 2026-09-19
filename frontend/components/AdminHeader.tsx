@@ -98,7 +98,7 @@ export default function AdminHeader() {
       <div className={styles.adminHeaderContent}>
         {/* Left: Logo */}
         <Link href="/admin" className={styles.adminLogo}>
-          Scribble Studios Admin
+          House Of Dahlia Admin
         </Link>
 
         {/* Center: Search Bar */}

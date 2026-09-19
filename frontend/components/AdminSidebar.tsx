@@ -230,7 +230,7 @@ export default function AdminSidebar() {
             <Logo
               textClassName={styles.logoTextFallback}
               imageClassName={styles.logoImage}
-              fallbackText="Scribble Studios"
+              fallbackText="House Of Dahlia"
             />
           </span>
           <span className={styles.logoText}>

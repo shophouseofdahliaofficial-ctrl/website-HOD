@@ -37,21 +37,20 @@ type ResolveOpts = { hostname?: string | null };
  */
 export function resolveApiBaseUrl(opts?: ResolveOpts): string {
   const envRaw = trimEnv(process.env.NEXT_PUBLIC_API_BASE_URL);
+  if (envRaw) {
+    return envRaw;
+  }
 
   const hostFromWindow =
     typeof window !== 'undefined' ? window.location.hostname : '';
   const host = (opts?.hostname || hostFromWindow || '').split(':')[0].toLowerCase();
 
   if (host === 'localhost' || host === '127.0.0.1') {
-    return 'http://localhost:3001';
+    return 'http://localhost:4001';
   }
 
   if (host && (isLanHostname(host) || host.endsWith('.local'))) {
-    return `http://${host}:3001`;
-  }
-
-  if (envRaw) {
-    return envRaw;
+    return `http://${host}:4001`;
   }
 
   return DEFAULT_PROD_API;

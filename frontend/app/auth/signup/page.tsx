@@ -255,7 +255,7 @@ export default function SignUpPage() {
       setError('');
       setLoading(true);
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4001';
       const configRes = await fetch(`${apiUrl}/api/auth/telegram/config`);
       const configData = await configRes.json();
       const botId = configData.botId;

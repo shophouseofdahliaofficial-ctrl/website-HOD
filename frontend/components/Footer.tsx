@@ -195,7 +195,7 @@ export default function Footer() {
             className={styles.bigLogoText}
             onMouseEnter={handleLogoHover}
           >
-            {'scribble'.split('').map((char, index) => (
+            {'house of dahlia'.split('').map((char, index) => (
               <span
                 key={index}
                 ref={(el) => {
@@ -213,7 +213,7 @@ export default function Footer() {
       <div className={styles.container}>
         {/* Copyright */}
         <div className={styles.copyright}>
-          <p>© 2025-{currentYear} myscribble.in. All rights reserved.</p>
+          <p>© 2025-{currentYear} houseofdahlia.in. All rights reserved.</p>
         </div>
       </div>
     </footer>
