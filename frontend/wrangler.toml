@@ -1,5 +1,5 @@
-name = "house-of-dahlia-frontend"
-main = ".vercel/output/static/_worker.js"
+name = "website-hod"
+main = ".vercel/output/static/_worker.js/index.js"
 compatibility_date = "2024-09-19"
 compatibility_flags = ["nodejs_compat"]
 
