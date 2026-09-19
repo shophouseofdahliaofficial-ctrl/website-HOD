@@ -225,10 +225,11 @@ export default function MediaLibraryModal({
               aria-label="Filter by folder"
             >
               <option value="all">All Folders</option>
-              <option value="milko/products">milko/products</option>
-              <option value="milko/banners">milko/banners</option>
-              <option value="milko/media">milko/media</option>
-              <option value="milko/customization">milko/customization</option>
+              <option value="houseofdahlia/products">houseofdahlia/products</option>
+              <option value="houseofdahlia/banners">houseofdahlia/banners</option>
+              <option value="houseofdahlia/media">houseofdahlia/media</option>
+              <option value="houseofdahlia/customization">houseofdahlia/customization</option>
+              <option value="houseofdahlia/logo">houseofdahlia/logo</option>
             </select>
 
             <button

@@ -210,7 +210,7 @@ export default function ProductsClient({
                   </div>
                 ) : (
                   <div className={cardStyles.placeholderImage}>
-                    <img src="/scribble-logo-bw.png" alt="Scribble Logo" className={cardStyles.placeholderLogo} />
+                    <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={cardStyles.placeholderLogo} />
                   </div>
                 )}
                 {/* Add to Favorite Button */}

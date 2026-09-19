@@ -50,7 +50,7 @@ const PRINT_CAROUSEL_PAGE_SIZE = 3;
 
 /** Sample photo used when demo polaroid feed toggle is enabled (replaces live webcam). */
 const DEMO_POLAROID_FEED_URL =
-  'https://res.cloudinary.com/djihr7crd/image/upload/v1781238197/photo_2026-06-12_09-46-51_cftjbn.jpg';
+  'https://res.cloudinary.com/hythbqu9/image/upload/v1789840141/houseofdahlia/products/polaroid_prints.jpg';
 
 type CompletionSequenceStep =
   | 'idle'

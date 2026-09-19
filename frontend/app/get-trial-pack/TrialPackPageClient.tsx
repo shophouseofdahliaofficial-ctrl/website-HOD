@@ -758,7 +758,7 @@ export default function TrialPackPageClient({ stepsOnly = false }: TrialPackPage
                             </div>
                           ) : (
                             <div className={productStyles.placeholderImage}>
-                              <img src="/scribble-logo-bw.png" alt="Scribble Logo" className={productStyles.placeholderLogo} />
+                              <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={productStyles.placeholderLogo} />
                             </div>
                           )}
                         </div>

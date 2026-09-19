@@ -54,33 +54,21 @@ export default function Logo({ textClassName, imageClassName, fallbackText }: Lo
     );
   }
 
-  if (config?.imageUrl) {
-    return (
-      <img
-        src={config.imageUrl}
-        alt="Logo"
-        onLoad={() => setImgLoaded(true)}
-        className={`${styles.logoImage} ${imageClassName || ''}`}
-        style={{
-          '--logo-width-desktop': `${config.widthPx ?? 120}px`,
-          '--logo-width-mobile': `${config.widthPxMobile ?? config.widthPx ?? 120}px`,
-          opacity: imgLoaded ? 1 : 0,
-          transition: 'opacity 0.25s ease-in-out',
-        } as React.CSSProperties}
-      />
-    );
-  }
-
-  if (fallbackText) {
-    return <span className={textClassName}>{fallbackText}</span>;
-  }
+  const defaultLogoUrl = '/house-of-dahlia-logo.png';
+  const displayUrl = config?.imageUrl || defaultLogoUrl;
 
   return (
-    <span
-      className={`${styles.logoSkeleton} ${imageClassName || ''}`}
+    <img
+      src={displayUrl}
+      alt="House Of Dahlia"
+      onLoad={() => setImgLoaded(true)}
+      className={`${styles.logoImage} ${imageClassName || ''}`}
       style={{
-        '--logo-width-desktop': '120px',
-        '--logo-width-mobile': '120px',
+        '--logo-width-desktop': `${config?.widthPx ?? 130}px`,
+        '--logo-width-mobile': `${config?.widthPxMobile ?? config?.widthPx ?? 110}px`,
+        opacity: imgLoaded ? 1 : 0.8,
+        transition: 'opacity 0.25s ease-in-out',
+        objectFit: 'contain',
       } as React.CSSProperties}
     />
   );

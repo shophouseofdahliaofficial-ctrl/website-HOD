@@ -32,7 +32,7 @@ const uploadDataUrlToCloudinary = async (dataUrl, folder) => {
 };
 
 const resolveCustomizationFolder = (productId) =>
-  productId ? `milko/products/${productId}/customization` : 'milko/customization-assets';
+  productId ? `houseofdahlia/products/${productId}/customization` : 'houseofdahlia/customization-assets';
 
 /**
  * Replace base64 imageUrl fields with Cloudinary URLs.

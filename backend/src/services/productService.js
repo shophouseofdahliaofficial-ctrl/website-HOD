@@ -319,7 +319,7 @@ const createProduct = async (productData, imageFile = null) => {
   if (imageFile) {
     const uploadResult = await uploadImage(imageFile.buffer, {
       resource_type: 'image',
-      folder: 'milko/products',
+      folder: 'houseofdahlia/products',
     });
     imageUrl = uploadResult.url;
   }
@@ -531,7 +531,7 @@ const updateProduct = async (productId, updates, imageFile = null) => {
       try {
         const urlParts = product.imageUrl.split('/');
         const publicId = urlParts.slice(-2).join('/').split('.')[0];
-        await deleteImage(`milko/products/${publicId}`);
+        await deleteImage(`houseofdahlia/products/${publicId}`);
       } catch (error) {
         console.error('Error deleting old image:', error);
       }
@@ -539,7 +539,7 @@ const updateProduct = async (productId, updates, imageFile = null) => {
 
     const uploadResult = await uploadImage(imageFile.buffer, {
       resource_type: 'image',
-      folder: 'milko/products',
+      folder: 'houseofdahlia/products',
     });
     updates.imageUrl = uploadResult.url;
   }
@@ -554,7 +554,7 @@ const updateProduct = async (productId, updates, imageFile = null) => {
       try {
         const urlParts = product.imageUrl.split('/');
         const publicId = urlParts.slice(-2).join('/').split('.')[0];
-        await deleteImage(`milko/products/${publicId}`);
+        await deleteImage(`houseofdahlia/products/${publicId}`);
       } catch (error) {
         console.error('Error deleting cleared primary image:', error);
       }

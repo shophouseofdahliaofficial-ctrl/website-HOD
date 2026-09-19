@@ -245,7 +245,7 @@ function SearchContent() {
                             </div>
                           ) : (
                             <div className={styles.placeholderImage}>
-                              <img src="/scribble-logo-bw.png" alt="Scribble Logo" className={styles.placeholderLogo} />
+                              <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={styles.placeholderLogo} />
                             </div>
                           )}
                           {/* Add to Favorite Button */}

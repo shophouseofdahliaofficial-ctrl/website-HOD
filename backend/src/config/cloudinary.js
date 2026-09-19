@@ -33,7 +33,7 @@ const uploadImage = async (file, options = {}) => {
     console.log('[CLOUDINARY] Starting upload...', {
       hasBuffer: Buffer.isBuffer(file),
       bufferSize: Buffer.isBuffer(file) ? file.length : 'N/A',
-      folder: options.folder || 'milko/products',
+      folder: options.folder || 'houseofdahlia/products',
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,
       hasApiKey: !!process.env.CLOUDINARY_API_KEY,
       hasApiSecret: !!process.env.CLOUDINARY_API_SECRET,
@@ -49,13 +49,13 @@ const uploadImage = async (file, options = {}) => {
         bufferSize: file.length,
         fileSizeMB: fileSizeMB.toFixed(2),
         useStream: useStream,
-        folder: options.folder || 'milko/products',
+        folder: options.folder || 'houseofdahlia/products',
       });
       
       try {
         // Remove mimeType from options as it's not a Cloudinary option
         const { mimeType: _, ...uploadOptions } = {
-          folder: options.folder || 'milko/products',
+          folder: options.folder || 'houseofdahlia/products',
           resource_type: options.resource_type || 'image',
           ...options,
         };
@@ -160,7 +160,7 @@ const uploadImage = async (file, options = {}) => {
       // If it's a file path or data URI
       console.log('[CLOUDINARY] Uploading file path/data URI...');
       const result = await cloudinary.uploader.upload(file, {
-        folder: options.folder || 'milko/products',
+        folder: options.folder || 'houseofdahlia/products',
         resource_type: options.resource_type || 'image',
         ...options,
       });

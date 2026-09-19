@@ -92,9 +92,9 @@ export default function ProductsSection() {
     {
       id: '1',
       name: 'Polaroid Prints',
-      description: 'Classic instant-style prints for your favorite moments.',
+      description: 'Classic instant-style fine art prints for your favorite moments.',
       pricePerLitre: 60,
-      imageUrl: undefined,
+      imageUrl: 'https://res.cloudinary.com/hythbqu9/image/upload/v1789840141/houseofdahlia/products/polaroid_prints.jpg',
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -102,9 +102,9 @@ export default function ProductsSection() {
     {
       id: '2',
       name: 'Photo Strips',
-      description: 'Fun booth-style strips perfect for gifts and keepsakes.',
+      description: 'Vintage booth-style strips perfect for keepsakes and gifting.',
       pricePerLitre: 70,
-      imageUrl: undefined,
+      imageUrl: 'https://res.cloudinary.com/hythbqu9/image/upload/v1789840143/houseofdahlia/products/photo_strips.jpg',
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -112,9 +112,9 @@ export default function ProductsSection() {
     {
       id: '3',
       name: 'Memory Book',
-      description: 'Handcrafted albums to preserve your cherished memories.',
+      description: 'Handcrafted linen albums to preserve your cherished memories.',
       pricePerLitre: 55,
-      imageUrl: undefined,
+      imageUrl: '/polaroid_clean.png',
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -122,9 +122,9 @@ export default function ProductsSection() {
     {
       id: '4',
       name: 'Custom Frame',
-      description: 'Premium frames tailored to your photos and style.',
+      description: 'Artisan frames tailored to your photos and style.',
       pricePerLitre: 65,
-      imageUrl: undefined,
+      imageUrl: '/strip_printer.png',
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -307,7 +307,7 @@ export default function ProductsSection() {
                       </div>
                     ) : (
                       <div className={styles.placeholderImage}>
-                        <img src="/scribble-logo-bw.png" alt="Scribble Logo" className={styles.placeholderLogo} />
+                        <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={styles.placeholderLogo} />
                       </div>
                     )}
                     {/* Add to Favorite Button */}

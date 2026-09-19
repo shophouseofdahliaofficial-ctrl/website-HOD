@@ -1098,7 +1098,7 @@ export default function AdminBannersPage() {
         }}
         onSelect={handleMediaSelect}
         multiple={mediaModalTarget?.type === 'bulk_add'}
-        initialFolder="milko/banners"
+        initialFolder="houseofdahlia/banners"
         title="Select Banner Image from Cloudinary"
       />
     </div>

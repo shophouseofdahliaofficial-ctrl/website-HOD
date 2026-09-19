@@ -29,7 +29,7 @@ export default function VerifyPromoSection() {
 
         {/* Description */}
         <p className={styles.description}>
-          Verify the authenticity of your Scribble Studios products. Enter the 6-digit verification code on your packaging to check if your product is genuine instantly.
+          Verify the authenticity of your House Of Dahlia products. Enter the 6-digit verification code on your packaging to check if your product is genuine instantly.
         </p>
       </div>
     </section>

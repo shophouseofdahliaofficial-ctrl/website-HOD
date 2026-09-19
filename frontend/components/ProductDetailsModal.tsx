@@ -4718,7 +4718,7 @@ export default function ProductDetailsModal({
                     </div>
                   ) : (
                     <div className={cardStyles.placeholderImage}>
-                      <img src="/scribble-logo-bw.png" alt="Scribble Logo" className={cardStyles.placeholderLogo} />
+                      <img src="/house-of-dahlia-logo.png" alt="Scribble Logo" className={cardStyles.placeholderLogo} />
                     </div>
                   )}
                 </div>
@@ -8217,7 +8217,7 @@ export default function ProductDetailsModal({
                 </div>
               ) : (
                 <div className={styles.placeholderImage}>
-                  <img src="/scribble-logo-bw.png" alt="Scribble Logo" className={styles.placeholderLogo} />
+                  <img src="/house-of-dahlia-logo.png" alt="Scribble Logo" className={styles.placeholderLogo} />
                 </div>
               )}
             </div>

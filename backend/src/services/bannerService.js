@@ -111,7 +111,7 @@ const createBanner = async (bannerData, imageFile, mobileImageFile = null) => {
 
       uploadResult = await uploadImage(imageFile.buffer, {
         resource_type: 'image',
-        folder: 'milko/banners',
+        folder: 'houseofdahlia/banners',
         mimeType: imageFile.mimetype,
       });
     } catch (error) {
@@ -136,7 +136,7 @@ const createBanner = async (bannerData, imageFile, mobileImageFile = null) => {
 
       mobileUploadResult = await uploadImage(mobileImageFile.buffer, {
         resource_type: 'image',
-        folder: 'milko/banners/mobile',
+        folder: 'houseofdahlia/banners/mobile',
         mimeType: mobileImageFile.mimetype,
       });
     } catch (error) {
@@ -224,7 +224,7 @@ const updateBanner = async (bannerId, updates, imageFile = null, mobileImageFile
 
     const uploadResult = await uploadImage(imageFile.buffer, {
       resource_type: 'image',
-      folder: 'milko/banners',
+      folder: 'houseofdahlia/banners',
     });
 
     updates.imageUrl = uploadResult.url;
@@ -243,7 +243,7 @@ const updateBanner = async (bannerId, updates, imageFile = null, mobileImageFile
 
     const mobileUploadResult = await uploadImage(mobileImageFile.buffer, {
       resource_type: 'image',
-      folder: 'milko/banners/mobile',
+      folder: 'houseofdahlia/banners/mobile',
     });
 
     updates.mobileImageUrl = mobileUploadResult.url;

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { contentApi } from '@/lib/api';
@@ -82,7 +82,7 @@ export default function AppDownloadBanner() {
     <div className={styles.banner} onClick={handleContainerClick}>
       <div className={styles.content}>
         {faviconUrl && (
-          <img src={faviconUrl} alt="Scribble Studios" className={styles.favicon} />
+          <img src={faviconUrl} alt="House Of Dahlia" className={styles.favicon} />
         )}
         <span className={styles.text}>Download app for better experience. Really!</span>
       </div>

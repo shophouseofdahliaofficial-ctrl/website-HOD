@@ -135,7 +135,7 @@ const addProductImage = async (req, res, next) => {
     if (req.file) {
       const uploadResult = await uploadImage(req.file.buffer, {
         resource_type: 'image',
-        folder: 'milko/products',
+        folder: 'houseofdahlia/products',
       });
       imageUrl = uploadResult.url;
     }
@@ -191,7 +191,7 @@ const uploadProductDetailAsset = async (req, res, next) => {
 
     const uploadResult = await uploadImage(req.file.buffer, {
       resource_type: 'image',
-      folder: `milko/products/${id}/detail-assets`,
+      folder: `houseofdahlia/products/${id}/detail-assets`,
     });
 
     res.status(201).json({
@@ -229,7 +229,7 @@ const uploadProductCustomizationAsset = async (req, res, next) => {
 
     const uploadResult = await uploadImage(req.file.buffer, {
       resource_type: 'image',
-      folder: `milko/products/${id}/customization`,
+      folder: `houseofdahlia/products/${id}/customization`,
     });
 
     res.status(201).json({
@@ -257,7 +257,7 @@ const uploadPendingCustomizationAsset = async (req, res, next) => {
 
     const uploadResult = await uploadImage(req.file.buffer, {
       resource_type: 'image',
-      folder: 'milko/customization-assets',
+      folder: 'houseofdahlia/customization-assets',
     });
 
     res.status(201).json({
@@ -283,7 +283,7 @@ const deleteProductImage = async (req, res, next) => {
       try {
         const urlParts = image.imageUrl.split('/');
         const publicId = urlParts.slice(-2).join('/').split('.')[0];
-        await deleteImage(`milko/products/${publicId}`);
+        await deleteImage(`houseofdahlia/products/${publicId}`);
       } catch (error) {
         console.error('Error deleting image from Cloudinary:', error);
       }
@@ -1691,7 +1691,7 @@ const deleteCoupon = async (req, res, next) => {
  * Upload or update logo (Cloudinary + site_content type 'logo')
  * POST /api/admin/logo
  * Body: FormData with optional 'image' (file), 'widthPx' (number, default 120), and 'widthPxMobile' (number, default same as widthPx)
- * - With image: upload to Cloudinary milko/logo, delete old if any, upsert metadata { imageUrl, imagePublicId, widthPx, widthPxMobile }
+ * - With image: upload to Cloudinary houseofdahlia/logo, delete old if any, upsert metadata { imageUrl, imagePublicId, widthPx, widthPxMobile }
  * - Without image: update only widthPx and widthPxMobile in existing logo (requires existing logo)
  */
 const upsertLogo = async (req, res, next) => {
@@ -1712,7 +1712,7 @@ const upsertLogo = async (req, res, next) => {
     }
 
     if (req.file && req.file.buffer) {
-      const uploadResult = await uploadImage(req.file.buffer, { folder: 'milko/logo' });
+      const uploadResult = await uploadImage(req.file.buffer, { folder: 'houseofdahlia/logo' });
       if (existing && existing.metadata && existing.metadata.imagePublicId) {
         try {
           await deleteImage(existing.metadata.imagePublicId);
@@ -1780,7 +1780,7 @@ const upsertFavicon = async (req, res, next) => {
       });
     }
 
-    const uploadResult = await uploadImage(req.file.buffer, { folder: 'milko/favicon' });
+    const uploadResult = await uploadImage(req.file.buffer, { folder: 'houseofdahlia/favicon' });
     if (existing?.metadata?.imagePublicId) {
       try {
         await deleteImage(existing.metadata.imagePublicId);
@@ -1833,7 +1833,7 @@ const uploadContentImage = async (req, res, next) => {
       });
     }
 
-    const uploadResult = await uploadImage(req.file.buffer, { folder: `milko/content/${type}` });
+    const uploadResult = await uploadImage(req.file.buffer, { folder: `houseofdahlia/content/${type}` });
 
     if (existing.metadata && existing.metadata.imagePublicId) {
       try {
@@ -2214,7 +2214,7 @@ const uploadMedia = async (req, res, next) => {
       throw new ValidationError('Image file is required');
     }
 
-    const folder = req.body.folder || 'milko/media';
+    const folder = req.body.folder || 'houseofdahlia/media';
     const uploadResult = await uploadImage(req.file.buffer, {
       folder,
     });

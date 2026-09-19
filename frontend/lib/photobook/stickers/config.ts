@@ -7,7 +7,7 @@ export const STICKER_GRID_PAGE_SIZE = 48;
 const OPENMOJI_CLOUDINARY_FOLDER = 'openmoji/svg';
 
 export function getCloudinaryCloudName(): string {
-  return process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim() || 'djihr7crd';
+  return process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim() || 'hythbqu9';
 }
 
 export function getOpenMojiCloudinaryFolder(): string {
