@@ -91,23 +91,43 @@ const register = async (userData) => {
     throw new ValidationError('Email already registered. Please login instead.');
   }
 
-  // Sign up with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: normalizedEmail,
-    password,
-    options: {
-      data: {
+  // Sign up with Supabase Auth (use admin client if available to bypass email rate limits & auto-confirm)
+  let authData = null;
+  let authError = null;
+
+  if (supabaseAdmin) {
+    const adminRes = await supabaseAdmin.auth.admin.createUser({
+      email: normalizedEmail,
+      password,
+      email_confirm: true,
+      user_metadata: {
         name,
-        role: 'customer', // Default role
+        role: 'customer',
       },
-    },
-  });
+    });
+    authData = adminRes.data;
+    authError = adminRes.error;
+  } else {
+    const res = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          name,
+          role: 'customer',
+        },
+      },
+    });
+    authData = res.data;
+    authError = res.error;
+  }
 
   if (authError) {
     console.error('[AUTH] Signup error:', authError.message);
     
     if (authError.message?.includes('already registered') || 
-        authError.message?.includes('already exists')) {
+        authError.message?.includes('already exists') ||
+        authError.message?.includes('User already registered')) {
       throw new ValidationError('Email already registered. Please login instead.');
     }
     
