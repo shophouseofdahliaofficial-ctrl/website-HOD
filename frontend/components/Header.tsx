@@ -21,6 +21,7 @@ import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/uti
 import { useCategoryMap } from '@/hooks/useCategoryMap';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import gsap from 'gsap';
 import { SITE_NAME } from '@/lib/seo';
 
 /**
