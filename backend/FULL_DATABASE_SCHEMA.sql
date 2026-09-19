@@ -256,13 +256,29 @@ CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
 -- 16. SITE CONTENT TABLE
 CREATE TABLE IF NOT EXISTS site_content (
     id SERIAL PRIMARY KEY,
-    content_key VARCHAR(100) UNIQUE NOT NULL,
-    content_value JSONB NOT NULL,
+    content_type VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    metadata JSONB DEFAULT '{}'::jsonb,
+    is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_site_content_key ON site_content(content_key);
+CREATE INDEX IF NOT EXISTS idx_site_content_type ON site_content(content_type);
+CREATE INDEX IF NOT EXISTS idx_site_content_active ON site_content(is_active);
+
+-- Insert default site content
+INSERT INTO site_content (content_type, title, content, metadata) VALUES
+  ('terms', 'Terms and Conditions', 'Default terms and conditions content.', '{}'),
+  ('privacy', 'Privacy Policy', 'Default privacy policy content.', '{}'),
+  ('about', 'About Us', 'Default about us content.', '{}'),
+  ('contact', 'Contact Us', 'Contact information', '{"email": "contact@houseofdahlia.com", "phone": "+91 1234567890"}'),
+  ('reviews', 'Reviews Settings', 'Reviews settings', '{"allowPublicReviews": true, "requireApproval": true}'),
+  ('pincodes', 'Pincode Settings', 'Delivery pincode settings', '{"serviceablePincodes": []}'),
+  ('logo', 'Logo', '', '{"widthPx": 120}'),
+  ('homepage_products', 'Homepage Products Rows', 'Homepage products section settings.', '{"rows": 1}')
+ON CONFLICT (content_type) DO NOTHING;
 
 -- 17. VERIFICATIONS TABLE
 CREATE TABLE IF NOT EXISTS verifications (
