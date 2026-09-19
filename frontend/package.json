@@ -6,7 +6,8 @@
         "dev": "next dev -p 4000",
         "dev:clean": "node -e \"var f=require('fs');['.next','node_modules/.cache'].forEach(function(p){try{f.rmSync(p,{recursive:true,force:true})}catch(e){}})\" && next dev",
         "build": "next build",
-        "pages:build": "npx @cloudflare/next-on-pages && node -e \"require('fs').writeFileSync('.vercel/output/static/.assetsignore', '_worker.js\\n')\"",
+        "pages:build": "node scripts/cf-build.js",
+        "cf:build": "node scripts/cf-build.js",
         "start": "next start",
         "lint": "next lint"
     },
