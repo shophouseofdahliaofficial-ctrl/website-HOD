@@ -3,7 +3,7 @@
  * Production sites must never use a localhost/LAN URL from env by mistake.
  */
 
-const DEFAULT_PROD_API = 'https://scribble-backend-94wn.onrender.com';
+const DEFAULT_PROD_API = 'https://website-hod.onrender.com';
 
 function trimEnv(url: string | undefined): string {
   return (url || '').trim();
