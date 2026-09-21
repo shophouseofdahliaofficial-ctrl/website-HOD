@@ -260,6 +260,7 @@ export default function FavoritesPage() {
       )}
 
       <QuickAddModal
+        key={quickAddProduct?.id || 'none'}
         product={quickAddProduct}
         isOpen={Boolean(quickAddProduct)}
         onClose={() => setQuickAddProduct(null)}

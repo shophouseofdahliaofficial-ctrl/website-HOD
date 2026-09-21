@@ -89,20 +89,14 @@ export default function QuickAddModal({
     );
   }, [displayProduct?.variations]);
 
-  // Auto-select first available standard variation
-  useEffect(() => {
-    if (variations.length > 0) {
-      setSelectedVariationId((prev) => {
-        if (prev && variations.some((v) => v.id === prev)) return prev;
-        const firstAvail = variations.find((v) => v.isAvailable) || variations[0];
-        return firstAvail ? firstAvail.id : null;
-      });
-    }
-  }, [variations]);
-
-  const selectedVariation: ProductVariation | null = useMemo(() => {
+  // Active selected variation (always resolves to a valid variation if variations exist)
+  const activeVariation: ProductVariation | null = useMemo(() => {
     if (!variations.length) return null;
-    return variations.find((v) => v.id === selectedVariationId) || variations[0] || null;
+    if (selectedVariationId) {
+      const match = variations.find((v) => v.id === selectedVariationId);
+      if (match) return match;
+    }
+    return variations.find((v) => v.isAvailable) || variations[0] || null;
   }, [variations, selectedVariationId]);
 
   // Customizable options
@@ -119,42 +113,40 @@ export default function QuickAddModal({
     );
   }, [isCustomizable, displayProduct?.customizationOptions]);
 
-  // Auto-initialize customization options with first active value
-  useEffect(() => {
-    if (customizationOptions.length > 0) {
-      setSelectedCustomizations((prev) => {
-        const updated = { ...prev };
-        let hasChanges = false;
-        customizationOptions.forEach((g) => {
-          if (!updated[g.id] && g.values && g.values.length > 0) {
-            const firstAvail = g.values.find((val) => (val as any).isActive !== false) || g.values[0];
-            if (firstAvail) {
-              updated[g.id] = firstAvail.id;
-              hasChanges = true;
-            }
-          }
-        });
-        return hasChanges ? updated : prev;
-      });
-    }
-  }, [customizationOptions]);
+  // Effective customizations map (always resolves every group to an active value from frame 1)
+  const effectiveCustomizations = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (!customizationOptions.length) return map;
+
+    customizationOptions.forEach((g) => {
+      if (selectedCustomizations[g.id]) {
+        map[g.id] = selectedCustomizations[g.id];
+      } else if (g.values && g.values.length > 0) {
+        const firstAvail = g.values.find((val) => (val as any).isActive !== false) || g.values[0];
+        if (firstAvail) {
+          map[g.id] = firstAvail.id;
+        }
+      }
+    });
+    return map;
+  }, [customizationOptions, selectedCustomizations]);
 
   // Matching customization combination
   const currentCombination = useMemo(() => {
     if (!displayProduct?.customizationCombinations || displayProduct.customizationCombinations.length === 0) {
       return null;
     }
-    const entries = Object.entries(selectedCustomizations);
+    const entries = Object.entries(effectiveCustomizations);
     if (entries.length === 0) return null;
 
     return displayProduct.customizationCombinations.find((combo) => {
       if (combo.isActive === false) return false;
       const keys = combo.combinationKeys || {};
       return Object.entries(keys).every(
-        ([groupId, valueId]) => String(selectedCustomizations[groupId]) === String(valueId)
+        ([groupId, valueId]) => String(effectiveCustomizations[groupId]) === String(valueId)
       );
     });
-  }, [displayProduct?.customizationCombinations, selectedCustomizations]);
+  }, [displayProduct?.customizationCombinations, effectiveCustomizations]);
 
   // Base pricing
   const basePrice = useMemo(() => {
@@ -182,7 +174,7 @@ export default function QuickAddModal({
         return Number(currentCombination.price);
       }
       let sum = basePrice;
-      Object.entries(selectedCustomizations).forEach(([groupId, valId]) => {
+      Object.entries(effectiveCustomizations).forEach(([groupId, valId]) => {
         const group = customizationOptions.find((g) => g.id === groupId);
         const val = group?.values?.find((v) => String(v.id) === String(valId));
         if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
@@ -192,16 +184,16 @@ export default function QuickAddModal({
       return sum;
     }
 
-    if (selectedVariation) {
-      if (selectedVariation.price != null && Number.isFinite(Number(selectedVariation.price))) {
-        return Number(selectedVariation.price);
+    if (activeVariation) {
+      if (activeVariation.price != null && Number.isFinite(Number(activeVariation.price))) {
+        return Number(activeVariation.price);
       }
-      const mult = Number(selectedVariation.priceMultiplier) || 1;
+      const mult = Number(activeVariation.priceMultiplier) || 1;
       return basePrice * mult;
     }
 
     return basePrice;
-  }, [displayProduct, isCustomizable, currentCombination, customizationOptions, selectedCustomizations, selectedVariation, basePrice]);
+  }, [displayProduct, isCustomizable, currentCombination, customizationOptions, effectiveCustomizations, activeVariation, basePrice]);
 
   // Unit Compare At Price Calculation
   const unitComparePrice = useMemo(() => {
@@ -213,7 +205,7 @@ export default function QuickAddModal({
       }
       if (baseCompareAtPrice != null) {
         let cmpSum = baseCompareAtPrice;
-        Object.entries(selectedCustomizations).forEach(([groupId, valId]) => {
+        Object.entries(effectiveCustomizations).forEach(([groupId, valId]) => {
           const group = customizationOptions.find((g) => g.id === groupId);
           const val = group?.values?.find((v) => String(v.id) === String(valId));
           if (val && typeof (val as any).compareAtPrice === 'number' && Number.isFinite((val as any).compareAtPrice)) {
@@ -225,17 +217,17 @@ export default function QuickAddModal({
       return null;
     }
 
-    if (selectedVariation?.compareAtPrice != null && Number.isFinite(Number(selectedVariation.compareAtPrice))) {
-      return Number(selectedVariation.compareAtPrice);
+    if (activeVariation?.compareAtPrice != null && Number.isFinite(Number(activeVariation.compareAtPrice))) {
+      return Number(activeVariation.compareAtPrice);
     }
 
     if (baseCompareAtPrice) {
-      const mult = selectedVariation ? (Number(selectedVariation.priceMultiplier) || 1) : 1;
+      const mult = activeVariation ? (Number(activeVariation.priceMultiplier) || 1) : 1;
       return baseCompareAtPrice * mult;
     }
 
     return null;
-  }, [displayProduct, isCustomizable, currentCombination, customizationOptions, selectedCustomizations, selectedVariation, baseCompareAtPrice]);
+  }, [displayProduct, isCustomizable, currentCombination, customizationOptions, effectiveCustomizations, activeVariation, baseCompareAtPrice]);
 
   const totalPrice = unitPrice * quantity;
   const totalComparePrice = unitComparePrice ? unitComparePrice * quantity : null;
@@ -245,8 +237,7 @@ export default function QuickAddModal({
   // Selected thumbnail image
   let activeImageUrl = getPrimaryProductImageUrl(displayProduct) || (displayProduct as any).imageUrl || '';
   if (isCustomizable) {
-    // Check if any selected option has an imageUrl
-    for (const [groupId, valId] of Object.entries(selectedCustomizations)) {
+    for (const [groupId, valId] of Object.entries(effectiveCustomizations)) {
       const group = customizationOptions.find((g) => g.id === groupId);
       const val = group?.values?.find((v) => String(v.id) === String(valId));
       if ((val as any)?.imageUrl) {
@@ -256,7 +247,7 @@ export default function QuickAddModal({
     }
   }
 
-  const isOutOfStock = displayProduct.isOutOfStock || (selectedVariation ? !selectedVariation.isAvailable : false);
+  const isOutOfStock = displayProduct.isOutOfStock || (activeVariation ? !activeVariation.isAvailable : false);
   const maxQty = displayProduct.maxQuantity ?? 99;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -272,10 +263,10 @@ export default function QuickAddModal({
 
     const variationIdToUse = isCustomizable
       ? (currentCombination?.id ?? undefined)
-      : (selectedVariation?.id ?? undefined);
+      : (activeVariation?.id ?? undefined);
 
     const customizationsToPass = isCustomizable
-      ? { selectedOptions: selectedCustomizations }
+      ? { selectedOptions: effectiveCustomizations }
       : undefined;
 
     const result = addItem(
@@ -368,7 +359,7 @@ export default function QuickAddModal({
         <div className={styles.body}>
           {/* Customization Options (if product is customizable) */}
           {isCustomizable && customizationOptions.map((g) => {
-            const selectedValId = selectedCustomizations[g.id];
+            const selectedValId = effectiveCustomizations[g.id];
             const selectedVal = (g.values || []).find((v) => String(v.id) === String(selectedValId));
 
             return (
@@ -467,15 +458,15 @@ export default function QuickAddModal({
                     'Size / Style'}
                   :
                 </span>
-                {selectedVariation && (
+                {activeVariation && (
                   <span className={styles.selectedValueText}>
-                    {removePriceFromName(selectedVariation.size)}
+                    {removePriceFromName(activeVariation.size)}
                   </span>
                 )}
               </div>
               <div className={styles.variationsGrid}>
                 {variations.map((v) => {
-                  const isActive = v.id === selectedVariationId;
+                  const isActive = v.id === activeVariation?.id;
                   return (
                     <button
                       key={v.id}

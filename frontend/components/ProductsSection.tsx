@@ -453,6 +453,7 @@ export default function ProductsSection() {
       </div>
 
       <QuickAddModal
+        key={quickAddProduct?.id || 'none'}
         product={quickAddProduct}
         isOpen={Boolean(quickAddProduct)}
         onClose={() => setQuickAddProduct(null)}
