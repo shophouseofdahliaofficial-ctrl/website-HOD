@@ -176,62 +176,22 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Full-Width 3D Tilted Center Scribble Text */
-.bigLogoSection {
+/* Simple House of Dahlia Footer Text */
+.simpleLogoSection {
   width: 100%;
-  max-width: 100%;
-  padding: 3rem 0 2rem;
-  margin: 1.5rem 0;
+  padding: 2.25rem 0 1.25rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
-.bigLogoPerspective {
-  width: 100%;
-  max-width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 650px;
-  perspective-origin: 50% 100%;
-  transform-style: preserve-3d;
-  overflow: hidden;
-  padding: 1rem 0;
-  box-sizing: border-box;
-}
-
-.bigLogoText {
-  display: block;
-  font-size: clamp(4rem, 15.5vw, 18.5rem);
-  font-weight: 900;
-  text-transform: lowercase;
-  letter-spacing: -0.01em;
-  line-height: 0.8;
-  color: #ff0449;
+.simpleLogoText {
+  margin: 0;
+  font-size: clamp(1.85rem, 5vw, 3.25rem);
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
   text-align: center;
-  white-space: nowrap;
-  transform: rotateX(32deg);
-  transform-origin: center bottom;
-  user-select: none;
-  margin: 0 auto;
-  padding: 0 0.5rem;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-
-  font-family: var(--font-chups-italic), 'Google Sans', sans-serif !important;
-  -webkit-text-stroke: 0;
-  paint-order: stroke fill;
-}
-
-.bigLogoChar {
-  display: inline-block;
-  font-family: inherit;
-  will-change: transform, opacity, filter;
-  transform-style: preserve-3d;
 }
 
 @media (max-width: 768px) {
@@ -244,14 +204,11 @@
     padding: 0 1rem;
   }
 
-  .bigLogoSection {
-    padding: 1.5rem 0 1rem;
-    margin: 1rem 0;
+  .simpleLogoSection {
+    padding: 1.5rem 0 0.85rem;
   }
 
-  .bigLogoText {
-    font-size: clamp(2.5rem, 15.5vw, 6.5rem);
-    transform: rotateX(24deg);
-    padding: 0 0.25rem;
+  .simpleLogoText {
+    font-size: 1.75rem;
   }
 }

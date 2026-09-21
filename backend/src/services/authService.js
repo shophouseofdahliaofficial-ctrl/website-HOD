@@ -229,7 +229,7 @@ const login = async (email, password) => {
   try {
     console.log('[AUTH] Attempting to fetch role from database (source of truth)...');
     const profileResult = await Promise.race([
-      query('SELECT id, name, email, role, lifetime_savings FROM users WHERE id = $1 OR LOWER(email) = $2 ORDER BY CASE WHEN id = $1 THEN 0 ELSE 1 END LIMIT 1', [canonicalUserId, normalizedEmail]),
+      query('SELECT id, name, email, role, lifetime_savings FROM users WHERE id::text = $1::text OR LOWER(email) = LOWER($2::text) ORDER BY CASE WHEN id::text = $1::text THEN 0 ELSE 1 END LIMIT 1', [canonicalUserId, normalizedEmail]),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Query timeout')), 5000) // 5 second timeout
       )

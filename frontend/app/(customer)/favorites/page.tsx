@@ -7,13 +7,16 @@ import { Product } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { openProductPage } from '@/lib/utils/productNavigation';
+import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { getCardPriceDisplay } from '@/lib/utils/productCardPricing';
+import { getCardPriceDisplay, getFirstVariationForCard } from '@/lib/utils/productCardPricing';
 import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/utils/productImages';
 import { getAverageProductRating, getProductReviewCount } from '@/lib/utils/productReviewStats';
 import { useCategoryMap } from '@/hooks/useCategoryMap';
 import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
+import { animateToCart } from '@/lib/utils/cartAnimation';
+import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import CustomerSidebarLayout from '@/components/customer/CustomerSidebarLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import cardStyles from '@/components/ProductsSection.module.css';
@@ -22,6 +25,7 @@ import styles from './favorites.module.css';
 export default function FavoritesPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { addItem } = useCart();
   const { showToast } = useToast();
   const categoryMap = useCategoryMap();
   
@@ -199,7 +203,7 @@ export default function FavoritesPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                     </svg>
                   </button>
                 </div>
@@ -207,12 +211,50 @@ export default function FavoritesPage() {
                 <div className={cardStyles.productInfo}>
                   <div className={cardStyles.productTitleRow}>
                     <h3 className={cardStyles.productName}>{product.name}</h3>
-                    <span className={cardStyles.productPrice}>{getCardPriceDisplay(product, '₹')}</span>
+                    <button
+                      type="button"
+                      className={cardStyles.quickAddButton}
+                      disabled={isOutOfStock}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isOutOfStock) {
+                          showToast('Out of stock', 'error');
+                          return;
+                        }
+
+                        const variation = getFirstVariationForCard(product);
+                        const result = addItem({
+                          productId: product.id,
+                          quantity: 1,
+                          variationId: variation?.id,
+                        }, product.maxQuantity);
+                        if (result.appliedQuantity <= 0) {
+                          showToast(`Maximum order quantity is ${product.maxQuantity ?? 99}`, 'error');
+                          return;
+                        }
+
+                        showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
+
+                        const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
+                        const sourceElement = e.currentTarget;
+
+                        if (sourceElement && imageUrl) {
+                          animateToCart({
+                            imageUrl,
+                            sourceElement,
+                            targetElement: cartIconRefStore.getAny(),
+                          });
+                        }
+                      }}
+                      aria-label={isOutOfStock ? 'Out of stock' : 'Quick add to cart'}
+                    >
+                      <span>Quick Add +</span>
+                    </button>
                   </div>
 
                   <div className={cardStyles.productCategoryRow}>
-                    <div className={cardStyles.productCategory}>
-                      {categoryLabel}
+                    <div className={cardStyles.productPrice}>
+                      {getCardPriceDisplay(product, '₹')}
                     </div>
                     <div className={cardStyles.productRatingCompact}>
                       {(getProductReviewCount(product)) > 0 ? (

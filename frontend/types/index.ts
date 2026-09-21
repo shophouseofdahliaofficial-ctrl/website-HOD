@@ -50,6 +50,7 @@ export interface ProductReview {
   rating: number; // 1-5
   comment?: string;
   isApproved: boolean;
+  isVerifiedPurchase?: boolean;
   userName?: string;
   userEmail?: string;
   createdAt: string;

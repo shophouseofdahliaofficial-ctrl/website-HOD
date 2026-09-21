@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { adminContentApi, SiteContent } from '@/lib/api';
@@ -29,6 +29,8 @@ const OTHER_OPTIONS = [
   { type: 'homepage_products', label: 'Homepage Products Rows', path: '/admin/content/homepage_products', description: 'Adjust how many product rows appear on homepage "Our Products"' },
   { type: 'delivery_time_off', label: 'Delivery time off', path: '/admin/content/delivery_time_off', description: 'After cutoff (IST), show a confirm modal before cart / subscription / trial payment' },
   { type: 'photobooth_links', label: 'Photobooth settings', path: '/admin/content/photobooth_links', description: 'Configure links, cover images, and promo card placements for Polaroids and Photostrips' },
+  { type: 'gifting', label: 'Gifting', path: '/admin/content/gifting', description: 'Configure gift wrapping price per product and toggle customer availability' },
+  { type: 'cod', label: 'Cash on Delivery (COD)', path: '/admin/content/cod', description: 'Enable or disable Cash on Delivery across cart and checkout' },
 ];
 
 function Icon({ name }: { name: string }) {
@@ -159,6 +161,23 @@ function Icon({ name }: { name: string }) {
         <svg viewBox="0 0 24 24" {...common}>
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+      );
+    case 'gifting':
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <polyline points="20 12 20 22 4 22 4 12" />
+          <rect x="2" y="7" width="20" height="5" />
+          <line x1="12" y1="22" x2="12" y2="7" />
+          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+        </svg>
+      );
+    case 'cod':
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <line x1="2" y1="10" x2="22" y2="10" />
         </svg>
       );
     default:

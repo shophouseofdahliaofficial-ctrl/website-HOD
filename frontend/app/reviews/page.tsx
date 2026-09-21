@@ -57,7 +57,6 @@ function FeedbackSummary({ df }: { df: DetailedFeedback }) {
   return (
     <div className={styles.detailedFeedbackReadOnly}>
       {row('Quality of the product', df.qualityStars)}
-      {row('Delivery agent behaviour', df.deliveryAgentStars)}
       {row('On time delivery', df.onTimeStars)}
       {row('Value for money', df.valueForMoneyStars)}
       <div className={styles.detailedFeedbackRow}>

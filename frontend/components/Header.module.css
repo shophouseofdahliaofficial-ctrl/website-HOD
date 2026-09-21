@@ -2,24 +2,94 @@
 
 .header {
   background: transparent;
-  border-bottom: 0px solid #e5e5e5;
-  padding: 0.68rem 1.1rem 0.8rem 1.8rem !Important;
+  border: 0px solid white !important;
+  padding: 0.4rem 0.5rem !important;
   display: flex;
   flex-direction: column;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 8px;
+  left: 2px;
+  right: 14px;
+  width: auto;
   z-index: 1000;
-  width: 100%;
+  border-radius: 106px;
   border-bottom: 0px solid #e2e2e2f1;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  isolation: isolate;
+  box-sizing: border-box;
 }
 
+:global(body[data-desktop-cart-open="true"]) .header,
 :global(body[data-mobile-menu-open="true"]) .header {
-  z-index: 10000 !important;
+  z-index: 9999 !important;
+}
+
+:global(body[data-desktop-cart-open="true"]) .headerRow,
+:global(body[data-mobile-menu-open="true"]) .headerRow {
+  z-index: auto !important;
+}
+
+:global(body[data-desktop-cart-open="true"]) .logoContainer,
+:global(body[data-desktop-cart-open="true"]) .navMenuAnchor,
+:global(body[data-mobile-menu-open="true"]) .logoContainer,
+:global(body[data-mobile-menu-open="true"]) .navMenuAnchor {
+  z-index: 1 !important;
+}
+
+.rightButtonsSlot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+:global(body[data-desktop-cart-open="true"]) .rightButtonsSlot {
+  min-width: 170px;
+  height: 48px;
+}
+
+:global(body[data-mobile-menu-open="true"]) .rightButtonsSlot {
+  min-width: 90px;
+  height: 48px;
+}
+
+/* Desktop cart open: backdrop covers page, scrollbar & headerRow; cart pill (rightButtons) is above it via z-index: 9999 */
+:global(body[data-desktop-cart-open="true"]) .mobileMenuBackdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 10 !important;
+  background: rgba(0, 0, 0, 0.14) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  pointer-events: auto !important;
+}
+
+/* Mobile menu backdrop */
+:global(body[data-mobile-menu-open="true"]) .mobileMenuBackdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 10 !important;
+  background: rgba(0, 0, 0, 0.14) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  pointer-events: auto !important;
+}
+
+/* Cart pill/panel: stays above the blur overlay (z-index 10) */
+:global(body[data-desktop-cart-open="true"]) .rightButtons,
+:global(body[data-mobile-menu-open="true"]) .rightButtons {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
 }
 
 /* Staggered Opening Reveal Header Animation (Desktop & Mobile) */
@@ -51,6 +121,18 @@
   opacity: 1;
   transform: translateY(0);
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+}
+
+@media (min-width: 768px) {
+  :global(body[data-reveal-active="true"]) .header .logoContainer {
+    opacity: 0 !important;
+    transform: translate(-50%, -16px) !important;
+  }
+
+  :global(body[data-reveal-active="false"]) .header .logoContainer {
+    opacity: 1;
+    transform: translate(-50%, 0) !important;
+  }
 }
 
 :global(body[data-reveal-active="false"]) .header .navMenuAnchor {
@@ -317,9 +399,10 @@
   }
 
   .rightButtons {
-    margin-right: 8px;
+    margin-right: 0px;
+    margin-left: auto;
+    z-index: 20;
   }
-
 }
 
 .header {
@@ -474,6 +557,14 @@
 
 .headerSpacer {
   width: 100%;
+  height: 90px;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 767px) {
+  .headerSpacer {
+    height: 110px;
+  }
 }
 
 :global(body[data-reveal-active="true"]) .headerSpacer {
@@ -504,6 +595,19 @@
 @media (max-width: 767px) {
   .logoContainer {
     gap: 0rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .logoContainer {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  .logoOnHomepage {
+    animation: none !important;
   }
 }
 
@@ -3076,7 +3180,7 @@
   height: 48px;
   width: max-content;
   flex: 0 0 auto;
-  margin: 0 auto;
+  margin: 0;
   align-self: center;
 }
 
@@ -3084,7 +3188,9 @@
   .navMenuAnchor {
     display: flex;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
+    margin: 0;
+    z-index: 20;
   }
 }
 
@@ -3092,7 +3198,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
+  gap: 0.2rem;
   padding: 10px;
   height: 48px;
   visibility: hidden;
@@ -3134,7 +3240,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
+  gap: 0.2rem;
   width: 100%;
   white-space: nowrap;
   flex-shrink: 0;
@@ -3295,13 +3401,16 @@
 /* Mobile Menu Backdrop Blur (behind expanding .rightButtons) */
 .mobileMenuBackdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(171, 171, 171, 0%);
-  backdrop-filter: blur(13px);
-  -webkit-backdrop-filter: blur(13px);
-  z-index: 999;
+  background: rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 10;
   display: none;
   opacity: 0;
   pointer-events: none;
@@ -3332,6 +3441,14 @@
   position: relative;
   z-index: 10;
   pointer-events: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.rightButtonsExpandedInner::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Header section inside menu - no logo, no border bottom, account and search on left, close on right */

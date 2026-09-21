@@ -32,6 +32,7 @@ async function ensureDeliveriesTable() {
 }
 
 async function getDeliveriesForDate(date, slot) {
+  await ensureDeliveriesTable();
   const slotClause = slot === 'morning'
     ? `AND COALESCE(s.delivery_time, '00:00')::time < TIME '14:00'`
     : slot === 'evening'
@@ -111,8 +112,8 @@ async function getDeliveriesForDate(date, slot) {
       LEFT JOIN products p ON p.id = s.product_id
       LEFT JOIN product_variations pv ON pv.id = s.product_variation_id
       LEFT JOIN addresses a ON a.id = s.address_id
-      LEFT JOIN orders co ON co.id = s.checkout_order_id AND co.user_id = s.user_id
-      LEFT JOIN orders co_trial ON co_trial.id = s.trial_checkout_order_id AND co_trial.user_id = s.user_id
+      LEFT JOIN orders co ON co.id::text = s.checkout_order_id::text AND co.user_id = s.user_id
+      LEFT JOIN orders co_trial ON co_trial.id::text = s.trial_checkout_order_id::text AND co_trial.user_id = s.user_id
       LEFT JOIN deliveries d ON d.delivery_schedule_id = ds.id AND d.date = ds.delivery_date
       WHERE ds.delivery_date = $1
         AND (

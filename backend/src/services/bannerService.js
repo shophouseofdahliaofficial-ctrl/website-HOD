@@ -159,8 +159,13 @@ const createBanner = async (bannerData, imageFile, mobileImageFile = null) => {
     };
   }
 
-  // If images array is empty but uploadResult provided, construct the first image item
-  if (images.length === 0 && uploadResult.url) {
+  // Sync Cloudinary upload URLs back into images array primary item if present
+  if (images.length > 0 && uploadResult?.url) {
+    images[0].imageUrl = uploadResult.url;
+    if (uploadResult.publicId) images[0].imagePublicId = uploadResult.publicId;
+    if (mobileUploadResult?.url) images[0].mobileImageUrl = mobileUploadResult.url;
+    if (mobileUploadResult?.publicId) images[0].mobileImagePublicId = mobileUploadResult.publicId;
+  } else if (images.length === 0 && uploadResult?.url) {
     images.push({
       id: 'img_' + Math.random().toString(36).substring(2, 9),
       imageUrl: uploadResult.url,
@@ -254,13 +259,17 @@ const updateBanner = async (bannerId, updates, imageFile = null, mobileImageFile
   if (updates.images) {
     let parsedImages = typeof updates.images === 'string' ? JSON.parse(updates.images) : updates.images;
     if (Array.isArray(parsedImages)) {
-      updates.images = parsedImages;
-      if (parsedImages.length > 0 && !imageFile) {
+      if (parsedImages.length > 0) {
+        if (updates.imageUrl) parsedImages[0].imageUrl = updates.imageUrl;
+        if (updates.imagePublicId) parsedImages[0].imagePublicId = updates.imagePublicId;
+        if (updates.mobileImageUrl) parsedImages[0].mobileImageUrl = updates.mobileImageUrl;
+        if (updates.mobileImagePublicId) parsedImages[0].mobileImagePublicId = updates.mobileImagePublicId;
         updates.imageUrl = parsedImages[0].imageUrl || updates.imageUrl || banner.imageUrl;
         updates.imagePublicId = parsedImages[0].imagePublicId || updates.imagePublicId || banner.imagePublicId;
         updates.mobileImageUrl = parsedImages[0].mobileImageUrl || updates.mobileImageUrl || banner.mobileImageUrl;
         updates.mobileImagePublicId = parsedImages[0].mobileImagePublicId || updates.mobileImagePublicId || banner.mobileImagePublicId;
       }
+      updates.images = parsedImages;
     }
   }
 

@@ -1109,7 +1109,7 @@ const getDeliveries = async (req, res, next) => {
        LEFT JOIN products p ON s.product_id = p.id
        LEFT JOIN users u ON s.user_id = u.id
        LEFT JOIN product_variations pv ON s.product_variation_id = pv.id
-       LEFT JOIN orders co_pay ON co_pay.id = s.checkout_order_id AND co_pay.user_id = s.user_id
+       LEFT JOIN orders co_pay ON co_pay.id::text = s.checkout_order_id::text AND co_pay.user_id = s.user_id
        WHERE ds.delivery_date = $1
          AND (
            s.id IS NULL
@@ -1890,7 +1890,7 @@ const getPendingOrdersCount = async (req, res, next) => {
         AND NOT EXISTS (
           SELECT 1 FROM subscriptions st
           WHERE st.is_trial IS TRUE
-            AND (st.trial_checkout_order_id = orders.id OR (
+            AND (st.trial_checkout_order_id::text = orders.id::text OR (
               orders.razorpay_order_id IS NOT NULL AND BTRIM(orders.razorpay_order_id::text) <> ''
               AND st.razorpay_subscription_id::text = BTRIM(orders.razorpay_order_id::text)
             ))

@@ -13,7 +13,7 @@
   background: #fff;
   border-radius: 24px;
   padding: 2rem;
-  margin: 2rem 1rem;
+  margin: 1rem 1rem;
   position: relative;
   border: 0px solid #ddd;
 }
@@ -25,18 +25,23 @@
 @media (min-width: 992px) {
   .desktopLeftSticky {
     display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: calc(100% + 1.25rem);
+    position: fixed;
+    top: 6rem;
+    right: calc(50% + 375px + 1.25rem);
+    z-index: 30;
     pointer-events: none;
+  }
+
+  @media (max-width: 1100px) {
+    .desktopLeftSticky {
+      right: auto;
+      left: 1rem;
+    }
   }
 
   .desktopBackButton {
     pointer-events: auto;
-    position: -webkit-sticky;
-    position: sticky;
-    top: 4rem;
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -49,9 +54,8 @@
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
-    box-shadow: none;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .desktopBackButton:hover {
@@ -59,7 +63,6 @@
     color: #181818;
     border-color: #f8f8f8;
     transform: translateX(-3px);
-
   }
 
   .desktopBackButton svg {
@@ -295,6 +298,20 @@
   font-size: 0.85rem;
   color: #999;
   margin: 0;
+}
+
+.itemVariationList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.25rem 0 0.35rem 0;
+}
+
+.itemVariant {
+  font-size: 0.85rem;
+  color: #666666;
+  margin: 0;
+  line-height: 1.35;
 }
 
 /* Pricing */
@@ -779,9 +796,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.6rem;
+  padding: 0.85rem 0.99rem;
   background: #fef9c3bd;
-  border-radius: 8px;
+  border-radius: 80px;
   font-size: 0.85rem;
   color: #835800;
   width: 100%;

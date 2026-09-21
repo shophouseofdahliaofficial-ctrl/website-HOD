@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 interface FloatingLabelInputProps {
+  id?: string;
   type?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -17,9 +18,12 @@ interface FloatingLabelInputProps {
   maxLength?: number;
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
   pattern?: string;
+  containerStyle?: React.CSSProperties;
+  noMarginBottom?: boolean;
 }
 
 export default function FloatingLabelInput({
+  id,
   type = 'text',
   value,
   onChange,
@@ -34,6 +38,8 @@ export default function FloatingLabelInput({
   maxLength,
   inputMode,
   pattern,
+  containerStyle,
+  noMarginBottom = false,
 }: FloatingLabelInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isFloating, setIsFloating] = useState(false);
@@ -63,10 +69,11 @@ export default function FloatingLabelInput({
   const inputType = showPasswordToggle ? (showPassword ? 'text' : 'password') : type;
 
   return (
-    <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
+    <div style={{ position: 'relative', marginBottom: noMarginBottom ? 0 : '1.25rem', ...containerStyle }}>
       {/* Input Field - Fixed height container (increased to 56px for premium taller inputs) */}
       <div style={{ position: 'relative', height: '56px' }}>
         <input
+          id={id}
           ref={inputRef}
           type={inputType}
           value={value}

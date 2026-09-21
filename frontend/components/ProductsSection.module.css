@@ -486,7 +486,7 @@
 
 .productCard {
   background: white;
-  border-radius: 24px;
+  border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 2px 13px rgb(0 0 0 / 0%);
   transition: 0.03s;
@@ -511,7 +511,8 @@
   aspect-ratio: 1;
   background: transparent;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: 23px;
+  padding: 4px;
 }
 
 .discountBadge {
@@ -627,7 +628,7 @@
 }
 
 .productInfo {
-  padding: 1.25rem;
+  padding: 1.05rem 1.25rem;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1112,17 +1113,54 @@
 
 /* Custom Redesigned Product Card Styles */
 .productPrice {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #000;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
   font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   flex-shrink: 0;
   white-space: nowrap;
 }
 
+.quickAddButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.26rem 0.55rem;
+  background: #e9e9e9;
+  color: #484848;
+  border: 1px solid #e9e9e9;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(255, 1, 85, 0.08);
+}
+
+.quickAddButton:hover {
+  background: #ffd5e3;
+  border-color: #ff0155;
+  transform: scale(1.04);
+}
+
+.quickAddButton:active {
+  transform: scale(0.95);
+}
+
+.quickAddButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
 .favoriteButton {
   position: absolute;
-  bottom: 12px;
+  top: 12px;
   right: 12px;
   background: rgba(255, 255, 255, 0.85);
   border: none;
@@ -1179,6 +1217,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #4a5568;
+  padding-right: 2px;
 }
 
 .starIconSmall {
@@ -1204,13 +1243,18 @@
 
 @media (max-width: 640px) {
   .productPrice {
-    font-size: 3vw;
+    font-size: 0.68rem;
+  }
+
+  .quickAddButton {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.64rem;
   }
 
   .favoriteButton {
     width: 32px;
     height: 32px;
-    bottom: 8px;
+    top: 8px;
     right: 8px;
   }
 

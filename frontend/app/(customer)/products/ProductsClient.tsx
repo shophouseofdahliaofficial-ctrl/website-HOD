@@ -14,7 +14,8 @@ import { getFirstVariationForCard, getCardDiscountOff, getCardPriceDisplay, getP
 import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/utils/productImages';
 import { getAverageProductRating, getProductReviewCount } from '@/lib/utils/productReviewStats';
 import { useCategoryMap } from '@/hooks/useCategoryMap';
-import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
+import { animateToCart } from '@/lib/utils/cartAnimation';
+import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import styles from './products.module.css';
 import cardStyles from '@/components/ProductsSection.module.css';
 
@@ -139,10 +140,11 @@ export default function ProductsClient({
         <svg
           style={{
             animation: 'loaderSpin 0.8s linear infinite',
-            width: '32px',
-            height: '32px',
+            width: '22px',
+            height: '22px',
             color: '#ff0040',
-            marginBottom: '16px'
+            marginBottom: '0px',
+            flexShrink: 0
           }}
           viewBox="0 0 24 24"
           fill="none"
@@ -176,15 +178,16 @@ export default function ProductsClient({
           const categoryLabel = product.categoryId ? (categoryMap.get(product.categoryId) || 'Dairy') : 'Dairy';
           const unitLabel = getProductDisplayUnitLabel(product);
           const productImage = getPrimaryProductImageUrl(product);
+          const isOutOfStock = product.isActive === false || (typeof product.quantity === 'number' && product.quantity <= 0);
 
           return (
             <div
               key={product.id}
-              className={`${cardStyles.productCard} ${product.isActive === false || (typeof product.quantity === 'number' && product.quantity <= 0) ? cardStyles.productCardOutOfStock : ''}`}
+              className={`${cardStyles.productCard} ${isOutOfStock ? cardStyles.productCardOutOfStock : ''}`}
               onClick={() => openProductPage(router, product.id)}
             >
               <div className={cardStyles.productImage} style={productImage ? { aspectRatio: 'auto' } : undefined}>
-                {product.isActive === false || (typeof product.quantity === 'number' && product.quantity <= 0) ? (
+                {isOutOfStock ? (
                   <div className={cardStyles.outOfStockBadge}>Out of stock</div>
                 ) : null}
                 {productImage ? (
@@ -235,22 +238,60 @@ export default function ProductsClient({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
                 </button>
               </div>
 
               <div className={cardStyles.productInfo}>
-                {/* Row 1: Product Name and Price */}
+                {/* Row 1: Product Name and Quick Add */}
                 <div className={cardStyles.productTitleRow}>
                   <h3 className={cardStyles.productName}>{product.name}</h3>
-                  <span className={cardStyles.productPrice}>{getDisplayPrice(product)}</span>
+                  <button
+                    type="button"
+                    className={cardStyles.quickAddButton}
+                    disabled={isOutOfStock}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isOutOfStock) {
+                        showToast('Out of stock', 'error');
+                        return;
+                      }
+
+                      const variation = getFirstVariationForCard(product);
+                      const result = addItem({
+                        productId: product.id,
+                        quantity: 1,
+                        variationId: variation?.id,
+                      }, product.maxQuantity);
+                      if (result.appliedQuantity <= 0) {
+                        showToast(`Maximum order quantity is ${product.maxQuantity ?? 99}`, 'error');
+                        return;
+                      }
+
+                      showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
+
+                      const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
+                      const sourceElement = e.currentTarget;
+
+                      if (sourceElement && imageUrl) {
+                        animateToCart({
+                          imageUrl,
+                          sourceElement,
+                          targetElement: cartIconRefStore.getAny(),
+                        });
+                      }
+                    }}
+                    aria-label={isOutOfStock ? 'Out of stock' : 'Quick add to cart'}
+                  >
+                    <span>Quick Add +</span>
+                  </button>
                 </div>
 
-                {/* Row 2: Category and rating */}
+                {/* Row 2: Price and rating */}
                 <div className={cardStyles.productCategoryRow}>
-                  <div className={cardStyles.productCategory}>
-                    {categoryLabel}
+                  <div className={cardStyles.productPrice}>
+                    {getCardPriceDisplay(product, '₹')}
                   </div>
                   <div className={cardStyles.productRatingCompact}>
                     {(getProductReviewCount(product)) > 0 ? (

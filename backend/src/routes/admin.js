@@ -168,7 +168,7 @@ router.get('/verify/pending-orders', async (req, res, next) => {
         AND NOT EXISTS (
           SELECT 1 FROM subscriptions st
           WHERE st.is_trial IS TRUE
-            AND (st.trial_checkout_order_id = o.id OR (
+            AND (st.trial_checkout_order_id::text = o.id::text OR (
               o.razorpay_order_id IS NOT NULL AND BTRIM(o.razorpay_order_id::text) <> ''
               AND st.razorpay_subscription_id::text = BTRIM(o.razorpay_order_id::text)
             ))

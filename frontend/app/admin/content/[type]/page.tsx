@@ -31,6 +31,8 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
   coming_soon: 'Coming Soon Settings',
   'coming-soon': 'Coming Soon Settings',
   photobooth_links: 'Photobooth settings',
+  gifting: 'Gifting',
+  cod: 'COD Settings',
 };
 
 /**
@@ -125,6 +127,19 @@ export default function AdminContentEditPage() {
           polaroidsPromoProductId: data.metadata?.polaroidsPromoProductId ?? '',
           photostripsPromoProductId: data.metadata?.photostripsPromoProductId ?? '',
         });
+      }
+      if (contentType === 'gifting') {
+        const meta = data.metadata || {};
+        const price = Number(meta.price ?? (Number.isFinite(Number(data.title)) ? Number(data.title) : 25));
+        const enabled = meta.enabled !== undefined ? meta.enabled === true : (data.isActive ?? true);
+        const resolvedPrice = Number.isFinite(price) && price >= 0 ? price : 25;
+        setTitle(String(resolvedPrice));
+        setContentText('Gift wrapping settings');
+        setMetadata({
+          price: resolvedPrice,
+          enabled,
+        });
+        setIsActive(enabled);
       }
       if (contentType === 'platform_fee') {
         const metadataAmount = Number(data.metadata?.amount);
@@ -283,6 +298,20 @@ export default function AdminContentEditPage() {
         setTitle('Scribble is coming soon!');
         setContentText('We’re working behind the scenes to bring you 100% pure, chemical-free milk and dairy products.');
         setMetadata({ imageUrl: '', imagePublicId: '', waitingCount: 0 });
+        setIsActive(true);
+      } else if (contentType === 'gifting') {
+        setError('');
+        setContent(null);
+        setTitle('25');
+        setContentText('Gift wrapping settings');
+        setMetadata({ price: 25, enabled: true });
+        setIsActive(true);
+      } else if (contentType === 'cod') {
+        setError('');
+        setContent(null);
+        setTitle('Cash on Delivery');
+        setContentText('Cash on delivery availability settings');
+        setMetadata({ enabled: true });
         setIsActive(true);
       } else {
         setError(error.message || 'Failed to load content');
@@ -489,6 +518,27 @@ export default function AdminContentEditPage() {
         };
       }
 
+      if (contentType === 'gifting') {
+        const rawPrice = Number(metadata.price !== undefined && metadata.price !== '' ? metadata.price : title);
+        if (!Number.isFinite(rawPrice) || rawPrice < 0) {
+          setError('Price to charge per product must be 0 or more.');
+          setSaving(false);
+          return;
+        }
+        const isEnabled = metadata.enabled !== undefined ? metadata.enabled === true : isActive;
+        finalMetadata = {
+          price: Math.round(rawPrice * 100) / 100,
+          enabled: isEnabled,
+        };
+      }
+
+      if (contentType === 'cod') {
+        const isEnabled = metadata.enabled !== undefined ? metadata.enabled === true : isActive;
+        finalMetadata = {
+          enabled: isEnabled,
+        };
+      }
+
       await adminContentApi.update(contentType, {
         title:
           contentType === 'subscription_delivery'
@@ -505,7 +555,11 @@ export default function AdminContentEditPage() {
                       ? title.trim() || DEFAULT_DELIVERY_TIME_OFF_TITLE
                       : contentType === 'photobooth_links'
                         ? 'Photobooth settings'
-                        : title,
+                        : contentType === 'gifting'
+                          ? String(finalMetadata.price ?? 25)
+                          : contentType === 'cod'
+                            ? (finalMetadata.enabled ? 'COD Enabled' : 'COD Disabled')
+                            : title,
         content:
           contentType === 'subscription_delivery'
             ? 'Subscription delivery settings'
@@ -521,7 +575,11 @@ export default function AdminContentEditPage() {
                       ? contentText.trim() || DEFAULT_DELIVERY_TIME_OFF_BODY
                       : contentType === 'photobooth_links'
                         ? 'Configure links for Polaroids and Photostrips'
-                        : contentText,
+                        : contentType === 'gifting'
+                          ? 'Gift wrapping settings'
+                          : contentType === 'cod'
+                            ? 'Cash on Delivery payment configuration.'
+                            : contentText,
         metadata: finalMetadata,
       });
 
@@ -576,7 +634,7 @@ export default function AdminContentEditPage() {
       )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        {contentType !== 'subscription_delivery' && contentType !== 'help_support' && contentType !== 'app_download' && contentType !== 'delivery_rates' && contentType !== 'delivery_time_off' && contentType !== 'coming_soon' && contentType !== 'coming-soon' && contentType !== 'photobooth_links' && (
+        {contentType !== 'subscription_delivery' && contentType !== 'help_support' && contentType !== 'app_download' && contentType !== 'delivery_rates' && contentType !== 'delivery_time_off' && contentType !== 'coming_soon' && contentType !== 'coming-soon' && contentType !== 'photobooth_links' && contentType !== 'gifting' && (
           <div className={styles.formGroup}>
             <label className={styles.label}>
               {contentType === 'platform_fee' ? 'Platform fee (INR) *' : 'Title *'}
@@ -793,6 +851,22 @@ export default function AdminContentEditPage() {
               onChange={(e) => setMetadata({ ...metadata, phone: e.target.value })}
               className={styles.input}
             />
+          </div>
+        )}
+
+        {contentType === 'contact' && (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>WhatsApp Number / Link</label>
+            <input
+              type="text"
+              value={metadata.whatsapp || ''}
+              onChange={(e) => setMetadata({ ...metadata, whatsapp: e.target.value })}
+              className={styles.input}
+              placeholder="e.g. 919876543210 or https://wa.me/919876543210"
+            />
+            <div className={styles.helpText} style={{ marginTop: '0.5rem' }}>
+              Direct WhatsApp link or 10-12 digit phone number for the floating help button chat link.
+            </div>
           </div>
         )}
 
@@ -1068,7 +1142,7 @@ export default function AdminContentEditPage() {
               </div>
             </div>
           </div>
-        ) : contentType === 'help_support' || contentType === 'app_download' || contentType === 'platform_fee' || contentType === 'delivery_time_off' || contentType === 'coming_soon' || contentType === 'coming-soon' || contentType === 'photobooth_links' ? null : (
+        ) : contentType === 'help_support' || contentType === 'app_download' || contentType === 'platform_fee' || contentType === 'delivery_time_off' || contentType === 'coming_soon' || contentType === 'coming-soon' || contentType === 'photobooth_links' || contentType === 'gifting' ? null : (
           <div className={styles.formGroup}>
             <label className={styles.label}>
               Content {contentType === 'contact' ? '(Optional)' : '*'}
@@ -1196,6 +1270,73 @@ export default function AdminContentEditPage() {
               </select>
               <div className={styles.helpText}>
                 Select on which product details modal the Photostrips #Photobooth promo card should be shown.
+              </div>
+            </div>
+          </>
+        )}
+
+        {contentType === 'gifting' && (
+          <>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>1. Price to charge per product for gifting (₹) *</label>
+              <input
+                type="number"
+                min={0}
+                step="1"
+                value={metadata.price !== undefined ? metadata.price : (title || 25)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setMetadata({ ...metadata, price: val });
+                  setTitle(val);
+                }}
+                className={styles.input}
+                placeholder="e.g. 25"
+                required
+              />
+              <div className={styles.helpText}>
+                This price is charged per product that the customer chooses to gift wrap.
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={metadata.enabled !== undefined ? metadata.enabled === true : isActive}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setMetadata({ ...metadata, enabled: checked });
+                    setIsActive(checked);
+                  }}
+                  className={styles.checkbox}
+                />
+                2. Enable Gifting option for customers (Show in Cart)
+              </label>
+              <div className={styles.helpText}>
+                When turned on, the gifting card (.cart_giftingSection) is displayed in the cart drawer and cart page. If turned off, it is completely hidden from customers.
+              </div>
+            </div>
+          </>
+        )}
+
+        {contentType === 'cod' && (
+          <>
+            <div className={styles.formGroup}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={metadata.enabled !== undefined ? metadata.enabled === true : isActive}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setMetadata({ ...metadata, enabled: checked });
+                    setIsActive(checked);
+                  }}
+                  className={styles.checkbox}
+                />
+                Enable Cash on Delivery (COD)
+              </label>
+              <div className={styles.helpText}>
+                When turned on, the COD payment methods banner appears in the cart drawer &amp; cart page, and the Cash on Delivery (COD) payment option is enabled in checkout step 3. When turned off, the COD badge is hidden and COD in checkout is disabled (muted).
               </div>
             </div>
           </>

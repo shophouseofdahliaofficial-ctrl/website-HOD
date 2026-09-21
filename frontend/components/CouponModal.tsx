@@ -12,6 +12,13 @@ interface CouponModalProps {
   onApply: (code: string) => void;
 }
 
+const formatINR = (amount: number) => {
+  return (Number(amount) || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const CouponModal: React.FC<CouponModalProps> = ({ isOpen, onClose, subtotal, platformFee, onApply }) => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(false);
@@ -104,7 +111,7 @@ const CouponModal: React.FC<CouponModalProps> = ({ isOpen, onClose, subtotal, pl
         <div className={styles.modalHeader}>
           <div className={styles.headerLeft}>
             <h2 className={styles.modalTitle}>Available Coupons</h2>
-            <p className={styles.cartTotalText}>Your cart: ₹{cartTotal.toFixed(2)}</p>
+            <p className={styles.cartTotalText}>Your cart: ₹{formatINR(cartTotal)}</p>
           </div>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>

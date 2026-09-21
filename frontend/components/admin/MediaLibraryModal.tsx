@@ -49,6 +49,15 @@ export default function MediaLibraryModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (deleteTarget) setDeleteTarget(null);
@@ -170,11 +179,12 @@ export default function MediaLibraryModal({
     <div
       className={styles.backdrop}
       role="presentation"
+      data-lenis-prevent
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={styles.modal} role="dialog" aria-modal="true">
+      <div className={styles.modal} role="dialog" aria-modal="true" data-lenis-prevent>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerInfo}>
@@ -275,7 +285,7 @@ export default function MediaLibraryModal({
         </div>
 
         {/* Media Grid */}
-        <div className={styles.body}>
+        <div className={styles.body} data-lenis-prevent>
           {loading ? (
             <div className={styles.loadingState}>
               <LoadingSpinner size="medium" />

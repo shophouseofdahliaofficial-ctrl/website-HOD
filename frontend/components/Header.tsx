@@ -23,6 +23,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { SITE_NAME } from '@/lib/seo';
+import DesktopCartDrawer from './DesktopCartDrawer';
 
 /**
  * User Dropdown Component
@@ -316,12 +317,20 @@ function UserDropdown({ user, logout, isAdmin, isMobile = false, className = '',
           </svg>
           My Account
         </Link>
-        <Link href="/saved-designs" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
+
+        <Link href="/orders" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
           <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M21 16V8C21 7.46957 20.7893 6.96086 20.4142 6.58579C20.0391 6.21071 19.5304 6 19 6H5C4.46957 6 3.96086 6.21071 3.58579 6.58579C3.21071 6.96086 3 7.46957 3 8V16C3 16.5304 3.21071 17.0391 3.58579 17.4142C3.96086 17.7893 4.46957 18 5 18H19C19.5304 18 20.0391 17.7893 20.4142 17.4142C20.7893 17.0391 21 16.5304 21 16Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 14H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Saved Designs
+          Orders
+        </Link>
+        <Link href="/favorites" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
+          <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Favorites
         </Link>
         <button
           type="button"
@@ -345,32 +354,11 @@ function UserDropdown({ user, logout, isAdmin, isMobile = false, className = '',
           </svg>
           Gift Cards
         </Link>
-        <Link href="/orders" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
-          <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 16V8C21 7.46957 20.7893 6.96086 20.4142 6.58579C20.0391 6.21071 19.5304 6 19 6H5C4.46957 6 3.96086 6.21071 3.58579 6.58579C3.21071 6.96086 3 7.46957 3 8V16C3 16.5304 3.21071 17.0391 3.58579 17.4142C3.96086 17.7893 4.46957 18 5 18H19C19.5304 18 20.0391 17.7893 20.4142 17.4142C20.7893 17.0391 21 16.5304 21 16Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M8 14H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Orders
-        </Link>
-        <Link href="/favorites" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
-          <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Favorites
-        </Link>
         <Link href="/reviews" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
           <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Reviews
-        </Link>
-        <Link href="/connectors" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
-          <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Connectors
         </Link>
         {isAdmin && (
           <Link href="/admin" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
@@ -632,16 +620,19 @@ export default function Header() {
 
   // Mobile navigation menu state, refs and effects
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopCartOpen, setIsDesktopCartOpen] = useState(false);
   const [isMobileOthersOpen, setIsMobileOthersOpen] = useState(false);
   const [isMobileKeepsakesOpen, setIsMobileKeepsakesOpen] = useState(false);
   const rightButtonsRef = useRef<HTMLDivElement>(null);
   const rightButtonsCollapsedRef = useRef<HTMLDivElement>(null);
   const rightButtonsExpandedRef = useRef<HTMLDivElement>(null);
+  const desktopCartExpandedRef = useRef<HTMLDivElement>(null);
   const mobileMenuBackdropRef = useRef<HTMLDivElement>(null);
   const mobileMenuHeaderRef = useRef<HTMLDivElement>(null);
   const mobileNavMenuRef = useRef<HTMLElement>(null);
   const isMenuAnimatingRef = useRef(false);
   const collapsedPillRectRef = useRef<{ top: number; left: number; width: number; height: number } | null>(null);
+  const currentDesktopCartScrollYRef = useRef(0);
   const [canScrollTop, setCanScrollTop] = useState(false);
   const [canScrollBottom, setCanScrollBottom] = useState(false);
 
@@ -689,6 +680,113 @@ export default function Header() {
       };
     }
     setIsMobileMenuOpen(true);
+  };
+
+  const openDesktopCart = useCallback(() => {
+    if (isMenuAnimatingRef.current) return;
+    currentDesktopCartScrollYRef.current = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    const nav = rightButtonsRef.current;
+    if (nav) {
+      const rect = nav.getBoundingClientRect();
+      collapsedPillRectRef.current = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+    setIsDesktopCartOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const handleOpenDesktopCart = () => {
+      openDesktopCart();
+    };
+    window.addEventListener('open-desktop-cart', handleOpenDesktopCart);
+    window.addEventListener('open-cart-drawer', handleOpenDesktopCart);
+    window.addEventListener('milko:open-desktop-cart', handleOpenDesktopCart);
+    return () => {
+      window.removeEventListener('open-desktop-cart', handleOpenDesktopCart);
+      window.removeEventListener('open-cart-drawer', handleOpenDesktopCart);
+      window.removeEventListener('milko:open-desktop-cart', handleOpenDesktopCart);
+    };
+  }, [openDesktopCart]);
+
+  const closeDesktopCart = () => {
+    if (isMenuAnimatingRef.current) return;
+    const nav = rightButtonsRef.current;
+    const backdrop = mobileMenuBackdropRef.current;
+    const collapsedContent = rightButtonsCollapsedRef.current;
+    const cartContent = desktopCartExpandedRef.current;
+
+    if (!nav) {
+      setIsDesktopCartOpen(false);
+      return;
+    }
+
+    isMenuAnimatingRef.current = true;
+    const savedRect = collapsedPillRectRef.current || {
+      top: 14,
+      left: window.innerWidth - 100,
+      width: 86,
+      height: 44,
+    };
+
+    gsap.killTweensOf([backdrop, nav, collapsedContent, cartContent].filter(Boolean));
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'power3.inOut' },
+      onComplete: () => {
+        setIsDesktopCartOpen(false);
+        document.body.removeAttribute('data-desktop-cart-open');
+        (window as any).lenis?.start();
+        if (backdrop) gsap.set(backdrop, { display: 'none', pointerEvents: 'none' });
+        if (cartContent) gsap.set(cartContent, { display: 'none' });
+        if (collapsedContent) gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
+        gsap.set(nav, { clearProps: 'all' });
+        isMenuAnimatingRef.current = false;
+      },
+    });
+
+    if (backdrop) {
+      tl.to(backdrop, { opacity: 0, duration: 0.35, ease: 'power2.inOut' }, 0);
+    }
+
+    if (cartContent) {
+      tl.to(cartContent, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
+    }
+
+    tl.to(
+      nav,
+      {
+        top: savedRect.top,
+        left: savedRect.left,
+        width: savedRect.width,
+        height: savedRect.height,
+        borderRadius: 555,
+        background: '#ffffffbf',
+        padding: '3px 4px',
+        boxShadow: 'none',
+        duration: 0.42,
+        ease: 'power3.inOut',
+      },
+      0.04
+    );
+
+    if (collapsedContent) {
+      tl.to(
+        collapsedContent,
+        {
+          opacity: 1,
+          duration: 0.18,
+          ease: 'power2.out',
+          onStart: () => {
+            gsap.set(collapsedContent, { display: 'flex' });
+          },
+        },
+        0.24
+      );
+    }
   };
 
   const closeMobileMenu = () => {
@@ -851,20 +949,24 @@ export default function Header() {
 
   // Close dropdown on route changes
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isDesktopCartOpen) {
       const nav = rightButtonsRef.current;
       const backdrop = mobileMenuBackdropRef.current;
       const collapsedContent = rightButtonsCollapsedRef.current;
       const expandedContent = rightButtonsExpandedRef.current;
+      const cartContent = desktopCartExpandedRef.current;
       if (backdrop) gsap.set(backdrop, { display: 'none', pointerEvents: 'none', opacity: 0 });
       if (expandedContent) gsap.set(expandedContent, { display: 'none', opacity: 0 });
+      if (cartContent) gsap.set(cartContent, { display: 'none', opacity: 0 });
       if (collapsedContent) gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
       if (nav) gsap.set(nav, { clearProps: 'all' });
       document.body.style.overflow = '';
       document.body.removeAttribute('data-mobile-menu-open');
+      document.body.removeAttribute('data-desktop-cart-open');
       isMenuAnimatingRef.current = false;
     }
     setIsMobileMenuOpen(false);
+    setIsDesktopCartOpen(false);
     setIsMobileOthersOpen(false);
     setIsMobileKeepsakesOpen(false);
     setExpandedDropdown(null);
@@ -1032,8 +1134,9 @@ export default function Header() {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.documentElement.setAttribute('data-mobile-menu-open', 'true');
       document.body.setAttribute('data-mobile-menu-open', 'true');
+      (window as any).lenis?.stop();
 
       const nav = rightButtonsRef.current;
       const backdrop = mobileMenuBackdropRef.current;
@@ -1170,14 +1273,212 @@ export default function Header() {
         }, 0.16);
       }
     } else {
-      document.body.style.overflow = '';
+      document.documentElement.removeAttribute('data-mobile-menu-open');
       document.body.removeAttribute('data-mobile-menu-open');
+      (window as any).lenis?.start();
     }
     return () => {
-      document.body.style.overflow = '';
+      document.documentElement.removeAttribute('data-mobile-menu-open');
       document.body.removeAttribute('data-mobile-menu-open');
+      (window as any).lenis?.start();
     };
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (isDesktopCartOpen) {
+      document.documentElement.setAttribute('data-desktop-cart-open', 'true');
+      document.body.setAttribute('data-desktop-cart-open', 'true');
+      (window as any).lenis?.stop();
+
+      const handlePreventBackgroundScroll = (e: WheelEvent | TouchEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest('[data-lenis-prevent]')) {
+          return;
+        }
+        e.preventDefault();
+      };
+
+      const handlePreventKeyboardScroll = (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.closest('[data-lenis-prevent]'))
+        ) {
+          return;
+        }
+        if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) {
+          e.preventDefault();
+        }
+      };
+
+      const initialScrollY = currentDesktopCartScrollYRef.current;
+      const handleScrollLock = () => {
+        if (Math.abs(window.scrollY - initialScrollY) > 1) {
+          window.scrollTo({ top: initialScrollY, behavior: 'instant' });
+        }
+      };
+
+      window.addEventListener('wheel', handlePreventBackgroundScroll, { passive: false });
+      window.addEventListener('touchmove', handlePreventBackgroundScroll, { passive: false });
+      window.addEventListener('keydown', handlePreventKeyboardScroll, { passive: false });
+      window.addEventListener('scroll', handleScrollLock, { passive: true });
+
+      const nav = rightButtonsRef.current;
+      const backdrop = mobileMenuBackdropRef.current;
+      const collapsedContent = rightButtonsCollapsedRef.current;
+      const cartContent = desktopCartExpandedRef.current;
+
+      if (!nav) return;
+
+      isMenuAnimatingRef.current = true;
+      const savedRect = collapsedPillRectRef.current || {
+        top: 14,
+        left: window.innerWidth - 100,
+        width: 86,
+        height: 44,
+      };
+
+      gsap.killTweensOf([backdrop, nav, collapsedContent, cartContent].filter(Boolean));
+
+      gsap.set(nav, {
+        position: 'fixed',
+        top: savedRect.top,
+        left: savedRect.left,
+        right: 'auto',
+        bottom: 'auto',
+        width: savedRect.width,
+        height: savedRect.height,
+        borderRadius: '555px',
+        background: '#ffffffbf',
+        zIndex: 9999,
+        padding: '3px 4px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        justifyContent: 'flex-start',
+        overflow: 'hidden',
+        boxShadow: 'none',
+      });
+
+      if (collapsedContent) {
+        gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
+      }
+      if (cartContent) {
+        gsap.set(cartContent, { display: 'flex', opacity: 0 });
+      }
+      if (backdrop) {
+        gsap.set(backdrop, { opacity: 0, display: 'block', pointerEvents: 'auto' });
+      }
+
+      const tl = gsap.timeline({
+        defaults: { ease: 'power4.out' },
+        onComplete: () => {
+          isMenuAnimatingRef.current = false;
+        },
+      });
+
+      if (backdrop) {
+        tl.to(
+          backdrop,
+          {
+            opacity: 1,
+            duration: 0.45,
+            ease: 'power2.out',
+          },
+          0
+        );
+      }
+
+      if (collapsedContent) {
+        tl.to(
+          collapsedContent,
+          {
+            opacity: 0,
+            duration: 0.12,
+            ease: 'power2.out',
+            onComplete: () => {
+              gsap.set(collapsedContent, { display: 'none' });
+            },
+          },
+          0
+        );
+      }
+
+      const targetWidth = Math.min(400, Math.max(340, window.innerWidth - 24));
+      const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const targetHeight = Math.max(0, viewportHeight - 20);
+      const targetTop = 10;
+      const targetLeft = Math.max(10, window.innerWidth - targetWidth - 12);
+
+      tl.to(
+        nav,
+        {
+          top: targetTop,
+          left: targetLeft,
+          width: targetWidth,
+          height: targetHeight,
+          borderRadius: 24,
+          background: '#ffffff',
+          padding: 0,
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+          duration: 0.52,
+          ease: 'power4.out',
+        },
+        0
+      );
+
+      if (cartContent) {
+        tl.to(
+          cartContent,
+          {
+            opacity: 1,
+            duration: 0.25,
+            ease: 'power2.out',
+          },
+          0.12
+        );
+      }
+
+      return () => {
+        (window as any).lenis?.start();
+        window.removeEventListener('wheel', handlePreventBackgroundScroll);
+        window.removeEventListener('touchmove', handlePreventBackgroundScroll);
+        window.removeEventListener('keydown', handlePreventKeyboardScroll);
+        window.removeEventListener('scroll', handleScrollLock);
+        document.documentElement.removeAttribute('data-desktop-cart-open');
+        document.body.removeAttribute('data-desktop-cart-open');
+      };
+    } else {
+      (window as any).lenis?.start();
+      document.documentElement.removeAttribute('data-desktop-cart-open');
+      document.body.removeAttribute('data-desktop-cart-open');
+    }
+  }, [isDesktopCartOpen]);
+
+  // Listen for custom open-desktop-cart events (e.g. from Add to Cart or external triggers)
+  useEffect(() => {
+    const handleOpenCartEvent = () => {
+      if (window.innerWidth >= 768) {
+        openDesktopCart();
+      }
+    };
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isDesktopCartOpen) closeDesktopCart();
+      }
+    };
+    window.addEventListener('milko:open-desktop-cart', handleOpenCartEvent);
+    window.addEventListener('open-desktop-cart', handleOpenCartEvent);
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      window.removeEventListener('milko:open-desktop-cart', handleOpenCartEvent);
+      window.removeEventListener('open-desktop-cart', handleOpenCartEvent);
+      window.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isDesktopCartOpen]);
 
   useEffect(() => {
     if (isSearchOverlayOpen) {
@@ -1449,7 +1750,12 @@ export default function Header() {
   const cartButtonMobileRef = useRef<HTMLElement | null>(null);
   const cartButtonDesktopRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.scrollY > 10;
+    }
+    return false;
+  });
   const hasScrolledToMembershipRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -1491,10 +1797,17 @@ export default function Header() {
     };
 
     updateRefs();
-    // Update refs after a short delay to ensure DOM is ready
-    const timeout = setTimeout(updateRefs, 100);
-    return () => clearTimeout(timeout);
-  }, [itemCount]); // Re-run when cart count changes
+    const t1 = setTimeout(updateRefs, 50);
+    const t2 = setTimeout(updateRefs, 200);
+    const t3 = setTimeout(updateRefs, 600);
+    window.addEventListener('resize', updateRefs);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener('resize', updateRefs);
+    };
+  }, [itemCount, showDesktopNav]);
 
   // Check if we're on an auth page or admin page
   const isAuthPage = pathname?.startsWith('/auth');
@@ -1509,6 +1822,11 @@ export default function Header() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
+      requestAnimationFrame(() => {
+        if (headerRef.current) {
+          setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+        }
+      });
     }, 800); // Show shimmer for 800ms on initial load
 
     return () => clearTimeout(timer);
@@ -1524,7 +1842,13 @@ export default function Header() {
             setHeaderHeight(searchRow.getBoundingClientRect().height + 0.5); // Add padding
           }
         } else {
-          setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+          const measured = headerRef.current.getBoundingClientRect().height;
+          if (isLoading) {
+            const defaultH = window.innerWidth <= 767 ? 88 : 70;
+            setHeaderHeight(Math.max(measured, defaultH));
+          } else {
+            setHeaderHeight(measured);
+          }
         }
       }
     };
@@ -1532,7 +1856,7 @@ export default function Header() {
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, [isScrolled]);
+  }, [isScrolled, isLoading]);
 
   // Scroll detection for mobile header behavior
   useEffect(() => {
@@ -1729,6 +2053,16 @@ export default function Header() {
         ].filter(Boolean).join(' ')}
         style={{ '--header-height': `${headerHeight}px` } as React.CSSProperties}
       >
+        {/* Backdrop blur overlay — inside header so it blurs headerRow & page below it, while rightButtons (cart) expands above it */}
+        <div
+          ref={mobileMenuBackdropRef}
+          className={`${styles.mobileMenuBackdrop} ${isMobileMenuOpen || isDesktopCartOpen ? styles.mobileMenuBackdropOpen : ''}`}
+          onClick={() => {
+            if (isDesktopCartOpen) closeDesktopCart();
+            else if (isMobileMenuOpen) closeMobileMenu();
+          }}
+        />
+
         <NavigationProgressBar />
 
         {/* First Row: Logo and Icons */}
@@ -1764,14 +2098,7 @@ export default function Header() {
                 <div className={styles.navMenuAnchor}>
                   {/* Invisible Natural Sizer ensuring navMenuAnchor has the exact natural width & height */}
                   <div className={styles.navMenuSizer} aria-hidden="true">
-                    <span className={styles.navLink}>Journals</span>
-                    <span className={styles.navLink}>Scribbling Sets</span>
-                    <span className={styles.keepsakesButton}>
-                      Memory Keepsakes
-                      <svg className={styles.dropdownArrow} viewBox="0 0 24 24" fill="none">
-                        <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
+                    <span className={styles.navLink}>Collections</span>
                     <span className={styles.othersButton}>
                       Others
                       <svg className={styles.dropdownArrow} viewBox="0 0 24 24" fill="none">
@@ -1790,32 +2117,8 @@ export default function Header() {
                         className={`${styles.navLink} ${isHeaderNavActive(pathname, '/journals') ? styles.navLinkActive : ''}`}
                         onClick={() => setExpandedDropdown(null)}
                       >
-                        Journals
+                        Collections
                       </Link>
-                      <Link
-                        href="/scribbling-sets"
-                        className={`${styles.navLink} ${isHeaderNavActive(pathname, '/scribbling-sets') ? styles.navLinkActive : ''}`}
-                        onClick={() => setExpandedDropdown(null)}
-                      >
-                        Scribbling Sets
-                      </Link>
-                      <div className={styles.keepsakesDropdown}>
-                        <button
-                          type="button"
-                          onClick={() => handleDropdownToggle('keepsakes')}
-                          className={`${styles.keepsakesButton} ${expandedDropdown === 'keepsakes' || isKeepsakesNavActive(pathname) ? styles.navLinkActive : ''}`}
-                        >
-                          Memory Keepsakes
-                          <svg
-                            className={`${styles.dropdownArrow} ${expandedDropdown === 'keepsakes' ? styles.dropdownArrowOpen : ''}`}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                      </div>
                       <div className={styles.othersDropdown}>
                         <button
                           type="button"
@@ -1919,10 +2222,11 @@ export default function Header() {
 
               {/* Right Side Icons / Expanding Menu - Hide on auth pages */}
               {!isAuthPage && (
-                <div
-                  ref={rightButtonsRef}
-                  className={`${styles.rightButtons} ${isMobileMenuOpen ? styles.rightButtonsExpanded : ''}`}
-                >
+                <div className={styles.rightButtonsSlot}>
+                  <div
+                    ref={rightButtonsRef}
+                    className={`${styles.rightButtons} ${isMobileMenuOpen ? styles.rightButtonsExpanded : ''}`}
+                  >
                   {/* Collapsed Mode Icons */}
                   <div
                     ref={rightButtonsCollapsedRef}
@@ -1989,8 +2293,9 @@ export default function Header() {
                       href="/cart"
                       className={`${styles.iconButton} ${styles.mobileCartButton}`}
                       aria-label="Cart"
+                      data-cart-target="mobile"
                     >
-                      <div ref={cartButtonMobileRef as any} className={styles.cartIconWrapper}>
+                      <div ref={cartButtonMobileRef as any} className={styles.cartIconWrapper} data-cart-icon-wrapper="true">
                         <svg className={`${styles.buttonIcon} ${styles.cartIcon}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                           <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
@@ -2006,12 +2311,17 @@ export default function Header() {
                     </Link>
 
                     {/* Desktop Cart Button */}
-                    <Link
-                      href="/cart"
+                    <button
+                      type="button"
                       className={styles.cartButton}
                       aria-label="Cart"
+                      data-cart-target="desktop"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openDesktopCart();
+                      }}
                     >
-                      <div ref={cartButtonDesktopRef as any} className={styles.cartIconWrapper}>
+                      <div ref={cartButtonDesktopRef as any} className={styles.cartIconWrapper} data-cart-icon-wrapper="true">
                         <svg className={`${styles.buttonIcon} ${styles.cartIcon}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                           <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
@@ -2024,8 +2334,19 @@ export default function Header() {
                         )}
                       </div>
                       <span className={styles.buttonText}>Cart</span>
-                    </Link>
+                    </button>
                   </div>
+
+                  {/* Expanded Desktop Cart & Checkout Content directly inside .rightButtons */}
+                  {isDesktopCartOpen && (
+                    <div
+                      ref={desktopCartExpandedRef}
+                      className={styles.rightButtonsExpandedInner}
+                      style={{ display: isDesktopCartOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
+                    >
+                      <DesktopCartDrawer onClose={closeDesktopCart} />
+                    </div>
+                  )}
 
                   {/* Expanded Mobile Menu Content directly inside .rightButtons */}
                   {showNavMenuOverlay && (
@@ -2108,52 +2429,9 @@ export default function Header() {
                           className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/journals') ? styles.mobileNavLinkActive : ''}`}
                           onClick={closeMobileMenu}
                         >
-                          Journals
+                          Collections
                         </Link>
-                        <Link
-                          href="/scribbling-sets"
-                          className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/scribbling-sets') ? styles.mobileNavLinkActive : ''}`}
-                          onClick={closeMobileMenu}
-                        >
-                          Scribbling Sets
-                        </Link>
-                        <div className={styles.mobileKeepsakesDropdown} style={{ width: '100%' }}>
-                          <button
-                            type="button"
-                            className={styles.mobileNavLink}
-                            onClick={() => setIsMobileKeepsakesOpen(!isMobileKeepsakesOpen)}
-                            style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
-                          >
-                            <span>Memory Keepsakes</span>
-                            <svg
-                              className={`${styles.dropdownArrow} ${isMobileKeepsakesOpen ? styles.dropdownArrowOpen : ''}`}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              style={{ width: '16px', height: '16px' }}
-                            >
-                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                          {isMobileKeepsakesOpen && (
-                            <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                              <Link
-                                href="/memorybooks"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/memorybooks') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Memory Books
-                              </Link>
-                              <Link
-                                href="/polaroids"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/polaroids') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Polas & Strips
-                              </Link>
-                            </div>
-                          )}
-                        </div>
+
                         <Link
                           href="/photobooth"
                           className={`${styles.mobileNavLink} ${styles.mobileNavLinkHighlight} ${isHeaderNavActive(pathname, '/photobooth') ? styles.mobileNavLinkActive : ''}`}
@@ -2243,7 +2521,8 @@ export default function Header() {
                     </div>
                   )}
                 </div>
-              )}
+              </div>
+            )}
             </>
           )}
         </div>
@@ -2724,20 +3003,11 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mobile / tablet: Backdrop blur overlay behind expanding rightButtons */}
-      {showNavMenuOverlay && (
-        <div
-          ref={mobileMenuBackdropRef}
-          className={`${styles.mobileMenuBackdrop} ${isMobileMenuOpen ? styles.mobileMenuBackdropOpen : ''}`}
-          onClick={closeMobileMenu}
-        />
-      )}
-
       {/* Spacer so content doesn't go under fixed header (keep auth pages overlay) */}
       {!isAuthPage ? (
         <div
           className={styles.headerSpacer}
-          style={{ height: headerHeight }}
+          style={headerHeight > 0 ? { height: headerHeight + 20 } : undefined}
           aria-hidden="true"
         />
       ) : null}

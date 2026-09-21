@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import headerStyles from '@/components/Header.module.css';
 import styles from './ProductPrintUploadModal.module.css';
+const boothStyles = styles;
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -1779,11 +1780,7 @@ export default function ProductPrintUploadModal({
                 <div className={styles.connectorInfoTextSection}>
                   <div className={styles.connectorInfoHead}>You control your data</div>
                   <div className={styles.connectorInfoBody}>
-                    Disconnect anytime in{' '}
-                    <Link href="/connectors" target="_blank" className={styles.connectorInfoLink}>
-                      Connectors
-                    </Link>
-                    .
+                    Disconnect anytime in your account settings.
                   </div>
                 </div>
               </div>

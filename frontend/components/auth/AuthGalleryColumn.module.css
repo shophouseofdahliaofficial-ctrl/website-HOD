@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,300..900;1,300..900&display=swap');
+
+.galleryContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  background-color: #f4f3f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 2.5rem;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+}
+
+.imageWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-height: 85vh;
+  position: relative;
+  z-index: 1;
+}
+
+.editorialImage {
+  max-height: 82vh;
+  max-width: 88%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.08));
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editorialImage:hover {
+  transform: scale(1.0);
+}
+
+/* Editorial quote/caption at bottom left */
+.captionBlock {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 3rem;
+  max-width: 320px;
+  text-align: left;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.productNumberText {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.15rem 0;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.shopNowLink {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #111827;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  display: inline-block;
+}
+
+.shopNowLink:hover {
+  opacity: 0.75;
+  color: #5c1825;
+}
+
+@media (max-width: 1200px) {
+  .editorialImage {
+    max-height: 72vh;
+    max-width: 90%;
+  }
+
+  .captionBlock {
+    bottom: 2rem;
+    left: 2rem;
+  }
+}
+
+@media (max-height: 750px) {
+  .editorialImage {
+    max-height: 68vh;
+  }
+
+  .captionBlock {
+    bottom: 1.5rem;
+    left: 2rem;
+  }
+}

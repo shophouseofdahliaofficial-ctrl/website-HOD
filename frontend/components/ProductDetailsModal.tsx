@@ -81,6 +81,7 @@ interface ProductDetailsModalProps {
   onAddTrialProduct?: (payload: { product: Product; variation: ProductVariation | null }) => void;
   onRelatedProductClick?: (product: Product) => void;
   isFlatPage?: boolean;
+  initialPhotobookProjectId?: string;
 }
 
 export default function ProductDetailsModal({
@@ -91,6 +92,7 @@ export default function ProductDetailsModal({
   onAddTrialProduct,
   onRelatedProductClick,
   isFlatPage = false,
+  initialPhotobookProjectId,
 }: ProductDetailsModalProps) {
   const router = useRouter();
   const { addItem, items } = useCart();
@@ -113,7 +115,7 @@ export default function ProductDetailsModal({
   const addToCartButtonRef = useRef<HTMLButtonElement>(null);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const reviewSummaryRef = useRef<HTMLDivElement>(null);
-  const detailsSectionRef = useRef<HTMLDivElement>(null);
+  const detailsSectionRef = useRef<HTMLDivElement | null>(null);
   const imageSectionRef = useRef<HTMLDivElement>(null);
   const imageGridRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +139,12 @@ export default function ProductDetailsModal({
   const [uploadedPrintItems, setUploadedPrintItems] = useState<UploadedPrintItem[]>([]);
   const [uploadedPrintMode, setUploadedPrintMode] = useState<PrintUploadMode>('polaroid');
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState<number>(1);
+  const [zoomPan, setZoomPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isZoomDragging, setIsZoomDragging] = useState<boolean>(false);
+  const zoomDragStartRef = useRef<{ x: number; y: number; panX: number; panY: number }>({ x: 0, y: 0, panX: 0, panY: 0 });
+  const hasZoomMovedRef = useRef<boolean>(false);
+  const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(0);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const [showRatingDetailsPopup, setShowRatingDetailsPopup] = useState(false);
@@ -151,7 +159,7 @@ export default function ProductDetailsModal({
     if (product?.id) {
       setLoadingDetails(true);
       productsApi
-        .getById(product.id)
+        .getById(product.id, true)
         .then((data) => {
           if (isMounted && data) {
             setProductDetails(data);
@@ -175,7 +183,7 @@ export default function ProductDetailsModal({
     if (displayProduct?.categoryId) {
       setLoadingRelated(true);
       productsApi
-        .getAll({ categoryId: displayProduct.categoryId })
+        .getAll()
         .then((res) => {
           if (isMounted) {
             const list = Array.isArray(res) ? res : (res as any)?.products || [];
@@ -200,14 +208,114 @@ export default function ProductDetailsModal({
     }
   }, [pinUserId]);
 
+  // Sync isFavorite from scoped localStorage
+  useEffect(() => {
+    if (!user || !displayProduct?.id) {
+      setIsFavorite(false);
+      return;
+    }
+    const favKey = `milko_favorites_u_${user.id}`;
+    const syncFav = () => {
+      try {
+        const raw = localStorage.getItem(favKey);
+        if (raw) {
+          const map = JSON.parse(raw);
+          setIsFavorite(Boolean(map[displayProduct.id]));
+        } else {
+          setIsFavorite(false);
+        }
+      } catch {
+        setIsFavorite(false);
+      }
+    };
+    syncFav();
+    window.addEventListener('favorites-updated', syncFav);
+    return () => {
+      window.removeEventListener('favorites-updated', syncFav);
+    };
+  }, [user, displayProduct?.id]);
+
+  // Compute deliverability whenever pincode or product changes
+  useEffect(() => {
+    if (!pincode || pincode.length !== 6) {
+      setIsPincodeAvailable(null);
+      return;
+    }
+    if (displayProduct.isNationwideDelivery) {
+      setIsPincodeAvailable(true);
+    } else if (Array.isArray(displayProduct.deliveryPincodes) && displayProduct.deliveryPincodes.length > 0) {
+      setIsPincodeAvailable(displayProduct.deliveryPincodes.includes(pincode));
+    } else {
+      setIsPincodeAvailable(true);
+    }
+  }, [pincode, displayProduct]);
+
+  // Listen for pincode-updated event from Header modal
+  useEffect(() => {
+    const handlePincodeUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<{ pincode?: string; status?: string }>;
+      const detail = customEvent.detail;
+      if (detail?.pincode) {
+        setPincode(detail.pincode);
+      }
+    };
+
+    window.addEventListener('milko:pincode-updated', handlePincodeUpdated as EventListener);
+    return () => {
+      window.removeEventListener('milko:pincode-updated', handlePincodeUpdated as EventListener);
+    };
+  }, []);
+
+  // Close share menu on outside click
+  useEffect(() => {
+    if (!shareMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) {
+        setShareMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [shareMenuOpen]);
+
   const variations = useMemo(() => displayProduct.variations || [], [displayProduct.variations]);
 
   useEffect(() => {
-    if (variations.length > 0 && !selectedVariationId) {
-      const firstAvailable = variations.find((v) => v.isAvailable) || variations[0];
-      if (firstAvailable) setSelectedVariationId(firstAvailable.id);
+    if (variations.length > 0) {
+      if (!selectedVariationId || !variations.some((v) => v.id === selectedVariationId)) {
+        const firstAvailable = variations.find((v) => v.isAvailable) || variations[0];
+        if (firstAvailable) setSelectedVariationId(firstAvailable.id);
+      }
     }
   }, [variations, selectedVariationId]);
+
+  useEffect(() => {
+    setSelectedCustomizations({});
+    setTextPersonalizations({});
+    setTextPersonalizationDone({});
+    setUploadedPrintItems([]);
+  }, [displayProduct.id]);
+
+  useEffect(() => {
+    if (displayProduct.isCustomizable && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0) {
+      if (displayProduct.customizationOptions.length === 1) {
+        const g = displayProduct.customizationOptions[0];
+        if (!selectedCustomizations[g.id] && g.values && g.values.length > 0) {
+          if (g.type !== 'text_input' && g.type !== 'uploads') {
+            const firstAvailable = g.values.find((val) => (val as any).isActive !== false) || g.values[0];
+            if (firstAvailable) {
+              setSelectedCustomizations((prev) => {
+                if (prev[g.id]) return prev;
+                return { ...prev, [g.id]: firstAvailable.id };
+              });
+            }
+          }
+        }
+      }
+    }
+  }, [displayProduct.customizationOptions, displayProduct.isCustomizable, displayProduct.id]);
 
   const selectedVariation = useMemo(() => {
     return variations.find((v) => v.id === selectedVariationId) || variations[0] || null;
@@ -218,41 +326,191 @@ export default function ProductDetailsModal({
     if (!displayProduct.customizationCombinations || displayProduct.customizationCombinations.length === 0) {
       return null;
     }
+    const entries = Object.entries(selectedCustomizations);
+    if (entries.length === 0) return null;
+
     return displayProduct.customizationCombinations.find((combo) => {
-      if (!combo.isActive) return false;
-      return Object.entries(combo.combinationKeys || {}).every(
-        ([groupId, valueId]) => selectedCustomizations[groupId] === valueId,
+      if (combo.isActive === false) return false;
+      const keys = combo.combinationKeys || {};
+      return Object.entries(keys).every(
+        ([groupId, valueId]) => String(selectedCustomizations[groupId]) === String(valueId),
       );
     });
   }, [displayProduct.customizationCombinations, selectedCustomizations]);
 
   // Base pricing
-  const basePrice = displayProduct.sellingPrice ?? displayProduct.pricePerLitre ?? 0;
-  const baseCompareAtPrice = displayProduct.compareAtPrice ?? null;
+  const basePrice = (displayProduct.sellingPrice !== null && displayProduct.sellingPrice !== undefined && Number.isFinite(Number(displayProduct.sellingPrice)))
+    ? Number(displayProduct.sellingPrice)
+    : Number(displayProduct.pricePerLitre || 0);
+
+  const baseCompareAtPrice = (displayProduct.compareAtPrice !== null && displayProduct.compareAtPrice !== undefined && Number.isFinite(Number(displayProduct.compareAtPrice)))
+    ? Number(displayProduct.compareAtPrice)
+    : null;
 
   const unitPrice = useMemo(() => {
-    if (currentCombination?.price != null) {
-      return currentCombination.price;
+    if (displayProduct.isCustomizable) {
+      if (currentCombination?.price != null && Number.isFinite(Number(currentCombination.price))) {
+        let comboPrice = Number(currentCombination.price);
+        if (textPersonalizations) {
+          (displayProduct.customizationOptions || []).forEach((group) => {
+            if (group.type === 'text_input') {
+              (group.values || []).forEach((val) => {
+                const inputKey = `${group.id}_${val.id}`;
+                const textVal = textPersonalizations[inputKey] || '';
+                if (textVal.trim() && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                  comboPrice += val.price;
+                }
+              });
+            }
+          });
+        }
+        return comboPrice;
+      }
+
+      let sellingSum = basePrice;
+      Object.keys(selectedCustomizations).forEach((groupId) => {
+        const valId = selectedCustomizations[groupId];
+        const group = (displayProduct.customizationOptions || []).find((g) => g.id === groupId);
+        const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+        if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+          sellingSum += val.price;
+        }
+      });
+
+      if (textPersonalizations) {
+        (displayProduct.customizationOptions || []).forEach((group) => {
+          if (group.type === 'text_input') {
+            (group.values || []).forEach((val) => {
+              const inputKey = `${group.id}_${val.id}`;
+              const textVal = textPersonalizations[inputKey] || '';
+              if (textVal.trim() && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                sellingSum += val.price;
+              }
+            });
+          }
+        });
+      }
+
+      return sellingSum;
     }
-    if (selectedVariation?.priceMultiplier != null) {
-      return basePrice * selectedVariation.priceMultiplier;
+
+    // Standard variations
+    if (selectedVariation?.price != null && Number.isFinite(Number(selectedVariation.price))) {
+      return Number(selectedVariation.price);
     }
-    return basePrice;
-  }, [currentCombination, selectedVariation, basePrice]);
+    const mult = Number(selectedVariation?.priceMultiplier) || 1;
+    return basePrice * mult;
+  }, [
+    displayProduct.isCustomizable,
+    displayProduct.customizationOptions,
+    currentCombination,
+    basePrice,
+    selectedCustomizations,
+    textPersonalizations,
+    selectedVariation,
+  ]);
 
   const originalUnitPrice = useMemo(() => {
-    if (currentCombination?.compareAtPrice != null) {
-      return currentCombination.compareAtPrice;
+    if (displayProduct.isCustomizable) {
+      if (currentCombination?.compareAtPrice != null && Number.isFinite(Number(currentCombination.compareAtPrice))) {
+        return Number(currentCombination.compareAtPrice);
+      }
+      if (baseCompareAtPrice != null) {
+        let compareSum = baseCompareAtPrice;
+        Object.keys(selectedCustomizations).forEach((groupId) => {
+          const valId = selectedCustomizations[groupId];
+          const group = (displayProduct.customizationOptions || []).find((g) => g.id === groupId);
+          const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+          if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+            compareSum += val.price;
+          }
+        });
+        return compareSum;
+      }
+      return null;
+    }
+
+    // Standard variations
+    if (selectedVariation?.compareAtPrice != null && Number.isFinite(Number(selectedVariation.compareAtPrice))) {
+      return Number(selectedVariation.compareAtPrice);
     }
     if (baseCompareAtPrice != null) {
-      const mult = selectedVariation?.priceMultiplier ?? 1;
+      const mult = Number(selectedVariation?.priceMultiplier) || 1;
       return baseCompareAtPrice * mult;
     }
     return null;
-  }, [currentCombination, baseCompareAtPrice, selectedVariation]);
+  }, [
+    displayProduct.isCustomizable,
+    displayProduct.customizationOptions,
+    currentCombination,
+    baseCompareAtPrice,
+    selectedCustomizations,
+    selectedVariation,
+  ]);
 
   const unitOff = originalUnitPrice && originalUnitPrice > unitPrice ? originalUnitPrice - unitPrice : 0;
   const unitLabel = getProductDisplayUnitLabel(displayProduct);
+
+  const animatedPriceRef = useRef<number | null>(null);
+  const [priceAnimKey, setPriceAnimKey] = useState<number>(0);
+  const [priceDirY, setPriceDirY] = useState<number>(1);
+  const prevUnitPriceRef = useRef<number>(0);
+
+  useEffect(() => {
+    animatedPriceRef.current = animatedPrice;
+  }, [animatedPrice]);
+
+  // Reset animatedPrice when product changes
+  useEffect(() => {
+    setAnimatedPrice(null);
+  }, [displayProduct.id]);
+
+  // Price Tweening Animation Effect
+  useEffect(() => {
+    if (animatedPriceRef.current === null) {
+      setAnimatedPrice(unitPrice);
+      return;
+    }
+
+    let startTimestamp: number | null = null;
+    const startValue = animatedPriceRef.current;
+    const endValue = unitPrice;
+    const duration = 120;
+
+    if (startValue === endValue) return;
+
+    let animationFrameId: number;
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const elapsed = timestamp - startTimestamp;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      const easedProgress = progress * (2 - progress);
+      const currentValue = startValue + (endValue - startValue) * easedProgress;
+      
+      setAnimatedPrice(currentValue);
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(step);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [unitPrice]);
+
+  useEffect(() => {
+    if (prevUnitPriceRef.current !== unitPrice && prevUnitPriceRef.current !== 0) {
+      const diff = unitPrice - prevUnitPriceRef.current;
+      setPriceDirY(diff >= 0 ? 1 : -1);
+      setPriceAnimKey((prev) => prev + 1);
+    }
+    prevUnitPriceRef.current = unitPrice;
+  }, [unitPrice]);
 
   const productMaxQuantity = displayProduct.maxQuantity || 99;
   const safeQty = Math.max(1, Math.min(quantity, productMaxQuantity));
@@ -268,9 +526,187 @@ export default function ProductDetailsModal({
 
   // Image collage
   const collageItems = useMemo(() => {
-    const urls = getOrderedProductImageUrls(displayProduct);
-    return urls.length > 0 ? urls : [getPrimaryProductImageUrl(displayProduct)];
+    const urls = getOrderedProductImageUrls(displayProduct).filter(Boolean) as string[];
+    const fallback = getPrimaryProductImageUrl(displayProduct);
+    if (urls.length > 0) return urls;
+    return fallback ? [fallback] : [];
   }, [displayProduct]);
+
+  // Zoom overlay effects: lock scrollbar on page/body, handle wheel zoom, Esc / Arrow key nav
+  useEffect(() => {
+    if (!isImageZoomOpen) {
+      setZoomScale(1);
+      setZoomPan({ x: 0, y: 0 });
+      return;
+    }
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevDocOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setZoomScale((prev) => {
+        const delta = e.deltaY < 0 ? 0.25 : -0.25;
+        const next = Math.min(4, Math.max(1, +(prev + delta).toFixed(2)));
+        if (next === 1) {
+          setZoomPan({ x: 0, y: 0 });
+        }
+        return next;
+      });
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 1 || isZoomDragging) {
+        e.preventDefault();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsImageZoomOpen(false);
+      } else if (e.key === 'ArrowLeft') {
+        setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : collageItems.length - 1));
+        setZoomScale(1);
+        setZoomPan({ x: 0, y: 0 });
+      } else if (e.key === 'ArrowRight') {
+        setSelectedImageIndex((prev) => (prev < collageItems.length - 1 ? prev + 1 : 0));
+        setZoomScale(1);
+        setZoomPan({ x: 0, y: 0 });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevDocOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isImageZoomOpen, collageItems.length, isZoomDragging]);
+
+  // Gallery items expanded for 3 equal columns layout
+  const displayGalleryItems = useMemo(() => {
+    if (collageItems.length === 0) return [];
+    if (collageItems.length === 1) return [collageItems[0], collageItems[0], collageItems[0]];
+    if (collageItems.length === 2) return [collageItems[0], collageItems[1], collageItems[0]];
+    return collageItems;
+  }, [collageItems]);
+
+  // Infinite track with 3 repeated sets for seamless 2-way infinite scrolling
+  const infiniteGalleryItems = useMemo(() => {
+    if (displayGalleryItems.length === 0) return [];
+    return [...displayGalleryItems, ...displayGalleryItems, ...displayGalleryItems];
+  }, [displayGalleryItems]);
+
+  useEffect(() => {
+    const el = imageGridRef.current;
+    if (!el || displayGalleryItems.length === 0) return;
+
+    const alignTrack = () => {
+      const singleSetWidth = el.scrollWidth / 3;
+      if (singleSetWidth > 0 && (el.scrollLeft === 0 || el.scrollLeft < singleSetWidth * 0.5 || el.scrollLeft > singleSetWidth * 2.5)) {
+        el.scrollLeft = singleSetWidth;
+      }
+    };
+
+    alignTrack();
+    const timer1 = setTimeout(alignTrack, 50);
+    const timer2 = setTimeout(alignTrack, 250);
+    window.addEventListener('resize', alignTrack);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      window.removeEventListener('resize', alignTrack);
+    };
+  }, [displayGalleryItems.length]);
+
+  const handleWheelOnDetails = useCallback((e: WheelEvent) => {
+    if (isImageZoomOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    const el = detailsSectionRef.current;
+    if (!el) return;
+
+    if (isFlatPage) {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      const isScrollingDown = e.deltaY > 0;
+      const isScrollingUp = e.deltaY < 0;
+      const pageScrollY = typeof window !== 'undefined' ? (window.scrollY || document.documentElement.scrollTop || 0) : 0;
+
+      if (isScrollingDown) {
+        if (scrollTop < maxScroll - 0.5) {
+          e.preventDefault();
+          e.stopPropagation();
+          const target = Math.min(maxScroll, el.scrollTop + e.deltaY);
+          const leftover = (el.scrollTop + e.deltaY) - maxScroll;
+          el.scrollTop = target;
+          if (leftover > 0 && typeof window !== 'undefined') {
+            window.scrollBy({ top: leftover, behavior: 'auto' });
+          }
+        } else {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof window !== 'undefined') {
+            window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+          }
+        }
+      } else if (isScrollingUp) {
+        if (pageScrollY > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          const leftover = -(pageScrollY + e.deltaY);
+          if (typeof window !== 'undefined') {
+            window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+          }
+          if (leftover > 0) {
+            el.scrollTop = Math.max(0, el.scrollTop - leftover);
+          }
+        } else if (scrollTop > 0.5) {
+          e.preventDefault();
+          e.stopPropagation();
+          el.scrollTop = Math.max(0, el.scrollTop + e.deltaY);
+        }
+      }
+    } else {
+      e.stopPropagation();
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const isScrollable = scrollHeight > clientHeight;
+
+      if (!isScrollable) {
+        e.preventDefault();
+        return;
+      }
+
+      const isScrollingUp = e.deltaY < 0;
+      const isScrollingDown = e.deltaY > 0;
+
+      if (isScrollingUp && scrollTop <= 0) {
+        e.preventDefault();
+      } else if (isScrollingDown && Math.ceil(scrollTop + clientHeight) >= scrollHeight) {
+        e.preventDefault();
+      }
+    }
+  }, [isFlatPage]);
+
+  const setDetailsSectionRef = useCallback((node: HTMLDivElement | null) => {
+    if (detailsSectionRef.current) {
+      detailsSectionRef.current.removeEventListener('wheel', handleWheelOnDetails);
+    }
+    detailsSectionRef.current = node;
+    if (node) {
+      node.addEventListener('wheel', handleWheelOnDetails, { passive: false });
+    }
+  }, [handleWheelOnDetails]);
 
   // Reviews
   const reviews = useMemo(() => {
@@ -285,14 +721,192 @@ export default function ProductDetailsModal({
     return feedback?.qualityStars ?? 5.0;
   }, [reviews, feedback]);
 
-  const { resolvedPolaroidUploadEnabled, resolvedStripUploadEnabled } = useMemo(
-    () => resolveUploadFlags(displayProduct, selectedVariation),
-    [displayProduct, selectedVariation],
+  const ratingCounts = useMemo(() => {
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    if (reviews.length > 0) {
+      reviews.forEach((r) => {
+        const rating = Math.min(5, Math.max(1, Math.round(r.rating || 5)));
+        counts[rating as 1 | 2 | 3 | 4 | 5] = (counts[rating as 1 | 2 | 3 | 4 | 5] || 0) + 1;
+      });
+    } else {
+      counts[5] = 1;
+    }
+    return counts;
+  }, [reviews]);
+
+  useEffect(() => {
+    if (!showRatingDetailsPopup) {
+      setRatingMeterAnimateIn(false);
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      setRatingMeterAnimateIn(true);
+    });
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showRatingDetailsPopup]);
+
+  const formatReviewRelativeDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths < 12) return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago`;
+    const diffYears = Math.floor(diffDays / 365);
+    return `${diffYears} year${diffYears === 1 ? '' : 's'} ago`;
+  };
+
+  const renderReviewStars = (rating: number) => (
+    <div className={styles.reviewRating} data-rating={rating} aria-label={`${rating} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={`${styles.reviewStarIcon} ${star <= rating ? styles.reviewStarFilled : styles.reviewStarEmpty}`}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.563.563 0 00-.182-.557L3.04 10.385a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345l2.125-5.111z" />
+        </svg>
+      ))}
+    </div>
   );
 
+  const RATING_METER_SEGMENT_COLORS = ['#fde2ea', '#f9b8d0', '#f58cb5', '#ef4f86', '#d81b60'];
+  const RATING_METER_STROKE_WIDTH = 8;
+
+  const buildRatingMeterArcPath = (
+    cx: number,
+    cy: number,
+    radius: number,
+    startAngle: number,
+    endAngle: number
+  ) => {
+    const x1 = cx + radius * Math.cos(startAngle);
+    const y1 = cy - radius * Math.sin(startAngle);
+    const x2 = cx + radius * Math.cos(endAngle);
+    const y2 = cy - radius * Math.sin(endAngle);
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`;
+  };
+
+  const renderSingleRatingMeter = (
+    rating: number | null | undefined,
+    key: string,
+    label: string,
+    animateIn: boolean
+  ) => {
+    const value = rating ?? 0;
+    const displayValue = value > 0 ? value.toFixed(1) : '0';
+    const segmentCount = RATING_METER_SEGMENT_COLORS.length;
+    const clampedValue = Math.min(segmentCount, Math.max(0, value));
+    const fullSegments = Math.floor(clampedValue);
+    const partialFraction = clampedValue - fullSegments;
+
+    return (
+      <div key={key} className={styles.ratingMeterCard} title={label}>
+        <div className={styles.ratingMeterShell}>
+          <svg
+            className={styles.ratingMeterSvg}
+            viewBox="0 0 100 62"
+            role="img"
+            aria-label={`${label}: ${displayValue} out of 5`}
+          >
+            {RATING_METER_SEGMENT_COLORS.map((_, index) => {
+              const startAngle = Math.PI - (index / segmentCount) * Math.PI;
+              const endAngle = Math.PI - ((index + 1) / segmentCount) * Math.PI;
+
+              return (
+                <path
+                  key={`${key}-bg-${index}`}
+                  className={styles.ratingMeterSegmentBg}
+                  d={buildRatingMeterArcPath(50, 48, 38, startAngle, endAngle)}
+                  fill="none"
+                  strokeWidth={RATING_METER_STROKE_WIDTH}
+                  strokeLinecap="butt"
+                />
+              );
+            })}
+            {RATING_METER_SEGMENT_COLORS.map((color, index) => {
+              const startAngle = Math.PI - (index / segmentCount) * Math.PI;
+              const endAngle = Math.PI - ((index + 1) / segmentCount) * Math.PI;
+              const isFull = index < fullSegments;
+              const isPartial = index === fullSegments && partialFraction > 0;
+              const shouldShow = isFull || isPartial;
+
+              if (!shouldShow) {
+                return null;
+              }
+
+              const targetFill = isPartial ? partialFraction : 1;
+
+              return (
+                <path
+                  key={`${key}-segment-${index}`}
+                  className={`${styles.ratingMeterSegment}${animateIn ? ` ${styles.ratingMeterSegmentFilled}` : ''}`}
+                  d={buildRatingMeterArcPath(50, 48, 38, startAngle, endAngle)}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={RATING_METER_STROKE_WIDTH}
+                  strokeLinecap="butt"
+                  pathLength={1}
+                  style={{
+                    ['--segment-fill' as string]: targetFill,
+                    ['--segment-fill-gap' as string]: 1 - targetFill,
+                    ['--segment-delay' as string]: `${index * 180}ms`,
+                  }}
+                />
+              );
+            })}
+          </svg>
+          <span className={styles.ratingMeterValue}>{displayValue}</span>
+        </div>
+        <span className={styles.ratingMeterLabel}>{label}</span>
+      </div>
+    );
+  };
+
+  const effectiveAccordionItems = useMemo(() => {
+    if (displayProduct.accordionItems && displayProduct.accordionItems.length > 0) {
+      return displayProduct.accordionItems.map((item) => ({
+        title: (item.title || '').replace(/<!--[\s\S]*?-->/g, '').replace(/<!--[\s\S]*$/g, '').trim(),
+        content: ((item as any).content || (item as any).htmlContent || '').replace(/<!--[\s\S]*?-->/g, '').replace(/<!--[\s\S]*$/g, '').trim(),
+      }));
+    }
+    return [
+      {
+        title: 'Sustainability',
+        content:
+          'Our products are crafted with sustainably sourced, eco-friendly materials designed for endurance and minimal environmental footprint.',
+      },
+      {
+        title: 'Whats inside?',
+        content:
+          'Premium quality materials, custom craftsmanship, and attention to detail engineered for high performance and durability.',
+      },
+    ];
+  }, [displayProduct.accordionItems]);
+
   const uploadsVariationGroup = useMemo(() => {
-    return (displayProduct.customizationOptions || []).find((g) => g.type === 'uploads');
-  }, [displayProduct.customizationOptions]);
+    return (displayProduct?.customizationOptions || []).find((g) => g.type === 'uploads');
+  }, [displayProduct?.customizationOptions]);
+
+  const { polaroidEnabled: resolvedPolaroidUploadEnabled, stripEnabled: resolvedStripUploadEnabled } = useMemo(
+    () => resolveUploadFlags(uploadsVariationGroup, displayProduct),
+    [uploadsVariationGroup, displayProduct],
+  );
 
   const printUploadEnabled = resolvedPolaroidUploadEnabled || resolvedStripUploadEnabled;
   const showUploadsInVariations = Boolean(
@@ -310,7 +924,7 @@ export default function ProductDetailsModal({
         if (prevGroup.type === 'uploads') {
           if (!printUploadCompleted) return false;
         } else if (prevGroup.type === 'text_input') {
-          const allDone = prevGroup.values.every((v) => textPersonalizationDone[`${prevGroup.id}_${v.id}`]);
+          const allDone = (prevGroup.values || []).every((v) => textPersonalizationDone[`${prevGroup.id}_${v.id}`]);
           if (!allDone) return false;
         } else {
           if (!selectedCustomizations[prevGroup.id]) return false;
@@ -321,10 +935,22 @@ export default function ProductDetailsModal({
     [displayProduct.customizationOptions, printUploadCompleted, selectedCustomizations, textPersonalizationDone],
   );
 
+  const handleSelectCustomizationOption = useCallback((groupId: string, valueId: string, groupIdx: number) => {
+    setSelectedCustomizations((prev) => {
+      const next = { ...prev, [groupId]: valueId };
+      const groups = displayProduct.customizationOptions || [];
+      // Clear selections for all groups after this one, so subsequent variations are unlocked and chosen step-by-step
+      for (let i = groupIdx + 1; i < groups.length; i++) {
+        delete next[groups[i].id];
+      }
+      return next;
+    });
+  }, [displayProduct.customizationOptions]);
+
   const requiresCustomizationCompletion = useMemo(() => {
     const groups = displayProduct.customizationOptions || [];
     if (!displayProduct.isCustomizable || groups.length === 0) return false;
-    return groups.some((g, idx) => !isGroupEnabled(idx + 1) && idx < groups.length - 1);
+    return !isGroupEnabled(groups.length);
   }, [displayProduct.customizationOptions, displayProduct.isCustomizable, isGroupEnabled]);
 
   const handlePincodeCheck = useCallback(async () => {
@@ -333,12 +959,12 @@ export default function ProductDetailsModal({
     try {
       if (displayProduct.isNationwideDelivery) {
         setIsPincodeAvailable(true);
-        writeScopedPincode(pinUserId, pincode);
+        writeScopedPincode(pinUserId, pincode, 'available');
       } else {
         const allowed = displayProduct.deliveryPincodes || [];
         const isAvail = allowed.includes(pincode);
         setIsPincodeAvailable(isAvail);
-        if (isAvail) writeScopedPincode(pinUserId, pincode);
+        if (isAvail) writeScopedPincode(pinUserId, pincode, 'available');
       }
     } finally {
       setIsCheckingPincode(false);
@@ -346,40 +972,60 @@ export default function ProductDetailsModal({
   }, [pincode, displayProduct, pinUserId]);
 
   const handleToggleFavorite = useCallback(() => {
-    setIsFavorite((prev) => {
-      const next = !prev;
-      showToast(next ? 'Added to favorites' : 'Removed from favorites', 'success');
-      return next;
-    });
-  }, [showToast]);
-
-  const handleAddToCart = useCallback(() => {
-    if (isProductOutOfStock) {
-      showToast('Out of stock', 'error');
+    if (!user) {
+      showToast('Please login to add favorites', 'error');
       return;
     }
+    if (!displayProduct?.id) return;
+    const favKey = `milko_favorites_u_${user.id}`;
+    let favMap: Record<string, boolean> = {};
+    try {
+      const raw = localStorage.getItem(favKey);
+      if (raw) favMap = JSON.parse(raw);
+    } catch {
+      favMap = {};
+    }
+    const nextVal = !favMap[displayProduct.id];
+    if (nextVal) {
+      favMap[displayProduct.id] = true;
+    } else {
+      delete favMap[displayProduct.id];
+    }
+    localStorage.setItem(favKey, JSON.stringify(favMap));
+    setIsFavorite(nextVal);
+    showToast(
+      nextVal ? `Added ${displayProduct.name} to favorites` : `Removed ${displayProduct.name} from favorites`,
+      'success'
+    );
+    window.dispatchEvent(new Event('favorites-updated'));
+  }, [user, displayProduct?.id, displayProduct?.name, showToast]);
+
+  const handleAddToCart = useCallback(() => {
+    if (isProductOutOfStock) return false;
     if (requiresCustomizationCompletion) {
-      showToast('Please complete all variation options before adding to cart.', 'error');
-      return;
+      showToast('Please complete all required customization fields', 'error');
+      return false;
     }
     if (remainingCartCapacity <= 0) {
       showToast(`Maximum order quantity is ${productMaxQuantity}`, 'error');
-      return;
+      return false;
     }
 
-    const printUploadCustomization = printUploadCompleted
+    const printUploadCustomization = isUploadsVariationActive(displayProduct)
       ? {
-          printUpload: {
-            items: uploadedPrintItems,
-            mode: uploadedPrintMode,
-            count: uploadedPrintItems.length,
-          },
+          uploadedPrintItems,
+          uploadedPrintMode,
+          printUploadCompleted,
         }
       : {};
 
+    const variationIdToUse = displayProduct.isCustomizable
+      ? (currentCombination?.id ?? undefined)
+      : (selectedVariation?.id ?? undefined);
+
     const result = addItem({
       productId: displayProduct.id,
-      variationId: selectedVariation?.id ?? undefined,
+      variationId: variationIdToUse,
       quantity: safeQty,
       customizations: {
         selectedOptions: selectedCustomizations,
@@ -390,11 +1036,20 @@ export default function ProductDetailsModal({
 
     if (result.ok) {
       showToast('Added to cart', 'success');
-      if (addToCartButtonRef.current) {
-        animateToCart(addToCartButtonRef.current, cartIconRefStore.current);
+      const sourceBtn = addToCartButtonRef.current || (document.querySelector(`.${styles.addToCartButton}`) as HTMLElement) || (document.querySelector('button[class*="addToCartButton"]') as HTMLElement);
+      if (sourceBtn) {
+        const imageUrl = getPrimaryProductImageUrl(displayProduct) || (displayProduct as any).imageUrl || '';
+        const target = cartIconRefStore.getAny();
+        animateToCart({
+          imageUrl,
+          sourceElement: sourceBtn,
+          targetElement: target,
+        });
       }
+      return true;
     } else {
       showToast('Could not add to cart', 'error');
+      return false;
     }
   }, [
     isProductOutOfStock,
@@ -404,7 +1059,8 @@ export default function ProductDetailsModal({
     uploadedPrintItems,
     uploadedPrintMode,
     addItem,
-    displayProduct.id,
+    displayProduct,
+    currentCombination,
     selectedVariation,
     safeQty,
     selectedCustomizations,
@@ -414,8 +1070,15 @@ export default function ProductDetailsModal({
   ]);
 
   const handleBuyNow = useCallback(() => {
-    handleAddToCart();
-    router.push('/checkout');
+    const success = handleAddToCart();
+    if (!success) return;
+
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    if (isDesktop) {
+      window.dispatchEvent(new CustomEvent('open-desktop-cart'));
+    } else {
+      router.push('/checkout');
+    }
   }, [handleAddToCart, router]);
 
   const scrollToReviewSummary = useCallback(() => {
@@ -506,40 +1169,91 @@ export default function ProductDetailsModal({
                 </div>
               ) : null}
 
-              {collageItems.length > 0 ? (
-                <div className={styles.imageGridWrapper}>
-                  <div ref={imageGridRef} className={styles.imageGrid}>
-                    {collageItems.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className={styles.imageGridItem}
-                        onClick={() => {
-                          setSelectedImageIndex(idx);
-                          setIsImageZoomOpen(true);
+              {displayGalleryItems.length > 0 ? (
+                <>
+                  {displayGalleryItems.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        className={`${styles.galleryNavBtn} ${styles.galleryNavPrev}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (imageGridRef.current) {
+                            const el = imageGridRef.current;
+                            const itemWidth = isFlatPage ? el.clientWidth / 3 : el.clientWidth;
+                            const singleSetWidth = el.scrollWidth / 3;
+                            if (singleSetWidth > 0 && el.scrollLeft <= itemWidth) {
+                              el.scrollLeft = el.scrollLeft + singleSetWidth;
+                            }
+                            el.scrollBy({ left: -itemWidth, behavior: 'smooth' });
+                          }
                         }}
+                        aria-label="Previous images"
                       >
-                        <Image
-                          src={item}
-                          alt={`${displayProduct.name} ${idx + 1}`}
-                          width={600}
-                          height={600}
-                          className={styles.gridImage}
-                          sizes="(max-width: 640px) 50vw, 280px"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {collageItems.length > 1 && (
-                    <div className={styles.imagePaginationDots}>
-                      {collageItems.map((_, dotIdx) => (
-                        <span
-                          key={dotIdx}
-                          className={`${styles.paginationDot} ${selectedImageIndex === dotIdx ? styles.paginationDotActive : ''}`}
-                        />
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M4 12H20M4 12L8 8M4 12L8 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.galleryNavBtn} ${styles.galleryNavNext}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (imageGridRef.current) {
+                            const el = imageGridRef.current;
+                            const itemWidth = isFlatPage ? el.clientWidth / 3 : el.clientWidth;
+                            const singleSetWidth = el.scrollWidth / 3;
+                            if (singleSetWidth > 0 && el.scrollLeft >= singleSetWidth * 2 - itemWidth) {
+                              el.scrollLeft = el.scrollLeft - singleSetWidth;
+                            }
+                            el.scrollBy({ left: itemWidth, behavior: 'smooth' });
+                          }
+                        }}
+                        aria-label="Next images"
+                      >
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 12H4M20 12L16 8M20 12L16 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+
+                  <div ref={imageGridRef} className={styles.imageGridWrapper}>
+                    <div className={styles.imageGrid}>
+                      {infiniteGalleryItems.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className={styles.imageGridItem}
+                          onClick={() => {
+                            setSelectedImageIndex(idx % collageItems.length);
+                            setIsImageZoomOpen(true);
+                          }}
+                        >
+                          <Image
+                            src={item}
+                            alt={`${displayProduct.name} ${idx + 1}`}
+                            width={600}
+                            height={600}
+                            className={styles.gridImage}
+                            sizes="(max-width: 640px) 50vw, 280px"
+                          />
+                        </div>
                       ))}
                     </div>
-                  )}
-                </div>
+                    {collageItems.length > 1 && (
+                      <div className={styles.imagePaginationDots}>
+                        {collageItems.map((_, dotIdx) => (
+                          <span
+                            key={dotIdx}
+                            className={`${styles.paginationDot} ${selectedImageIndex === dotIdx ? styles.paginationDotActive : ''}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div className={styles.placeholderImage}>
                   <Logo />
@@ -548,38 +1262,21 @@ export default function ProductDetailsModal({
             </div>
 
             {/* Right Side - Details */}
-            <div className={styles.detailsSection} ref={detailsSectionRef}>
+            <div className={styles.detailsSection} ref={setDetailsSectionRef}>
               <div className={styles.productOverviewCard}>
                 {/* Product Title & Share */}
                 <div className={styles.productHeader}>
                   <h1 className={styles.productTitle}>
                     <span>{displayProduct.name}</span>
                     <div className={styles.shareRow}>
-                      <button
-                        type="button"
-                        className={`${styles.favoriteTrigger} ${isFavorite ? styles.favoriteTriggerActive : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isFavorite) triggerSparkleBurst(e.currentTarget);
-                          handleToggleFavorite();
-                        }}
-                        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        <svg
-                          className={styles.favoriteTriggerIcon}
-                          viewBox="0 0 24 24"
-                          fill={isFavorite ? '#ff0155' : 'none'}
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                      </button>
                       <div className={styles.shareWrap} ref={shareMenuRef}>
                         <button
                           type="button"
                           className={styles.shareTrigger}
-                          onClick={() => setShareMenuOpen((open) => !open)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShareMenuOpen((open) => !open);
+                          }}
                           aria-label="Share product"
                         >
                           <svg className={styles.shareTriggerIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -590,6 +1287,127 @@ export default function ProductDetailsModal({
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                           </svg>
                         </button>
+
+                        <div className={`${styles.shareMenu} ${shareMenuOpen ? styles.shareMenuOpen : ''}`}>
+                          {/* Copy Link */}
+                          <button
+                            type="button"
+                            className={styles.shareMenuItem}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '';
+                              if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                navigator.clipboard.writeText(shareUrl || window.location.href);
+                                showToast('Link copied to clipboard', 'success');
+                              }
+                              setShareMenuOpen(false);
+                            }}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                              </svg>
+                            </span>
+                            <span>Copy Link</span>
+                          </button>
+
+                          {/* WhatsApp */}
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${displayProduct.name}: ${typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : ''}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.shareMenuItem}
+                            onClick={() => setShareMenuOpen(false)}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z" />
+                                <path fill="#fff" d="M17.47 14.38c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.21 3.07.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" />
+                              </svg>
+                            </span>
+                            <span>WhatsApp</span>
+                          </a>
+
+                          {/* Facebook */}
+                          <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.shareMenuItem}
+                            onClick={() => setShareMenuOpen(false)}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                              </svg>
+                            </span>
+                            <span>Facebook</span>
+                          </a>
+
+                          {/* X (Twitter) */}
+                          <a
+                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${displayProduct.name}`)}&url=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.shareMenuItem}
+                            onClick={() => setShareMenuOpen(false)}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                              </svg>
+                            </span>
+                            <span>X (Twitter)</span>
+                          </a>
+
+                          {/* Pinterest */}
+                          <a
+                            href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}&media=${encodeURIComponent(getPrimaryProductImageUrl(displayProduct) || '')}&description=${encodeURIComponent(displayProduct.name)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.shareMenuItem}
+                            onClick={() => setShareMenuOpen(false)}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.291 1.199-.33 1.366-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
+                              </svg>
+                            </span>
+                            <span>Pinterest</span>
+                          </a>
+
+                          {/* Telegram */}
+                          <a
+                            href={`https://t.me/share/url?url=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}&text=${encodeURIComponent(`Check out ${displayProduct.name}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.shareMenuItem}
+                            onClick={() => setShareMenuOpen(false)}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
+                              </svg>
+                            </span>
+                            <span>Telegram</span>
+                          </a>
+
+                          {/* Email */}
+                          <a
+                            href={`mailto:?subject=${encodeURIComponent(displayProduct.name)}&body=${encodeURIComponent(`Check out ${displayProduct.name} on House of Dahlia: ${typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : ''}`)}`}
+                            className={styles.shareMenuItem}
+                            onClick={() => setShareMenuOpen(false)}
+                          >
+                            <span className={styles.shareMenuItemIcon}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2" />
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                              </svg>
+                            </span>
+                            <span>Email</span>
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </h1>
@@ -601,7 +1419,7 @@ export default function ProductDetailsModal({
                     className={styles.productRating}
                     role="button"
                     tabIndex={0}
-                    onClick={scrollToReviewSummary}
+                    onClick={() => setShowRatingDetailsPopup(true)}
                     aria-label="View customer reviews"
                   >
                     <span className={styles.ratingScore}>{averageRating.toFixed(1)}</span>
@@ -609,7 +1427,7 @@ export default function ProductDetailsModal({
                       <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                     </svg>
                     <span className={styles.ratingDivider} />
-                    <span className={styles.ratingCount}>({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+                    <span className={styles.ratingCount}>{reviews.length}</span>
                   </div>
                 )}
 
@@ -620,7 +1438,26 @@ export default function ProductDetailsModal({
                 <div className={styles.priceSection}>
                   <div className={styles.priceContainer}>
                     <div className={styles.singlePriceContainer}>
-                      <span className={styles.currentPrice}>₹{Math.round(unitPrice)}</span>
+                      <span className={styles.currentPrice}>
+                        ₹
+                        <span
+                          key={priceAnimKey}
+                          className={`${styles.tDigitGroup} ${styles.isAnimating}`}
+                          style={{ '--digit-dir-y': priceDirY } as React.CSSProperties}
+                        >
+                          {(animatedPrice !== null ? Math.round(animatedPrice).toString() : Math.round(unitPrice).toString())
+                            .split('')
+                            .map((char, index) => (
+                              <span
+                                key={index}
+                                className={styles.tDigit}
+                                style={{ animationDelay: `${index * 12}ms` }}
+                              >
+                                {char}
+                              </span>
+                            ))}
+                        </span>
+                      </span>
                       {originalUnitPrice && originalUnitPrice > unitPrice ? (
                         <span className={styles.originalPrice}>₹{Math.round(originalUnitPrice)}</span>
                       ) : null}
@@ -633,71 +1470,295 @@ export default function ProductDetailsModal({
 
                 {/* Quantity + Variations */}
                 <div className={styles.purchaseSection}>
-                  {productMaxQuantity > 1 && !isTrialMode ? (
-                    <div className={styles.qtyRow}>
-                      <div className={styles.qtyLabel}>Qty</div>
-                      <div className={styles.qtyControl} aria-label="Quantity selector">
-                        <button
-                          type="button"
-                          className={styles.qtyButton}
-                          onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                          aria-label="Decrease quantity"
-                        >
-                          -
-                        </button>
-                        <input
-                          className={styles.qtyInput}
-                          value={safeQty}
-                          inputMode="numeric"
-                          onChange={(e) => {
-                            const n = parseInt(e.target.value || '1', 10);
-                            setQuantity(Number.isFinite(n) ? n : 1);
-                          }}
-                          aria-label="Quantity"
-                        />
-                        <button
-                          type="button"
-                          className={styles.qtyButton}
-                          onClick={() => {
-                            if (isProductOutOfStock) return;
-                            if (remainingCartCapacity <= 0 || safeQty >= remainingCartCapacity) {
-                              showToast(`Maximum order quantity is ${productMaxQuantity}`, 'error');
-                              return;
-                            }
-                            setQuantity((q) => Math.min(productMaxQuantity, q + 1));
-                          }}
-                          aria-label="Increase quantity"
-                          disabled={isAtMaxQuantity || isProductOutOfStock}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
+                  {/* Variations / Customizable Options Selector */}
+                  {displayProduct.isCustomizable && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0 ? (
+                    <div className={styles.customizationContainer}>
+                      {displayProduct.customizationOptions.map((g, idx) => {
+                        const enabled = isGroupEnabled(idx);
+                        const groupTitle = g.title || (g as any).name || (g as any).groupTitle || (g as any).label || 'Option';
+                        const selectedValueId = selectedCustomizations[g.id];
+                        const selectedValueObj = (g.values || []).find((val) => val.id === selectedValueId);
+                        const selectedValueName = selectedValueObj?.name || '';
+                        const groupType = g.type;
 
-                  {/* Variations selector */}
-                  {variations.length > 0 && (
-                    <div className={styles.variationPicker}>
-                      <div className={styles.variationRow}>
-                        <div className={styles.variationLabel}>Size / Style</div>
-                        <div className={styles.variationsGrid}>
-                          {variations.map((v) => {
-                            const isActive = v.id === selectedVariationId;
-                            return (
+                        if (groupType === 'uploads') {
+                          if (!enabled) return null;
+                          return (
+                            <div key={g.id} className={`${styles.customizationGroup} ${!enabled ? styles.customizationGroupLocked : ''}`}>
+                              <div className={styles.groupHeader}>
+                                <span className={styles.groupTitle}>{groupTitle}</span>
+                                <span className={styles.groupHeaderSeparator}>:</span>
+                                {(() => {
+                                  const uploadText = printUploadCompleted
+                                    ? `${uploadedPrintItems.length} Images Uploaded`
+                                    : 'Choose images to upload';
+                                  return (
+                                    <span
+                                      key={uploadText}
+                                      className={`${styles.selectedValueText} ${styles.tDigitGroup} ${styles.isAnimating}`}
+                                      style={
+                                        {
+                                          '--digit-dir-y': 1,
+                                          '--digit-distance': '5px',
+                                          '--digit-blur': '2.5px',
+                                          '--digit-dur': '160ms',
+                                        } as React.CSSProperties
+                                      }
+                                    >
+                                      {uploadText.split('').map((char, index) => (
+                                        <span
+                                          key={index}
+                                          className={styles.tDigit}
+                                          style={{ animationDelay: `${index * 12}ms` }}
+                                        >
+                                          {char}
+                                        </span>
+                                      ))}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
                               <button
-                                key={v.id}
                                 type="button"
-                                className={`${styles.variationButton} ${isActive ? styles.variationActive : ''} ${v.isAvailable ? '' : styles.variationDisabled}`}
-                                disabled={!v.isAvailable}
-                                onClick={() => setSelectedVariationId(v.id)}
+                                className={`${styles.uploadImagesButton} ${printUploadCompleted ? styles.uploadImagesButtonEdit : ''} ${enabled ? styles.blurItemAnimate : ''}`}
+                                onClick={() => setIsPrintUploadOpen(true)}
                               >
-                                {removePriceFromName(v.size)}
+                                {printUploadCompleted ? (
+                                  <EditUploadedImagesButtonIcon className={styles.uploadImagesButtonIcon} />
+                                ) : (
+                                  <UploadImagesButtonIcon className={styles.uploadImagesButtonIcon} />
+                                )}
+                                <span>{printUploadCompleted ? 'Edit uploaded Images' : 'Upload Images'}</span>
                               </button>
-                            );
-                          })}
+                            </div>
+                          );
+                        }
+
+                        if (groupType === 'text_input') {
+                          return (
+                            <div key={g.id} className={`${styles.customizationGroup} ${!enabled ? styles.customizationGroupLocked : ''}`}>
+                              <div className={styles.groupHeader}>
+                                <span className={styles.groupTitle}>{groupTitle}</span>
+                              </div>
+                              <div className={styles.textInputGroup}>
+                                {(g.values || []).map((v, vIdx) => {
+                                  const key = `${g.id}_${v.id}`;
+                                  const val = textPersonalizations[key] || '';
+                                  return (
+                                    <div
+                                      key={`${v.id}_${enabled}`}
+                                      className={enabled ? styles.blurItemAnimate : ''}
+                                      style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '6px',
+                                        width: '100%',
+                                        animationDelay: `${vIdx * 50}ms`,
+                                      }}
+                                    >
+                                      <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>{v.name}</label>
+                                      <input
+                                        type="text"
+                                        className={styles.pincodeInput}
+                                        placeholder={`Enter ${v.name.toLowerCase()}`}
+                                        value={val}
+                                        disabled={!enabled}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          setTextPersonalizations((prev) => ({ ...prev, [key]: newText }));
+                                          setTextPersonalizationDone((prev) => ({ ...prev, [key]: newText.trim().length > 0 }));
+                                        }}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (groupType === 'image_selector' || (groupType as any) === 'image') {
+                          return (
+                            <div key={g.id} className={`${styles.customizationGroup} ${!enabled ? styles.customizationGroupLocked : ''}`}>
+                              <div className={styles.groupHeader}>
+                                <span className={styles.groupTitle}>{groupTitle}</span>
+                                {selectedValueName && (
+                                  <>
+                                    <span className={styles.groupHeaderSeparator}>:</span>
+                                    <span className={styles.selectedValueText}>{selectedValueName}</span>
+                                  </>
+                                )}
+                              </div>
+                              <div className={styles.imageSelectorGrid}>
+                                {(g.values || []).map((val, vIdx) => {
+                                  const isSelected = selectedValueId === val.id;
+                                  return (
+                                    <button
+                                      key={`${val.id}_${enabled}`}
+                                      type="button"
+                                      disabled={!enabled}
+                                      className={`${styles.imageSelectorCard} ${isSelected ? styles.imageSelectorCardActive : ''} ${!enabled ? styles.disabled : styles.blurItemAnimate}`}
+                                      style={{ animationDelay: `${vIdx * 50}ms` }}
+                                      onClick={() => {
+                                        handleSelectCustomizationOption(g.id, val.id, idx);
+                                      }}
+                                    >
+                                      {(val as any).imageUrl && (
+                                        <img src={(val as any).imageUrl} alt={val.name} className={styles.imageSelectorThumbnail} />
+                                      )}
+                                      <span className={styles.imageSelectorLabel}>{val.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (groupType === 'colour_palette' || (groupType as any) === 'color') {
+                          return (
+                            <div key={g.id} className={`${styles.customizationGroup} ${!enabled ? styles.customizationGroupLocked : ''}`}>
+                              <div className={styles.groupHeader}>
+                                <span className={styles.groupTitle}>{groupTitle}</span>
+                                {selectedValueName && (
+                                  <>
+                                    <span className={styles.groupHeaderSeparator}>:</span>
+                                    <span className={styles.selectedValueText}>{selectedValueName}</span>
+                                  </>
+                                )}
+                              </div>
+                              <div className={styles.colorSelectorPalette}>
+                                {(g.values || []).map((val, vIdx) => {
+                                  const isSelected = selectedValueId === val.id;
+                                  return (
+                                    <button
+                                      key={`${val.id}_${enabled}`}
+                                      type="button"
+                                      disabled={!enabled}
+                                      style={{ backgroundColor: (val as any).colorHex || '#ccc', animationDelay: `${vIdx * 40}ms` }}
+                                      className={`${styles.colorSwatch} ${isSelected ? styles.colorSwatchActive : ''} ${!enabled ? styles.disabled : styles.blurItemAnimate}`}
+                                      title={val.name}
+                                      onClick={() => {
+                                        handleSelectCustomizationOption(g.id, val.id, idx);
+                                      }}
+                                    >
+                                      <span className="sr-only">{val.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div key={g.id} className={`${styles.customizationGroup} ${!enabled ? styles.customizationGroupLocked : ''}`}>
+                            <div className={styles.groupHeader}>
+                              <span className={styles.groupTitle}>{groupTitle}</span>
+                              {selectedValueName && (
+                                <>
+                                  <span className={styles.groupHeaderSeparator}>:</span>
+                                  <span
+                                    key={selectedValueName}
+                                    className={`${styles.selectedValueText} ${styles.tDigitGroup} ${styles.isAnimating}`}
+                                    style={
+                                      {
+                                        '--digit-dir-y': 1,
+                                        '--digit-distance': '5px',
+                                        '--digit-blur': '2.5px',
+                                        '--digit-dur': '160ms',
+                                      } as React.CSSProperties
+                                    }
+                                  >
+                                    {removePriceFromName(selectedValueName).split('').map((char, index) => (
+                                      <span
+                                        key={index}
+                                        className={styles.tDigit}
+                                        style={{ animationDelay: `${index * 12}ms` }}
+                                      >
+                                        {char}
+                                      </span>
+                                    ))}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <div className={styles.variationsGrid}>
+                              {(g.values || []).map((val, vIdx) => {
+                                const isSelected = selectedValueId === val.id;
+                                return (
+                                  <button
+                                    key={`${val.id}_${enabled}`}
+                                    type="button"
+                                    disabled={!enabled}
+                                    className={`${styles.variationButton} ${isSelected ? styles.variationActive : ''} ${!enabled ? styles.variationDisabled : styles.blurItemAnimate}`}
+                                    style={{ animationDelay: `${vIdx * 50}ms` }}
+                                    onClick={() => {
+                                      handleSelectCustomizationOption(g.id, val.id, idx);
+                                    }}
+                                  >
+                                    {val.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    variations.length > 0 && (
+                      <div className={styles.variationPicker}>
+                        <div className={styles.variationRow}>
+                          <div className={styles.variationLabel}>
+                            <span>{(displayProduct as any).variationGroupTitle || (displayProduct as any).variationTitle || (displayProduct as any).variationLabel || 'Size / Style'}</span>
+                            {selectedVariation && (
+                              <>
+                                <span className={styles.groupHeaderSeparator}>:</span>
+                                <span
+                                  key={selectedVariation.id}
+                                  className={`${styles.selectedValueText} ${styles.tDigitGroup} ${styles.isAnimating}`}
+                                  style={
+                                    {
+                                      '--digit-dir-y': 1,
+                                      '--digit-distance': '5px',
+                                      '--digit-blur': '2.5px',
+                                      '--digit-dur': '160ms',
+                                    } as React.CSSProperties
+                                  }
+                                >
+                                  {removePriceFromName(selectedVariation.size).split('').map((char, index) => (
+                                    <span
+                                      key={index}
+                                      className={styles.tDigit}
+                                      style={{ animationDelay: `${index * 12}ms` }}
+                                    >
+                                      {char}
+                                    </span>
+                                  ))}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <div className={styles.variationsGrid}>
+                            {variations.map((v) => {
+                              const isActive = v.id === selectedVariationId;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  className={`${styles.variationButton} ${isActive ? styles.variationActive : ''} ${v.isAvailable ? '' : styles.variationDisabled}`}
+                                  disabled={!v.isAvailable}
+                                  onClick={() => setSelectedVariationId(v.id)}
+                                >
+                                  {removePriceFromName(v.size)}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )
                   )}
 
                   {/* Print upload button if active */}
@@ -718,6 +1779,28 @@ export default function ProductDetailsModal({
 
                   {/* Action buttons */}
                   <div className={styles.actionButtons}>
+                    <button
+                      type="button"
+                      className={`${styles.actionFavoriteButton} ${isFavorite ? styles.actionFavoriteButtonActive : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isFavorite) triggerSparkleBurst(e.currentTarget);
+                        handleToggleFavorite();
+                      }}
+                      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <svg
+                        className={styles.actionFavoriteIcon}
+                        viewBox="0 0 24 24"
+                        fill={isFavorite ? '#af5d6a' : 'none'}
+                        stroke="#af5d6a"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </button>
                     {isTrialMode ? (
                       <button
                         type="button"
@@ -757,50 +1840,81 @@ export default function ProductDetailsModal({
                       </>
                     )}
                   </div>
-                </div>
 
-                {/* Delivery Checker */}
-                <div className={styles.deliverySection}>
-                  <div className={styles.deliveryTitle}>Check Delivery</div>
-                  <div className={styles.pincodeInputRow}>
-                    <input
-                      type="text"
-                      className={styles.pincodeInput}
-                      placeholder="Enter 6-digit pincode"
-                      maxLength={6}
-                      value={pincode}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                        setPincode(val);
-                        setIsPincodeAvailable(null);
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className={styles.pincodeCheckButton}
-                      disabled={pincode.length !== 6 || isCheckingPincode}
-                      onClick={handlePincodeCheck}
-                    >
-                      {isCheckingPincode ? 'Checking...' : 'Check'}
-                    </button>
-                  </div>
-                  {isPincodeAvailable !== null && (
-                    <div className={isPincodeAvailable ? styles.pincodeSuccess : styles.pincodeError}>
-                      {isPincodeAvailable ? 'Delivery available in your area' : 'Delivery not available for this pincode'}
-                    </div>
+                  {/* Delivery availability hyperlink - shown below action buttons */}
+                  {!isTrialMode && (
+                    <>
+                      <button
+                        type="button"
+                        className={`${styles.deliveryCheckLink} ${pincode.length === 6 && isPincodeAvailable === true ? styles.deliveryCheckLinkSuccess : ''}`}
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('milko:open-pincode-modal'));
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" />
+                        </svg>
+                        {isPincodeAvailable === true && pincode.length === 6
+                          ? `Delivery available to your location ${pincode}`
+                          : isPincodeAvailable === false && pincode.length === 6
+                            ? `Delivery unavailable to your location ${pincode}`
+                            : 'Check delivery availability & estimated arrival'}
+                      </button>
+
+                      {pincode.length === 6 &&
+                        isPincodeAvailable === true &&
+                        displayProduct.deliveryTimeText ? (
+                        <div className={styles.deliveryEstimatedText}>
+                          Estimated delivery time is {displayProduct.deliveryTimeText}
+                        </div>
+                      ) : null}
+                    </>
                   )}
                 </div>
 
                 {/* Description */}
-                {displayProduct.description && (
+                {Boolean(displayProduct.description && displayProduct.description.replace(/<[^>]*>/g, '').trim().length > 0) && (
                   <div className={styles.descriptionSection}>
                     <div className={styles.descriptionTitle}>About Product</div>
                     <div
                       className={styles.descriptionContent}
-                      dangerouslySetInnerHTML={{ __html: toSafeHtml(displayProduct.description) }}
+                      dangerouslySetInnerHTML={{ __html: toSafeHtml(displayProduct.description || '') }}
                     />
                   </div>
                 )}
+
+                {/* Accordions */}
+                <div className={styles.accordionContainer}>
+                  {effectiveAccordionItems.map((item, idx) => {
+                    const isOpen = openAccordionIndex === idx;
+                    return (
+                      <div key={idx} className={styles.accordionItem}>
+                        <button
+                          type="button"
+                          className={styles.accordionHeader}
+                          onClick={() => setOpenAccordionIndex(isOpen ? null : idx)}
+                        >
+                          <span className={styles.accordionTitle}>{item.title}</span>
+                          <svg
+                            className={`${styles.accordionChevron} ${isOpen ? styles.accordionChevronOpen : ''}`}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        <div className={`${styles.accordionContentWrapper} ${isOpen ? styles.accordionContentWrapperOpen : ''}`}>
+                          <div
+                            className={styles.accordionContent}
+                            dangerouslySetInnerHTML={{ __html: toSafeHtml(item.content) }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Banners */}
@@ -808,40 +1922,155 @@ export default function ProductDetailsModal({
                 <ProductDetailBanners banners={displayProduct.detailBanners} />
               )}
 
-              {/* Related Products */}
-              {relatedProducts.length > 0 && (
-                <div className={styles.relatedSection}>
-                  <h3 className={styles.relatedHeading}>You May Also Like</h3>
-                  <div className={styles.relatedGrid}>
-                    {relatedProducts.map((rel) => (
-                      <Link
-                        key={rel.id}
-                        href={`/product/${rel.id}`}
-                        className={styles.relatedCard}
-                        onClick={() => onRelatedProductClick?.(rel)}
-                      >
-                        <div className={styles.relatedImageWrap}>
-                          <Image
-                            src={getPrimaryProductImageUrl(rel)}
-                            alt={rel.name}
-                            fill
-                            className={styles.relatedImage}
-                            sizes="(max-width: 640px) 50vw, 200px"
-                          />
-                        </div>
-                        <div className={styles.relatedInfo}>
-                          <div className={styles.relatedName}>{rel.name}</div>
-                          <div className={styles.relatedPrice}>₹{Math.round(rel.sellingPrice ?? rel.pricePerLitre)}</div>
-                        </div>
-                      </Link>
-                    ))}
+              {/* Customer Reviews Container */}
+              <div className={styles.reviewSummarySection} ref={reviewSummaryRef}>
+                <h3 className={styles.reviewSummaryTitle}>
+                  Customer Reviews
+                </h3>
+
+                <div className={styles.reviewSummaryContent}>
+                  {/* Left Column: Rating score + star + subtitle + button */}
+                  <div className={styles.reviewSummaryLeft}>
+                    <div className={styles.ratingCardNumberRow}>
+                      <span className={styles.ratingCardNumber}>{averageRating.toFixed(1)}</span>
+                      <svg className={styles.ratingCardStar} viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    </div>
+                    <div className={styles.ratingCardCount}>
+                      Based on {reviews.length || 1} {reviews.length === 1 ? 'review' : 'reviews'}
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.showMoreButton}
+                      onClick={() => setShowRatingDetailsPopup(true)}
+                    >
+                      Show more
+                    </button>
+                  </div>
+
+                  {/* Right Column: 5-star distribution progress bars */}
+                  <div className={styles.reviewSummaryRightTop}>
+                    <div className={styles.ratingDistribution}>
+                      {[5, 4, 3, 2, 1].map((stars) => {
+                        const count = ratingCounts[stars as 1 | 2 | 3 | 4 | 5] || 0;
+                        const total = Math.max(1, reviews.length || 1);
+                        const percent = Math.round((count / total) * 100);
+
+                        return (
+                          <div key={stars} className={styles.ratingBarRow}>
+                            <div className={styles.ratingBarLabel}>
+                              {stars} ★
+                            </div>
+                            <div className={styles.ratingBarContainer}>
+                              <div
+                                className={styles.ratingBar}
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                            <div className={styles.ratingBarCount}>{count}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Related Products - Rendered in its own container at the bottom of the page */}
+      {!loadingDetails && relatedProducts.length > 0 && (
+        <div className={isFlatPage ? styles.flatPageExtras : undefined} style={{ marginTop: '2.5rem' }}>
+          <div className={styles.relatedSection}>
+            <h3 className={styles.relatedHeading}>You May Also Like</h3>
+            <div className={`${cardStyles.productsGrid} ${styles.relatedGrid}`}>
+              {relatedProducts.map((rel) => {
+                const categoryLabel = (rel.categoryId ? categoryMap.get(String(rel.categoryId)) : undefined) || 'Collection';
+                const isOutOfStock = (rel.quantity ?? 0) <= 0;
+                const displayPrice = getCardPriceDisplay(rel);
+                const ratingVal = getAverageProductRating(rel);
+                const hasRating = getProductReviewCount(rel) > 0;
+                const imageUrl = getPrimaryProductImageUrl(rel) || '';
+
+                return (
+                  <Link
+                    key={rel.id}
+                    href={`/product/${rel.id}`}
+                    className={`${cardStyles.productCard} ${isOutOfStock ? cardStyles.productCardOutOfStock : ''}`}
+                    onClick={() => onRelatedProductClick?.(rel)}
+                  >
+                    <div className={cardStyles.productImage} style={imageUrl ? { aspectRatio: 'auto' } : undefined}>
+                      {isOutOfStock && (
+                        <div className={cardStyles.outOfStockBadge}>Out of stock</div>
+                      )}
+                      {imageUrl ? (
+                        <div className="product-card-image-wrapper">
+                          <Image
+                            src={imageUrl}
+                            alt={rel.name}
+                            width={500}
+                            height={500}
+                            sizes="(max-width: 640px) 50vw, (max-width: 968px) 50vw, 300px"
+                            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '19px' }}
+                          />
+                          {rel.hoverNextImage && getOrderedProductImageUrls(rel)[1] && (
+                            <div className="product-card-hover-image-container">
+                              <Image
+                                src={getOrderedProductImageUrls(rel)[1]}
+                                alt={rel.name}
+                                width={500}
+                                height={500}
+                                sizes="(max-width: 640px) 50vw, (max-width: 968px) 50vw, 300px"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '19px' }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className={cardStyles.placeholderImage}>
+                          <Logo />
+                        </div>
+                      )}
+                      {rel.isCustomizable && (
+                        <div className={`${cardStyles.assuredBadge} ${cardStyles.customizableBadge}`}>
+                          <svg className={cardStyles.verifiedIcon} viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                          </svg>
+                          <span>Customizable</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={cardStyles.productInfo}>
+                      <div className={cardStyles.productTitleRow}>
+                        <h4 className={cardStyles.productName}>{rel.name}</h4>
+                        <span className={cardStyles.productPrice}>{displayPrice}</span>
+                      </div>
+
+                      <div className={cardStyles.productCategoryRow}>
+                        <div className={cardStyles.productCategory}>
+                          {categoryLabel}
+                        </div>
+                        <div className={cardStyles.productRatingCompact}>
+                          <svg className={cardStyles.starIconSmall} style={{ color: hasRating ? '#ffc107' : '#cbd5e1' }} viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                          <span style={{ color: hasRating ? 'inherit' : '#94a3b8' }}>
+                            {hasRating ? ratingVal.toFixed(1) : '0.0'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Product Print Upload Modal */}
       {printUploadEnabled && isPrintUploadOpen && (
@@ -859,6 +2088,301 @@ export default function ProductDetailsModal({
             showToast(`${nextItems.length} photos customized and saved!`, 'success');
           }}
         />
+      )}
+
+      {/* Fullscreen Image Zoom Lightbox Overlay */}
+      {isImageZoomOpen && collageItems.length > 0 && typeof document !== 'undefined' && createPortal(
+        <div
+          className={styles.zoomOverlay}
+          onClick={() => setIsImageZoomOpen(false)}
+          onWheel={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <div className={styles.zoomCounter}>
+            {selectedImageIndex + 1} / {collageItems.length}
+          </div>
+
+          <button
+            type="button"
+            className={styles.zoomClose}
+            onClick={() => setIsImageZoomOpen(false)}
+            aria-label="Close zoomed image"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {collageItems.length > 1 && (
+            <>
+              <button
+                type="button"
+                className={`${styles.zoomNav} ${styles.zoomNavLeft}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : collageItems.length - 1));
+                  setZoomScale(1);
+                  setZoomPan({ x: 0, y: 0 });
+                }}
+                aria-label="Previous image"
+              >
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 12H20M4 12L8 8M4 12L8 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${styles.zoomNav} ${styles.zoomNavRight}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) => (prev < collageItems.length - 1 ? prev + 1 : 0));
+                  setZoomScale(1);
+                  setZoomPan({ x: 0, y: 0 });
+                }}
+                aria-label="Next image"
+              >
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 12H4M20 12L16 8M20 12L16 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </>
+          )}
+
+          <div
+            className={styles.zoomImageWrap}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hasZoomMovedRef.current) {
+                hasZoomMovedRef.current = false;
+                return;
+              }
+              if (zoomScale === 1) {
+                setZoomScale(2.2);
+              } else {
+                setZoomScale(1);
+                setZoomPan({ x: 0, y: 0 });
+              }
+            }}
+            onMouseDown={(e) => {
+              hasZoomMovedRef.current = false;
+              if (zoomScale > 1) {
+                e.preventDefault();
+                setIsZoomDragging(true);
+                zoomDragStartRef.current = {
+                  x: e.clientX,
+                  y: e.clientY,
+                  panX: zoomPan.x,
+                  panY: zoomPan.y,
+                };
+              }
+            }}
+            onMouseMove={(e) => {
+              if (isZoomDragging && zoomScale > 1) {
+                const dx = e.clientX - zoomDragStartRef.current.x;
+                const dy = e.clientY - zoomDragStartRef.current.y;
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                  hasZoomMovedRef.current = true;
+                }
+                setZoomPan({
+                  x: zoomDragStartRef.current.panX + dx,
+                  y: zoomDragStartRef.current.panY + dy,
+                });
+              }
+            }}
+            onMouseUp={() => setIsZoomDragging(false)}
+            onMouseLeave={() => setIsZoomDragging(false)}
+            onTouchStart={(e) => {
+              hasZoomMovedRef.current = false;
+              if (zoomScale > 1 && e.touches.length === 1) {
+                setIsZoomDragging(true);
+                zoomDragStartRef.current = {
+                  x: e.touches[0].clientX,
+                  y: e.touches[0].clientY,
+                  panX: zoomPan.x,
+                  panY: zoomPan.y,
+                };
+              }
+            }}
+            onTouchMove={(e) => {
+              if (isZoomDragging && zoomScale > 1 && e.touches.length === 1) {
+                const dx = e.touches[0].clientX - zoomDragStartRef.current.x;
+                const dy = e.touches[0].clientY - zoomDragStartRef.current.y;
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                  hasZoomMovedRef.current = true;
+                }
+                setZoomPan({
+                  x: zoomDragStartRef.current.panX + dx,
+                  y: zoomDragStartRef.current.panY + dy,
+                });
+              }
+            }}
+            onTouchEnd={() => setIsZoomDragging(false)}
+            style={{
+              position: 'relative',
+              width: '85vw',
+              height: '85vh',
+              cursor: zoomScale > 1 ? (isZoomDragging ? 'grabbing' : 'grab') : 'zoom-in',
+              userSelect: 'none',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                transform: `translate(${zoomPan.x}px, ${zoomPan.y}px) scale(${zoomScale})`,
+                transition: isZoomDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                transformOrigin: 'center center',
+                willChange: 'transform',
+              }}
+            >
+              <Image
+                src={collageItems[selectedImageIndex]}
+                alt={`${displayProduct.name} zoomed`}
+                fill
+                style={{ objectFit: 'contain', pointerEvents: 'none' }}
+                sizes="100vw"
+                priority
+                draggable={false}
+              />
+            </div>
+          </div>
+
+          <div className={styles.zoomControls}>
+            <button
+              type="button"
+              className={styles.zoomControlBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomScale((s) => {
+                  const next = Math.max(1, +(s - 0.5).toFixed(2));
+                  if (next === 1) setZoomPan({ x: 0, y: 0 });
+                  return next;
+                });
+              }}
+              disabled={zoomScale <= 1}
+              aria-label="Zoom out"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </button>
+            <span className={styles.zoomScaleText}>{Math.round(zoomScale * 100)}%</span>
+            <button
+              type="button"
+              className={styles.zoomControlBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomScale((s) => Math.min(4, +(s + 0.5).toFixed(2)));
+              }}
+              disabled={zoomScale >= 4}
+              aria-label="Zoom in"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* Customer Reviews & Rating Popup Modal */}
+      {showRatingDetailsPopup && typeof document !== 'undefined' && createPortal(
+        <div
+          className={styles.reviewsPopupOverlay}
+          onClick={() => setShowRatingDetailsPopup(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Customer reviews"
+        >
+          <div
+            className={styles.reviewsPopupPanel}
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div className={styles.reviewsPopupHeader}>
+              <h3 className={styles.reviewsPopupTitle}>Customer Reviews ({reviews.length})</h3>
+              <button
+                type="button"
+                className={styles.reviewsPopupClose}
+                onClick={() => setShowRatingDetailsPopup(false)}
+                aria-label="Close reviews"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.reviewsPopupScroll}>
+              <div className={styles.ratingDetailsMeter}>
+                <div className={styles.ratingMetersRow}>
+                  {renderSingleRatingMeter(feedback?.qualityStars, 'quality', 'Quality of the product', ratingMeterAnimateIn)}
+                  {renderSingleRatingMeter(feedback?.onTimeStars, 'on-time', 'On time delivery', ratingMeterAnimateIn)}
+                  {renderSingleRatingMeter(feedback?.valueForMoneyStars, 'value', 'Value for money', ratingMeterAnimateIn)}
+                </div>
+              </div>
+
+              {reviews.length > 0 ? (
+                <div className={styles.reviewsList}>
+                  {reviews.map((review) => {
+                    const reviewerInitial = (review.reviewerName || 'C').charAt(0).toUpperCase();
+                    return (
+                      <article key={review.id} className={styles.reviewItem}>
+                        <div className={styles.reviewHeader}>
+                          <div className={styles.reviewerInfo}>
+                            <div className={styles.reviewerAvatarWrap}>
+                              <div className={styles.reviewerAvatar} aria-hidden="true">
+                                {reviewerInitial}
+                              </div>
+                              <span className={styles.reviewerVerifiedBadge} tabIndex={0} aria-label="Verified customer">
+                                <span className={styles.reviewerVerifiedTooltip} role="tooltip">
+                                  Verified customer
+                                </span>
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                  <path
+                                    fillRule="evenodd"
+                                    clipRule="evenodd"
+                                    d="M9.5924 3.20027C9.34888 3.4078 9.22711 3.51158 9.09706 3.59874C8.79896 3.79854 8.46417 3.93721 8.1121 4.00672C7.95851 4.03705 7.79903 4.04977 7.48008 4.07522C6.6787 4.13918 6.278 4.17115 5.94371 4.28923C5.17051 4.56233 4.56233 5.17051 4.28923 5.94371C4.17115 6.278 4.13918 6.6787 4.07522 7.48008C4.04977 7.79903 4.03705 7.95851 4.00672 8.1121C3.93721 8.46417 3.79854 8.79896 3.59874 9.09706C3.51158 9.22711 3.40781 9.34887 3.20027 9.5924C2.67883 10.2043 2.4181 10.5102 2.26522 10.8301C1.91159 11.57 1.91159 12.43 2.26522 13.1699C2.41811 13.4898 2.67883 13.7957 3.20027 14.4076C3.40778 14.6511 3.51158 14.7729 3.59874 14.9029C3.79854 15.201 3.93721 15.5358 4.00672 15.8879C4.03705 16.0415 4.04977 16.201 4.07522 16.5199C4.13918 17.3213 4.17115 17.722 4.28923 18.0563C4.56233 18.8295 5.17051 19.4377 5.94371 19.7108C6.278 19.8288 6.6787 19.8608 7.48008 19.9248C7.79903 19.9502 7.95851 19.963 8.1121 19.9933C8.46417 20.0628 8.79896 20.2015 9.09706 20.4013C9.22711 20.4884 9.34887 20.5922 9.5924 20.7997C10.2043 21.3212 10.5102 21.5819 10.8301 21.7348C11.57 22.0884 12.43 22.0884 13.1699 21.7348C13.4898 21.5819 13.7957 21.3212 14.4076 20.7997C14.6511 20.5922 14.7729 20.4884 14.9029 20.4013C15.201 20.2015 15.5358 20.0628 15.8879 19.9933C16.0415 19.963 16.201 19.9502 16.5199 19.9248C17.3213 19.8608 17.722 19.8288 18.0563 19.7108C18.8295 19.4377 19.4377 18.8295 19.7108 18.0563C19.8288 17.722 19.8608 17.3213 19.9248 16.5199C19.9502 16.201 19.963 16.0415 19.9933 15.8879C20.0628 15.5358 20.2015 15.201 20.4013 14.9029C20.4884 14.7729 20.5922 14.6511 20.7997 14.4076C21.3212 13.7957 21.5819 13.4898 21.7348 13.1699C22.0884 12.43 22.0884 11.57 21.7348 10.8301C21.5819 10.5102 21.3212 10.2043 20.7997 9.5924C20.5922 9.34887 20.4884 9.22711 20.4013 9.09706C20.2015 8.79896 20.0628 8.46417 19.9933 8.1121C19.963 7.95851 19.9502 7.79903 19.9248 7.48008C19.8608 6.6787 19.8288 6.278 19.7108 5.94371C19.4377 5.17051 18.8295 4.56233 18.0563 4.28923C17.722 4.17115 17.3213 4.13918 16.5199 4.07522C16.201 4.04977 16.0415 4.03705 15.8879 4.00672C15.5358 3.93721 15.201 3.79854 14.9029 3.59874C14.7729 3.51158 14.6511 3.40781 14.4076 3.20027C13.7957 2.67883 13.4898 2.41811 13.1699 2.26522C12.43 1.91159 11.57 1.91159 10.8301 2.26522C10.5102 2.4181 10.2043 2.67883 9.5924 3.20027ZM16.3735 9.86314C16.6913 9.5453 16.6913 9.03 16.3735 8.71216C16.0557 8.39433 15.5403 8.39433 15.2225 8.71216L10.3723 13.5624L8.77746 11.9676C8.45963 11.6498 7.94432 11.6498 7.62649 11.9676C7.30866 12.2854 7.30866 12.8007 7.62649 13.1186L9.79678 15.2889C10.1146 15.6067 10.6299 15.6067 10.9478 15.2889L16.3735 9.86314Z"
+                                    fill="#ff004c"
+                                  />
+                                </svg>
+                              </span>
+                            </div>
+                            <div className={styles.reviewerName}>{review.reviewerName}</div>
+                          </div>
+                          {renderReviewStars(review.rating)}
+                        </div>
+                        {review.comment ? (
+                          <p className={styles.reviewText}>{review.comment}</p>
+                        ) : null}
+                        <time className={styles.reviewDate} dateTime={review.createdAt}>
+                          {formatReviewRelativeDate(review.createdAt)}
+                        </time>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className={styles.reviewsPopupEmptyState}>
+                  <p className={styles.reviewsPopupEmpty}>No customer reviews yet. Be the first to share your experience after delivery.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

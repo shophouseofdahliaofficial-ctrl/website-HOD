@@ -145,25 +145,41 @@ export function normalizeListHtml(inputHtml: string): string {
   return doc.body.innerHTML;
 }
 
+export function stripHtmlComments(input: string): string {
+  if (!input) return '';
+  return input.replace(/<!--[\s\S]*?-->/g, '').replace(/<!--[\s\S]*$/g, '');
+}
+
 export function normalizePastedHtml(html: string, plainText: string): string {
-  const trimmedHtml = html.trim();
-  if (!trimmedHtml) {
-    const fromPlain = plainTextToListHtml(plainText);
-    return fromPlain ? fromPlain : textToHtml(plainText);
+  const cleanHtml = stripHtmlComments(html || '').trim();
+  const cleanPlain = stripHtmlComments(plainText || '').trim();
+  if (!cleanHtml) {
+    const fromPlain = plainTextToListHtml(cleanPlain);
+    return fromPlain ? fromPlain : textToHtml(cleanPlain);
   }
-  return sanitizeHtml(trimmedHtml);
+  return sanitizeHtml(cleanHtml);
 }
 
 export function sanitizeHtml(inputHtml: string) {
+  const cleanHtml = stripHtmlComments(inputHtml || '');
+
   // DOMParser only exists in the browser. In non-browser contexts, fall back to escaping.
   if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
-    return escapeHtml(inputHtml);
+    return escapeHtml(cleanHtml);
   }
 
-  const doc = new DOMParser().parseFromString(inputHtml, 'text/html');
+  const doc = new DOMParser().parseFromString(cleanHtml, 'text/html');
 
   // Remove scripts/styles explicitly
   doc.querySelectorAll('script,style').forEach((n) => n.remove());
+
+  // Remove all comment nodes explicitly
+  const commentWalker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_COMMENT);
+  const comments: Node[] = [];
+  while (commentWalker.nextNode()) {
+    comments.push(commentWalker.currentNode);
+  }
+  comments.forEach((c) => c.parentNode?.removeChild(c));
 
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT);
   const elements: Element[] = [];
@@ -205,7 +221,7 @@ export function sanitizeHtml(inputHtml: string) {
 }
 
 export function toSafeHtml(input: string) {
-  const raw = input || '';
-  return looksLikeHtml(raw) ? sanitizeHtml(raw) : textToHtml(raw);
+  const clean = stripHtmlComments(input || '').trim();
+  return looksLikeHtml(clean) ? sanitizeHtml(clean) : textToHtml(clean);
 }
 

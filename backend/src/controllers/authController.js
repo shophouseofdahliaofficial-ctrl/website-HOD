@@ -116,7 +116,7 @@ const exchangeToken = async (req, res, next) => {
     let role = 'customer';
     try {
       const result = await query(
-        'SELECT id, role, avatar_url FROM users WHERE id = $1 OR LOWER(email) = $2 ORDER BY CASE WHEN id = $1 THEN 0 ELSE 1 END LIMIT 1',
+        'SELECT id, role, avatar_url FROM users WHERE id::text = $1::text OR LOWER(email) = LOWER($2::text) ORDER BY CASE WHEN id::text = $1::text THEN 0 ELSE 1 END LIMIT 1',
         [targetUserId, normalizedEmail]
       );
       const avatar_url = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null;

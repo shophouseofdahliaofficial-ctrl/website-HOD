@@ -27,6 +27,8 @@ import {
   getCartItemOrderSubtotalContribution,
   getCartItemPriceDetails,
   getCartItemPriceLineAmount,
+  getPhotoboothCartProject,
+  getPhotoboothPrintsLabel,
   shouldShowCartPriceLine,
 } from '@/lib/utils/cartPricing';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
@@ -48,6 +50,15 @@ type SubscriptionCartItem = {
   deliveryTime: string;
   totalAmount: number;
   updatedAt: string;
+};
+
+const getPhotobookCartProject = (it: CartItem) => {
+  if (!it?.customizations) return null;
+  return (
+    it.customizations.photobookProject ||
+    it.customizations.photobook ||
+    (it.customizations.photobookProjectId ? { id: it.customizations.photobookProjectId } : null)
+  );
 };
 
 export default function CartPage() {
@@ -157,6 +168,9 @@ export default function CartPage() {
     if (items.length || subscriptionCartItem) void load();
   }, [items, subscriptionCartItem]);
 
+  const [giftingConfig, setGiftingConfig] = useState<{ enabled: boolean; price: number }>({ enabled: true, price: 25 });
+  const [codConfig, setCodConfig] = useState<{ enabled: boolean }>({ enabled: true });
+
   useEffect(() => {
     const loadPlatformFee = async () => {
       try {
@@ -170,7 +184,39 @@ export default function CartPage() {
       }
     };
 
+    const loadGiftingConfig = async () => {
+      try {
+        const data = await contentApi.getByType('gifting');
+        if (data) {
+          const price = Number(data.metadata?.price ?? (Number.isFinite(Number(data.title)) ? Number(data.title) : 25));
+          const enabled = (data.metadata?.enabled !== undefined ? data.metadata.enabled === true : data.isActive) ?? true;
+          const isActuallyActive = enabled && data.isActive !== false;
+          setGiftingConfig({
+            enabled: isActuallyActive,
+            price: Number.isFinite(price) && price >= 0 ? price : 25,
+          });
+        }
+      } catch {
+        setGiftingConfig({ enabled: true, price: 25 });
+      }
+    };
+
+    const loadCodConfig = async () => {
+      try {
+        const data = await contentApi.getByType('cod');
+        if (data) {
+          const enabled = (data.metadata?.enabled !== undefined ? data.metadata.enabled === true : data.isActive) ?? true;
+          const isActuallyActive = enabled && data.isActive !== false;
+          setCodConfig({ enabled: isActuallyActive });
+        }
+      } catch {
+        setCodConfig({ enabled: true });
+      }
+    };
+
     loadPlatformFee();
+    loadGiftingConfig();
+    loadCodConfig();
   }, []);
 
   useEffect(() => {
@@ -220,28 +266,69 @@ export default function CartPage() {
     }).format(amount);
   };
 
-  const getCustomizationDescriptionParts = (it: CartItem, p: Product) => {
-    if (!p.isCustomizable || !it.variationId) return [];
-    const combo = (p.customizationCombinations || []).find(c => c.id === it.variationId);
-
+  const getCustomizationDescriptionParts = (it: CartItem, p?: Product | null) => {
     const descParts: string[] = [];
-    if (combo) {
-      Object.keys(combo.combinationKeys || {}).forEach(groupId => {
-        const valId = combo.combinationKeys[groupId];
-        const group = (p.customizationOptions || []).find(g => g.id === groupId);
-        const val = group ? (group.values || []).find(v => v.id === valId) : null;
+
+    // 1. Customizable product combinations
+    if (p && p.isCustomizable && it.variationId) {
+      const combo = (p.customizationCombinations || []).find((c) => String(c.id) === String(it.variationId));
+      if (combo && combo.combinationKeys) {
+        Object.keys(combo.combinationKeys).forEach((groupId) => {
+          const valId = combo.combinationKeys[groupId];
+          const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+          const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+          if (group && val) {
+            descParts.push(`${group.title}: ${val.name}`);
+          }
+        });
+      }
+    }
+
+    // 2. Direct selectedOptions in customizations
+    if (p && descParts.length === 0 && it.customizations?.selectedOptions && typeof it.customizations.selectedOptions === 'object') {
+      const selectedOpts = it.customizations.selectedOptions;
+      Object.keys(selectedOpts).forEach((groupId) => {
+        const valId = selectedOpts[groupId];
+        const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+        const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
         if (group && val) {
           descParts.push(`${group.title}: ${val.name}`);
         }
       });
     }
 
-    // Add text personalization summaries
-    if (it.customizations && it.customizations.textPersonalization) {
+    // 3. Standard variations in product.variations
+    if (p && descParts.length === 0 && it.variationId) {
+      const v = (p.variations || []).find((x) => String(x.id) === String(it.variationId));
+      if (v?.size) {
+        const trimmed = String(v.size).trim();
+        const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
+        descParts.push(formatted);
+      }
+    }
+
+    // 4. Fallback if variation size is stored directly in item or customizations
+    if (descParts.length === 0) {
+      const fallbackSize =
+        (it as any).variationSize ||
+        (it as any).size ||
+        it.customizations?.size ||
+        (it.customizations?.variation as any)?.size ||
+        (it as any).variation?.size ||
+        (it as any).variantName;
+      if (fallbackSize) {
+        const trimmed = String(fallbackSize).trim();
+        const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
+        descParts.push(formatted);
+      }
+    }
+
+    // 5. Text personalization
+    if (p && it.customizations && it.customizations.textPersonalization) {
       const textPers = it.customizations.textPersonalization;
-      (p.customizationOptions || []).forEach(group => {
+      (p.customizationOptions || []).forEach((group) => {
         if (group.type === 'text_input') {
-          (group.values || []).forEach(val => {
+          (group.values || []).forEach((val) => {
             const inputKey = `${group.id}_${val.id}`;
             const textVal = textPers[inputKey] || '';
             if (textVal.trim()) {
@@ -531,7 +618,7 @@ export default function CartPage() {
             ...x.customizations,
             giftWrap: {
               comment: foundWrap.comment,
-              price: 25
+              price: giftingConfig.price
             }
           }
         };
@@ -630,7 +717,7 @@ export default function CartPage() {
               if (!shouldShowCartPriceLine(it, p)) return null;
               const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
               const itemKey = getItemKey(it.productId, it.variationId, it.customizations);
-              const photobooth = it.customizations?.photoboothProject;
+              const photobooth = getPhotoboothCartProject(it);
               const photobook = getPhotobookCartProject(it);
               const itemTotal = getCartItemOrderSubtotalContribution(it, p);
 
@@ -796,8 +883,8 @@ export default function CartPage() {
                       })()
                     ) : null}
                     {!p?.isCustomizable && v ? (
-                      <div className={styles.itemInfo}>
-                        <span>{v.size}</span>
+                      <div className={styles.itemVariationList}>
+                        <span>{/^size\s*:/i.test(v.size.trim()) || v.size.includes(':') ? v.size.trim() : `Size: ${v.size.trim()}`}</span>
                       </div>
                     ) : null}
                     {it.customizations?.giftWrap && (
@@ -808,7 +895,7 @@ export default function CartPage() {
                         )}
                       </div>
                     )}
-                    <div className={styles.itemPrice}>₹{itemTotal.toFixed(2)}</div>
+                    <div className={styles.itemPrice}>₹{formatINR(itemTotal)}</div>
                   </div>
 
                   <div className={styles.itemActions}>
@@ -880,7 +967,7 @@ export default function CartPage() {
                     </span>
                     <span>Delivery: {subscriptionCartItem.deliveryTime}</span>
                   </div>
-                  <div className={styles.itemPrice}>₹{subscriptionCartItem.totalAmount.toFixed(2)}</div>
+                  <div className={styles.itemPrice}>₹{formatINR(subscriptionCartItem.totalAmount)}</div>
                 </div>
                 <div className={styles.itemActions}>
                   <button
@@ -947,31 +1034,33 @@ export default function CartPage() {
           </div>
 
           {/* Gifting Section */}
-          <div className={`${styles.summarySection} ${styles.giftingSection}`}>
-            <h3 className={styles.sectionTitle}>Gifting</h3>
-            <div className={styles.giftingBox}>
-              <div className={styles.giftingContent}>
-                <h4 className={styles.giftingTitle}>Buying for a loved one?</h4>
-                <p className={styles.giftingDescription}>
-                  Add premium gift wrapping to your order for just ₹25
-                </p>
-                <button
-                  type="button"
-                  className={styles.giftingButton}
-                  onClick={handleOpenGiftModal}
-                >
-                  {hasAnyGiftWrap ? 'Edit gift wrap' : 'Add gift wrap'}
-                </button>
-              </div>
-              <div className={styles.giftingIconWrapper}>
-                <DotLottieReact
-                  src="/animations/gift.json"
-                  autoplay
-                  loop
-                />
+          {giftingConfig.enabled && (
+            <div className={`${styles.summarySection} ${styles.giftingSection}`}>
+              <h3 className={styles.sectionTitle}>Gifting</h3>
+              <div className={styles.giftingBox}>
+                <div className={styles.giftingContent}>
+                  <h4 className={styles.giftingTitle}>Buying for a loved one?</h4>
+                  <p className={styles.giftingDescription}>
+                    Add premium gift wrapping to your order for just ₹{giftingConfig.price}
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.giftingButton}
+                    onClick={handleOpenGiftModal}
+                  >
+                    {hasAnyGiftWrap ? 'Edit gift wrap' : 'Add gift wrap'}
+                  </button>
+                </div>
+                <div className={styles.giftingIconWrapper}>
+                  <DotLottieReact
+                    src="/animations/gift.json"
+                    autoplay
+                    loop
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Price Details */}
           <div className={styles.summarySection}>
@@ -987,59 +1076,61 @@ export default function CartPage() {
                 return (
                   <div key={getItemKey(it.productId, it.variationId, it.customizations)} className={styles.priceRow}>
                     <span>{getCartItemCheckoutLineLabel(it, p)}</span>
-                    <span>₹{itemTotal.toFixed(2)}</span>
+                    <span>₹{formatINR(itemTotal)}</span>
                   </div>
                 );
               })}
               {subscriptionCartItem && (
                 <div className={styles.priceRow}>
                   <span>1 X plan for {subscriptionCartItem.productName}</span>
-                  <span>₹{subscriptionCartItem.totalAmount.toFixed(2)}</span>
+                  <span>₹{formatINR(subscriptionCartItem.totalAmount)}</span>
                 </div>
               )}
               {couponDiscount > 0 && (
                 <div className={styles.priceRow}>
                   <span>Coupon discount</span>
-                  <span className={styles.discount}>-₹{couponDiscount.toFixed(2)}</span>
+                  <span className={styles.discount}>-₹{formatINR(couponDiscount)}</span>
                 </div>
               )}
               {platformFee > 0 && (
                 <div className={styles.priceRow}>
                   <span>Platform fee</span>
-                  <span>₹{platformFee.toFixed(2)}</span>
+                  <span>₹{formatINR(platformFee)}</span>
                 </div>
               )}
               {totalGiftWrapFee > 0 && (
                 <div className={styles.priceRow}>
                   <span>Gift wrap</span>
-                  <span>₹{totalGiftWrapFee.toFixed(2)}</span>
+                  <span>₹{formatINR(totalGiftWrapFee)}</span>
                 </div>
               )}
               <div className={styles.priceRow}>
                 <span>Delivery Charges</span>
                 <span className={displayedDeliveryCharges > 0 ? '' : styles.freeDelivery}>
-                  {displayedDeliveryCharges > 0 ? `₹${displayedDeliveryCharges.toFixed(2)}` : 'Proceed Further'}
+                  {displayedDeliveryCharges > 0 ? `₹${formatINR(displayedDeliveryCharges)}` : 'Proceed Further'}
                 </span>
               </div>
               <div className={`${styles.priceRow} ${styles.priceRowTotal}`}>
                 <span>Total Amount</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span>₹{formatINR(total)}</span>
               </div>
             </div>
             <div className={styles.totalSavingsBox}>
               <span className={styles.totalSavingsLabel}>Your total savings</span>
-              <span className={styles.savings}>₹{savings.toFixed(2)}</span>
+              <span className={styles.savings}>₹{formatINR(savings)}</span>
             </div>
-            <div className={styles.paymentMethods}>
-              <div className={styles.paymentMethodItem}>
-                <span className={styles.paymentMethodLabel}>COD</span>
-                <span className={styles.paymentMethodAvailable}>Available</span>
+            {codConfig.enabled && (
+              <div className={styles.paymentMethods}>
+                <div className={styles.paymentMethodItem}>
+                  <span className={styles.paymentMethodLabel}>COD</span>
+                  <span className={styles.paymentMethodAvailable}>Available</span>
+                </div>
+                <div className={styles.paymentMethodItem}>
+                  <span className={styles.paymentMethodLabel}>Online Payment</span>
+                  <span className={styles.paymentMethodAvailable}>Available</span>
+                </div>
               </div>
-              <div className={styles.paymentMethodItem}>
-                <span className={styles.paymentMethodLabel}>Online Payment</span>
-                <span className={styles.paymentMethodAvailable}>Available</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Place Order Button */}
@@ -1051,7 +1142,7 @@ export default function CartPage() {
             ) : null}
             <div className={styles.totalAmountMobile}>
               <span className={styles.totalAmountLabel}>Total Amount</span>
-              <span className={styles.totalAmountValue}>₹{total.toFixed(2)}</span>
+              <span className={styles.totalAmountValue}>₹{formatINR(total)}</span>
             </div>
             <button
               onClick={handleCheckout}
@@ -1238,7 +1329,7 @@ export default function CartPage() {
                         }}
                       >
                         {tempWrappedItems.length > 0
-                          ? `Save & Apply (₹${tempWrappedItems.length * 25})`
+                          ? `Save & Apply (₹${tempWrappedItems.length * giftingConfig.price})`
                           : hasAnyGiftWrap
                           ? 'Remove All & Save'
                           : 'Done'}

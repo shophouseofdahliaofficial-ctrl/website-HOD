@@ -52,14 +52,16 @@ function ProductDeepLinkContent() {
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '70vh',
           fontFamily: 'var(--font-inter), sans-serif',
           color: '#666',
-          fontSize: '1.05rem',
+          fontSize: 'calc(1.05rem - 3px)',
           fontWeight: 500,
+          letterSpacing: '-0.5px',
+          gap: '10px',
         }}
       >
         <style>{`
@@ -70,10 +72,11 @@ function ProductDeepLinkContent() {
         <svg
           style={{
             animation: 'loaderSpin 0.8s linear infinite',
-            width: '26px',
-            height: '26px',
+            width: '22px',
+            height: '22px',
             color: '#ff0040',
-            marginBottom: '12px'
+            marginBottom: '0px',
+            flexShrink: 0
           }}
           viewBox="0 0 24 24"
           fill="none"
@@ -256,14 +259,16 @@ export default function ProductDeepLinkPage() {
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '70vh',
             fontFamily: 'var(--font-inter), sans-serif',
             color: '#666',
-            fontSize: '1.05rem',
+            fontSize: 'calc(1.05rem - 3px)',
             fontWeight: 500,
+            letterSpacing: '-0.5px',
+            gap: '10px',
           }}
         >
           <style>{`
@@ -274,10 +279,11 @@ export default function ProductDeepLinkPage() {
           <svg
             style={{
               animation: 'loaderSpin 0.8s linear infinite',
-              width: '26px',
-              height: '26px',
+              width: '22px',
+              height: '22px',
               color: '#ff0040',
-              marginBottom: '12px',
+              marginBottom: '0px',
+              flexShrink: 0
             }}
             viewBox="0 0 24 24"
             fill="none"

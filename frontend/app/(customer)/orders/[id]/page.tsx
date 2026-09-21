@@ -32,6 +32,7 @@ type DetailedFeedback = {
 type OrderItem = {
   productName: string;
   variationSize: string | null;
+  variationName?: string | null;
   variationId?: number | null;
   quantity: number;
   unitPrice: number;
@@ -42,6 +43,7 @@ type OrderItem = {
   photobookImageCheckUrl?: string | null;
   buyAgainEnabled?: boolean;
   detailedFeedback?: DetailedFeedback | null;
+  customizations?: any;
 };
 
 const PHOTOBOOK_IMAGE_CLEANUP_DAYS = 7;
@@ -692,7 +694,7 @@ export default function OrderDetailsPage() {
         {order.status === 'delivered' && (
           <section className={styles.section}>
             <h2 className={styles.recommendationTitle}>
-              How likely are you to recommend Scribble to friends and family?
+              How likely are you to recommend House of Dahlia to friends and family?
             </h2>
             <div className={styles.ratingOptions}>
               <button
@@ -834,6 +836,86 @@ export default function OrderDetailsPage() {
                     </div>
                     <div className={styles.productCardInfo}>
                       <h3 className={styles.productCardName}>{item.productName}</h3>
+                      {(() => {
+                        const p = item.productId ? loadedProducts[String(item.productId)] : null;
+                        const descParts: string[] = [];
+
+                        // 1. Customizable product combinations
+                        if (p && p.isCustomizable && item.variationId) {
+                          const combo = (p.customizationCombinations || []).find((c) => String(c.id) === String(item.variationId));
+                          if (combo && combo.combinationKeys) {
+                            Object.keys(combo.combinationKeys).forEach((groupId) => {
+                              const valId = combo.combinationKeys[groupId];
+                              const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+                              const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+                              if (group && val) {
+                                descParts.push(`${group.title}: ${val.name}`);
+                              }
+                            });
+                          }
+                        }
+
+                        // 2. Direct selectedOptions in customizations
+                        if (descParts.length === 0 && item.customizations?.selectedOptions && typeof item.customizations.selectedOptions === 'object') {
+                          const selectedOpts = item.customizations.selectedOptions;
+                          Object.keys(selectedOpts).forEach((groupId) => {
+                            const valId = selectedOpts[groupId];
+                            const group = (p?.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+                            const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+                            if (group && val) {
+                              descParts.push(`${group.title}: ${val.name}`);
+                            } else if (typeof valId === 'string' || typeof valId === 'number') {
+                              descParts.push(`${valId}`);
+                            }
+                          });
+                        }
+
+                        // 3. Standard variations in product.variations
+                        if (p && descParts.length === 0 && item.variationId) {
+                          const v = (p.variations || []).find((x) => String(x.id) === String(item.variationId));
+                          if (v?.size) {
+                            const trimmed = String(v.size).trim();
+                            const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
+                            descParts.push(formatted);
+                          }
+                        }
+
+                        // 4. Fallback if variation size is stored directly in item or customizations
+                        if (descParts.length === 0) {
+                          const fallbackSize =
+                            item.variationSize ||
+                            item.variationName ||
+                            (item as any).size ||
+                            item.customizations?.size ||
+                            (item.customizations?.variation as any)?.size ||
+                            (item.customizations as any)?.variationName;
+                          if (fallbackSize) {
+                            const trimmed = String(fallbackSize).trim();
+                            const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
+                            descParts.push(formatted);
+                          }
+                        }
+
+                        // 5. Text personalizations
+                        if (item.customizations?.textPersonalization) {
+                          const tp = item.customizations.textPersonalization;
+                          Object.keys(tp).forEach((key) => {
+                            if (tp[key]) {
+                              descParts.push(`Personalization: ${tp[key]}`);
+                            }
+                          });
+                        }
+
+                        if (descParts.length === 0) return null;
+
+                        return (
+                          <div className={styles.itemVariationList}>
+                            {descParts.map((desc) => (
+                              <span key={desc} className={styles.itemVariant}>{desc}</span>
+                            ))}
+                          </div>
+                        );
+                      })()}
                       {isSubscriptionOrderItem(item) && (
                         <p className={styles.subscriptionTransferNotePerItem}>
                           Plans are managed in My Account &gt;{' '}
@@ -921,7 +1003,6 @@ export default function OrderDetailsPage() {
                       {hasReview && df ? (
                         <div className={styles.detailedFeedbackReadOnly}>
                           <div className={styles.detailedFeedbackRow}><span>Quality of the product</span><span className={styles.detailedFeedbackStars}>{[1, 2, 3, 4, 5].map(n => <span key={n} className={n <= df.qualityStars ? styles.starFilled : styles.starEmpty}>★</span>)}</span></div>
-                          <div className={styles.detailedFeedbackRow}><span>Delivery agent behaviour</span><span className={styles.detailedFeedbackStars}>{[1, 2, 3, 4, 5].map(n => <span key={n} className={n <= (df.deliveryAgentStars ?? 0) ? styles.starFilled : styles.starEmpty}>★</span>)}</span></div>
                           <div className={styles.detailedFeedbackRow}><span>On time delivery</span><span className={styles.detailedFeedbackStars}>{[1, 2, 3, 4, 5].map(n => <span key={n} className={n <= (df.onTimeStars ?? 0) ? styles.starFilled : styles.starEmpty}>★</span>)}</span></div>
                           <div className={styles.detailedFeedbackRow}><span>Value for money</span><span className={styles.detailedFeedbackStars}>{[1, 2, 3, 4, 5].map(n => <span key={n} className={n <= (df.valueForMoneyStars ?? 0) ? styles.starFilled : styles.starEmpty}>★</span>)}</span></div>
                           <div className={styles.detailedFeedbackRow}><span>Would you order again</span><span>{df.wouldOrderAgain || '—'}</span></div>
@@ -971,10 +1052,15 @@ export default function OrderDetailsPage() {
                         productId: String(it.productId),
                         quantity: it.quantity,
                         variationId: it.variationId != null ? String(it.variationId) : undefined,
+                        customizations: it.customizations || undefined,
                       });
                     }
                   });
-                  router.push('/cart');
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                    window.dispatchEvent(new CustomEvent('open-desktop-cart'));
+                  } else {
+                    router.push('/cart');
+                  }
                 }}
               >
                 <svg className={styles.deliveredActionBtnIcon} viewBox="0 0 24 24" fill="currentColor" aria-hidden>

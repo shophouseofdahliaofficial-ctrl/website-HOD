@@ -11,6 +11,13 @@ export interface CartItem {
       comment: string;
       price: number;
     };
+    photoboothProject?: any;
+    photobookProject?: any;
+    photobook?: any;
+    photobookProjectId?: string;
+    photobooth?: any;
+    photoboothProjectId?: string;
+    [key: string]: any;
   };
 }
 

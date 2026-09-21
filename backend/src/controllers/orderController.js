@@ -31,6 +31,34 @@ async function incrementCouponUsageByCode(couponCode) {
   }
 }
 
+async function markPhotoboothProjectOrdered(projectId, userId) {
+  if (!projectId) return;
+  try {
+    await query(
+      `UPDATE photobooth_projects SET status = 'ordered', updated_at = NOW() WHERE id::text = $1::text AND (user_id IS NULL OR user_id::text = $2::text)`,
+      [String(projectId), String(userId)]
+    );
+  } catch (e) {
+    console.warn('[ORDER] Could not mark photobooth project ordered:', e?.message || e);
+  }
+}
+
+async function lockPhotobookProjectsForItems(items, userId) {
+  if (!Array.isArray(items)) return;
+  for (const it of items) {
+    if (it.photobookProjectId) {
+      try {
+        await query(
+          `UPDATE photobook_projects SET status = 'ordered', updated_at = NOW() WHERE id::text = $1::text AND (user_id IS NULL OR user_id::text = $2::text)`,
+          [String(it.photobookProjectId), String(userId)]
+        );
+      } catch (e) {
+        console.warn('[ORDER] Could not mark photobook project ordered:', e?.message || e);
+      }
+    }
+  }
+}
+
 function getDeliveryCount(freq, durationDays) {
   if (freq === 'alternate') return Math.floor((durationDays - 1) / 2) + 1;
   if (freq === 'weekly') return Math.floor((durationDays - 1) / 7) + 1;
@@ -364,7 +392,7 @@ const createOrder = async (req, res, next) => {
 
       for (const it of computedItems) {
         if (it.photoboothProjectId) {
-          await photoboothProjectModel.markProjectOrdered(it.photoboothProjectId, userId);
+          await markPhotoboothProjectOrdered(it.photoboothProjectId, userId);
         }
       }
       await lockPhotobookProjectsForItems(computedItems, userId);
@@ -473,16 +501,17 @@ const createOrder = async (req, res, next) => {
       const paymentMethodFinal = method === 'wallet' ? (walletUsed > 0 ? 'wallet' : 'online') : 'online';
       const paymentStatusFinal = remaining > 0 ? 'pending' : 'paid';
 
-      await client.query(
+      const insRes = await client.query(
         `
         INSERT INTO orders (
-          id, user_id, order_number, status, payment_method, payment_status,
-          currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
+          user_id, order_number, status, payment_method, payment_status,
+          currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug,
+          total_amount, discount_amount, final_amount, shipping_address
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+        RETURNING id
         `,
         [
-          id,
           userId,
           orderNumber,
           'placed',
@@ -501,22 +530,41 @@ const createOrder = async (req, res, next) => {
           normalizedCouponCode,
           isNationwideDelivery,
           creatorSlug || null,
+          subtotal || total || 0,
+          discount || 0,
+          total || 0,
+          deliveryAddress || null,
         ]
       );
+
+      const dbOrderId = insRes.rows[0].id;
 
       for (const it of computedItems) {
         await client.query(
           `
           INSERT INTO order_items (
             order_id, product_id, variation_id, product_name, variation_size,
-            unit_price, quantity, line_total, photobooth_project_id, photobook_project_id, photobook_image_check_url
+            unit_price, quantity, line_total, total_price, photobooth_project_id, photobook_project_id, photobook_image_check_url,
+            customizations, customization_data, gift_wrap
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
           `,
           [
-            id, it.productId, it.variationId, it.productName, it.variationSize,
-            it.unitPrice, it.quantity, it.lineTotal, null, null,
-            null,
+            dbOrderId,
+            it.productId,
+            it.variationId,
+            it.productName,
+            it.variationSize,
+            it.unitPrice,
+            it.quantity,
+            it.lineTotal,
+            it.lineTotal || (it.unitPrice * it.quantity) || 0,
+            it.photoboothProjectId || null,
+            it.photobookProjectId || null,
+            it.photobookImageCheckUrl || null,
+            it.customizations ? JSON.stringify(it.customizations) : null,
+            it.customizations ? JSON.stringify(it.customizations) : null,
+            it.giftWrap ? JSON.stringify(it.giftWrap) : (it.customizations?.giftWrap ? JSON.stringify(it.customizations.giftWrap) : null),
           ]
         );
 
@@ -538,7 +586,7 @@ const createOrder = async (req, res, next) => {
         return res.status(201).json({
           success: true,
           data: {
-            orderId: id,
+            orderId: String(dbOrderId),
             orderNumber,
             razorpayOrderId,
             key: process.env.RAZORPAY_KEY_ID,
@@ -551,26 +599,32 @@ const createOrder = async (req, res, next) => {
       }
 
       if (hasSubscriptionItem) {
-        await subscriptionService.createFromCheckoutOrder(id);
+        await subscriptionService.createFromCheckoutOrder(dbOrderId);
       }
+      for (const it of computedItems) {
+        if (it.photoboothProjectId) {
+          await markPhotoboothProjectOrdered(it.photoboothProjectId, userId);
+        }
+      }
+      await lockPhotobookProjectsForItems(computedItems, userId);
       await incrementCouponUsageByCode(normalizedCouponCode);
       await notifyAdminsForOrder(
         {
-          id,
+          id: dbOrderId,
           orderNumber,
           total,
           paymentStatus: 'paid',
         },
         {
           containsSubscription: hasSubscriptionItem,
-          eventKey: `order:${id}:paid`,
+          eventKey: `order:${dbOrderId}:paid`,
         }
       );
 
       return res.status(201).json({
         success: true,
         data: {
-          orderId: id,
+          orderId: String(dbOrderId),
           orderNumber,
           paymentStatus: 'paid',
           walletUsed: Math.round(walletUsed * 100) / 100,

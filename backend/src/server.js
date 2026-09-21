@@ -30,6 +30,8 @@ const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 const { startSubscriptionExpiryJob } = require('./jobs/subscriptionExpiryJob');
 const productModel = require('./models/product');
+const addressModel = require('./models/address');
+const orderModel = require('./models/order');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -235,6 +237,12 @@ app.listen(PORT, () => {
   startSubscriptionExpiryJob();
   productModel.ensureAllProductColumns().catch((error) => {
     console.warn('[milko-backend] Product schema ensure failed on startup:', error.message);
+  });
+  addressModel.ensureAddressSchema().catch((error) => {
+    console.warn('[milko-backend] Address schema ensure failed on startup:', error.message);
+  });
+  orderModel.ensureOrdersSchema().catch((error) => {
+    console.warn('[milko-backend] Order schema ensure failed on startup:', error.message);
   });
 });
 

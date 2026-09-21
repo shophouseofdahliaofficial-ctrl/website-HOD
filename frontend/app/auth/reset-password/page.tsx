@@ -1,17 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import { authApi } from '@/lib/api/auth';
+import Logo from '@/components/Logo';
 import styles from '../auth.module.css';
 
-/**
- * Password Reset Page
- * Handles both requesting reset and updating password
- */
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -21,19 +18,15 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState<'request' | 'reset'>('request');
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setLoaded(true);
-  }, []);
-
-  // Check if we have an access token (from email link)
-  useState(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token')) {
-      setMode('reset');
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        setMode('reset');
+      }
     }
-  });
+  }, []);
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +35,9 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      // Check if email exists in our records first to provide a clear error message
       const { registered } = await authApi.checkEmail(email);
       if (!registered) {
-        throw new Error('This email address is not registered');
+        throw new Error('This email address is not registered.');
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -54,9 +46,9 @@ export default function ResetPasswordPage() {
 
       if (error) throw error;
 
-      setSuccess('Password reset link sent! Check your email.');
+      setSuccess('Password reset link sent! Please check your email.');
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset link');
+      setError(err.message || 'Failed to send reset link.');
     } finally {
       setLoading(false);
     }
@@ -73,7 +65,7 @@ export default function ResetPasswordPage() {
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Password must be at least 6 characters long');
       return;
     }
 
@@ -86,7 +78,7 @@ export default function ResetPasswordPage() {
 
       if (error) throw error;
 
-      setSuccess('Password updated successfully! Redirecting...');
+      setSuccess('Password updated successfully! Redirecting to login...');
       setTimeout(() => {
         router.push('/auth/login');
       }, 2000);
@@ -98,249 +90,120 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className={`${styles.authContainer} ${loaded ? styles.loaded : ''}`} style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      background: '#ffffff',
-      padding: '2rem',
-    }}>
-      <div className={styles.authCard} style={{
-        background: 'white',
-        padding: '2.5rem',
-        borderRadius: '20px',
-        border: 'none',
-        boxShadow: 'none',
-        width: '100%',
-        maxWidth: '440px',
-      }}>
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: 700,
-          color: '#1a1a1a',
-          marginBottom: '0.5rem',
-        }}>
-          {mode === 'request' ? 'Reset Password' : 'Set New Password'}
-        </h2>
+    <>
+      {/* Top Left Back Navigation */}
+      <button
+        type="button"
+        onClick={() => router.push('/auth/login')}
+        className={styles.backButton}
+        aria-label="Back to login"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        Back to login
+      </button>
 
-        <p style={{
-          color: '#666',
-          fontSize: '0.95rem',
-          marginBottom: '2rem',
-        }}>
-          {mode === 'request' 
-            ? 'Enter your email to receive a password reset link'
-            : 'Enter your new password below'
-          }
+      {/* Main Centered Reset Form */}
+      <div className={styles.authCenterContent}>
+        {/* Real Brand Logo */}
+        <div className={styles.topIconWrapper}>
+          <Logo imageClassName={styles.authLogoImage} />
+        </div>
+
+        <h1 className={styles.authTitle}>
+          {mode === 'request' ? 'Reset password' : 'Set new password'}
+        </h1>
+        <p className={styles.authSubtitle}>
+          {mode === 'request'
+            ? 'Enter your email to receive a recovery link'
+            : 'Choose a new password for your account'}
         </p>
 
+        {error && <div className={styles.errorMessage}>{error}</div>}
+        {success && <div className={styles.successMessage}>{success}</div>}
+
         {mode === 'request' ? (
-          <form onSubmit={handleRequestReset}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="email" style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.9rem',
-                fontWeight: 500,
-                color: '#333',
-              }}>
-                Email Address
-              </label>
+          <form onSubmit={handleRequestReset} className={styles.form} noValidate>
+            <div className={styles.inputGroup}>
               <input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="Email address"
                 required
+                className={styles.cleanInput}
+                autoComplete="email"
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '0.95rem',
-                }}
               />
             </div>
-
-            {error && (
-              <div style={{
-                padding: '0.75rem',
-                background: '#fee',
-                border: '1px solid #fcc',
-                borderRadius: '6px',
-                color: '#c33',
-                fontSize: '0.9rem',
-                marginBottom: '1rem',
-              }}>
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div style={{
-                padding: '0.75rem',
-                background: '#efe',
-                border: '1px solid #cfc',
-                borderRadius: '6px',
-                color: '#3c3',
-                fontSize: '0.9rem',
-                marginBottom: '1rem',
-              }}>
-                {success}
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                background: 'rgb(37, 99, 235)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '20px',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1,
-              }}
+              className={styles.primaryButton}
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {loading ? 'Sending link...' : 'Send reset link'}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleUpdatePassword}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="password" style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.9rem',
-                fontWeight: 500,
-                color: '#333',
-              }}>
-                New Password
-              </label>
+          <form onSubmit={handleUpdatePassword} className={styles.form} noValidate>
+            <div className={styles.inputGroup}>
               <input
-                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="New password (min. 6 characters)"
                 required
-                minLength={6}
+                className={styles.cleanInput}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '0.95rem',
-                }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="confirmPassword" style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.9rem',
-                fontWeight: 500,
-                color: '#333',
-              }}>
-                Confirm Password
-              </label>
+            <div className={styles.inputGroup}>
               <input
-                id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
                 required
-                minLength={6}
+                className={styles.cleanInput}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '0.95rem',
-                }}
               />
             </div>
-
-            {error && (
-              <div style={{
-                padding: '0.75rem',
-                background: '#fee',
-                border: '1px solid #fcc',
-                borderRadius: '6px',
-                color: '#c33',
-                fontSize: '0.9rem',
-                marginBottom: '1rem',
-              }}>
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div style={{
-                padding: '0.75rem',
-                background: '#efe',
-                border: '1px solid #cfc',
-                borderRadius: '6px',
-                color: '#3c3',
-                fontSize: '0.9rem',
-                marginBottom: '1rem',
-              }}>
-                {success}
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                background: '#000',
-                color: 'white',
-                border: 'none',
-                borderRadius: '20px',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1,
-              }}
+              className={styles.primaryButton}
             >
-              {loading ? 'Updating...' : 'Update Password'}
+              {loading ? 'Updating password...' : 'Update password'}
             </button>
           </form>
         )}
 
-        <div style={{
-          marginTop: '1rem',
-          textAlign: 'center',
-          paddingTop: '0.5rem',
-          borderTop: '0px solid #e5e5e5',
-        }}>
-          <Link
-            href="/auth/login"
-            style={{
-              color: '#0070f3',
-              textDecoration: 'none',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-            }}
-          >
-            Back to Login
-          </Link>
-        </div>
+        <Link href="/auth/login" className={styles.forgotPasswordLink} style={{ marginTop: '1.5rem' }}>
+          Remember your password? Log in
+        </Link>
       </div>
-    </div>
+    </>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.authCenterContent}>
+          <div className={styles.topIconWrapper}>
+            <Logo imageClassName={styles.authLogoImage} />
+          </div>
+          <p style={{ color: '#6b7280' }}>Loading...</p>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -1,4 +1,4 @@
-import type { VariationGroup } from '@/types';
+import type { VariationGroup, Product } from '@/types';
 
 type UploadFlagSource = {
   polaroidUploadEnabled?: boolean;
@@ -8,7 +8,7 @@ type UploadFlagSource = {
 /** When an uploads variation group exists, only its flags apply (no product-level fallback). */
 export function resolveUploadFlags(
   uploadsGroup: VariationGroup | null | undefined,
-  product: UploadFlagSource,
+  product?: UploadFlagSource | null,
 ) {
   if (uploadsGroup?.type === 'uploads') {
     return {
@@ -17,13 +17,16 @@ export function resolveUploadFlags(
     };
   }
   return {
-    polaroidEnabled: Boolean(product.polaroidUploadEnabled),
-    stripEnabled: Boolean(product.stripUploadEnabled),
+    polaroidEnabled: Boolean(product?.polaroidUploadEnabled),
+    stripEnabled: Boolean(product?.stripUploadEnabled),
   };
 }
 
-export function isUploadsVariationActive(group: VariationGroup): boolean {
-  if (group.type !== 'uploads') return false;
+export function isUploadsVariationActive(group?: VariationGroup | Product | null): boolean {
+  if (!group) return false;
+  if ('type' in group && group.type === 'uploads') {
+    return Boolean(group.polaroidUploadEnabled) || Boolean(group.stripUploadEnabled);
+  }
   return Boolean(group.polaroidUploadEnabled) || Boolean(group.stripUploadEnabled);
 }
 

@@ -358,13 +358,27 @@ export default function OrdersPage() {
 
                       {/* 2. Large Cover Image */}
                       <div className={styles.orderCoverImageContainer}>
-                        {item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.productName} className={styles.orderCoverImage} />
-                        ) : getFallbackImageUrl(item) ? (
-                          <img src={getFallbackImageUrl(item)!} alt={item.productName} className={styles.orderCoverImage} />
-                        ) : (
-                          <div className={styles.orderCoverPlaceholder}>📦</div>
-                        )}
+                        {(() => {
+                          const imgSrc = item.imageUrl || getFallbackImageUrl(item);
+                          if (!imgSrc) {
+                            return <div className={styles.orderCoverPlaceholder}>📦</div>;
+                          }
+                          return (
+                            <>
+                              <img
+                                src={imgSrc}
+                                alt=""
+                                aria-hidden="true"
+                                className={styles.orderCoverImageBlurBg}
+                              />
+                              <img
+                                src={imgSrc}
+                                alt={item.productName}
+                                className={styles.orderCoverImage}
+                              />
+                            </>
+                          );
+                        })()}
                         {extraProductCount > 0 ? (
                           <div className={styles.coverExtraBadge} aria-hidden>
                             +{extraProductCount}
@@ -509,10 +523,15 @@ export default function OrdersPage() {
                                         productId: String(it.productId),
                                         quantity: it.quantity,
                                         variationId: it.variationId != null ? String(it.variationId) : undefined,
+                                        customizations: (it as any).customizations || undefined,
                                       });
                                     }
                                   });
-                                  router.push('/cart');
+                                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                                    window.dispatchEvent(new CustomEvent('open-desktop-cart'));
+                                  } else {
+                                    router.push('/cart');
+                                  }
                                 }}
                               >
                                 Buy again

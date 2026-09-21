@@ -262,6 +262,12 @@ export default function AdminBannersPage() {
       if (primaryImage.mobileImagePublicId) {
         formDataToSend.append('mobileImagePublicId', primaryImage.mobileImagePublicId);
       }
+      if (imageItems[0]?.file) {
+        formDataToSend.append('image', imageItems[0].file);
+      }
+      if (imageItems[0]?.mobileFile) {
+        formDataToSend.append('mobileImage', imageItems[0].mobileFile);
+      }
 
       if (editingBanner) {
         await adminBannersApi.update(editingBanner.id, formDataToSend);

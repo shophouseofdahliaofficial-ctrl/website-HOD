@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import gsap from 'gsap';
-import Logo from './Logo';
 import { contentApi } from '@/lib/api';
 import styles from './Footer.module.css';
 
@@ -11,8 +9,6 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [trustpilotUrl, setTrustpilotUrl] = useState<string>('');
   const [googleReviewUrl, setGoogleReviewUrl] = useState<string>('');
-  const logoTextRef = useRef<HTMLDivElement>(null);
-  const lettersRef = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
     contentApi.getByType('reviews')
@@ -30,92 +26,6 @@ export default function Footer() {
         console.error('Failed to load reviews settings for footer:', err);
       });
   }, []);
-
-  useEffect(() => {
-    const container = logoTextRef.current;
-    if (!container) return;
-    const elements = lettersRef.current.filter(Boolean);
-    if (elements.length === 0) return;
-
-    // Set initial hidden state so letters don't show before footer is scrolled into view
-    gsap.set(elements, {
-      y: 65,
-      opacity: 0,
-      rotateX: -70,
-      filter: 'blur(10px)',
-    });
-
-    let hasTriggered = false;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasTriggered) {
-            hasTriggered = true;
-
-            // Trigger GSAP entrance animation when footer is scrolled into view
-            gsap.fromTo(
-              elements,
-              {
-                y: 65,
-                opacity: 0,
-                rotateX: -70,
-                filter: 'blur(10px)',
-              },
-              {
-                y: 0,
-                opacity: 1,
-                rotateX: 0,
-                filter: 'blur(0px)',
-                duration: 1.15,
-                stagger: 0.06,
-                ease: 'power3.out',
-                onComplete: () => {
-                  // Continuous floating wave animation
-                  gsap.to(elements, {
-                    y: -12,
-                    duration: 2.2,
-                    ease: 'sine.inOut',
-                    repeat: -1,
-                    yoyo: true,
-                    stagger: {
-                      each: 0.1,
-                      repeat: -1,
-                      yoyo: true,
-                    },
-                  });
-                },
-              }
-            );
-
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  const handleLogoHover = () => {
-    const elements = lettersRef.current.filter(Boolean);
-    if (elements.length === 0) return;
-
-    gsap.to(elements, {
-      y: -20,
-      rotateZ: (i) => (i % 2 === 0 ? -7 : 7),
-      duration: 0.32,
-      stagger: 0.04,
-      ease: 'back.out(2)',
-      yoyo: true,
-      repeat: 1,
-    });
-  };
 
   return (
     <footer className={styles.footer}>
@@ -187,27 +97,9 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Full-width 3D Tilted Center Scribble Text */}
-      <div className={styles.bigLogoSection}>
-        <div className={styles.bigLogoPerspective}>
-          <div
-            ref={logoTextRef}
-            className={styles.bigLogoText}
-            onMouseEnter={handleLogoHover}
-          >
-            {'house of dahlia'.split('').map((char, index) => (
-              <span
-                key={index}
-                ref={(el) => {
-                  lettersRef.current[index] = el;
-                }}
-                className={styles.bigLogoChar}
-              >
-                {char}
-              </span>
-            ))}
-          </div>
-        </div>
+      {/* Simple House of Dahlia Text Section */}
+      <div className={styles.simpleLogoSection}>
+        <h2 className={styles.simpleLogoText}>House of Dahlia</h2>
       </div>
 
       <div className={styles.container}>

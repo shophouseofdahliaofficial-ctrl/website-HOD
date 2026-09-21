@@ -58,18 +58,18 @@
 /* Loading with Text */
 .loadingWithText {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 10px;
   padding: 2rem;
   text-align: center;
 }
 
 .loadingText {
   color: #000000;
-  font-size: 0.95rem;
-  letter-spacing: -1px;
+  font-size: calc(0.95rem - 3px);
+  letter-spacing: -0.5px;
 }
 
 /* Dark theme variant for admin */

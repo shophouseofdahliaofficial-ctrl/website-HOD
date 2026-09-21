@@ -57,6 +57,20 @@ export default function DashboardPage() {
   // Address edit states
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const addressFormRef = useRef<HTMLDivElement>(null);
+
+  const scrollToAddressForm = () => {
+    setTimeout(() => {
+      if (addressFormRef.current) {
+        addressFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const firstInput = addressFormRef.current.querySelector<HTMLInputElement>('input:not([type="hidden"])');
+        if (firstInput) {
+          firstInput.focus({ preventScroll: true });
+        }
+      }
+    }, 100);
+  };
+
   const [addressForm, setAddressForm] = useState({
     name: '',
     street: '',
@@ -228,6 +242,7 @@ export default function DashboardPage() {
       latitude: address.latitude,
       longitude: address.longitude,
     });
+    scrollToAddressForm();
   };
 
   const handleUpdateAddress = async () => {
@@ -487,7 +502,7 @@ export default function DashboardPage() {
         <div className={styles.infoCardHeader}>
           <h2 className={styles.infoCardTitle}>Address</h2>
           {!isAddingAddress && !editingAddressId && addresses.length > 0 && (
-            <button className={styles.editIconButton} onClick={() => setIsAddingAddress(true)} aria-label="Add address">
+            <button className={styles.editIconButton} onClick={() => { setIsAddingAddress(true); scrollToAddressForm(); }} aria-label="Add address">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M8 12H16M12 8V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -498,7 +513,7 @@ export default function DashboardPage() {
         </div>
 
         {(isAddingAddress || editingAddressId) && (
-          <div className={styles.addressForm}>
+          <div ref={addressFormRef} className={styles.addressForm}>
             <div className={styles.infoGrid}>
               <div className={styles.infoField}>
                 <label className={styles.infoFieldLabel}>Address Name (e.g. Home, Office)</label>
@@ -548,7 +563,7 @@ export default function DashboardPage() {
         {addresses.length === 0 && !isAddingAddress ? (
           <div className={styles.emptyAddresses}>
             <p>No addresses saved yet.</p>
-            <button onClick={() => setIsAddingAddress(true)} className={`${styles.btn} ${styles.btnPrimary}`}>Add Address</button>
+            <button onClick={() => { setIsAddingAddress(true); scrollToAddressForm(); }} className={`${styles.btn} ${styles.btnPrimary}`}>Add Address</button>
           </div>
         ) : (
           <div className={styles.addressesList}>

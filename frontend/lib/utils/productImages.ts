@@ -7,22 +7,45 @@ import type { ProductImage } from '@/types';
 export function getOrderedProductImageUrls(product: {
   imageUrl?: string | null;
   images?: ProductImage[] | null;
-}): string[] {
-  const rows = [...(product.images || [])].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
-  const urls = rows.map((r) => r.imageUrl);
-  const main = product.imageUrl || null;
-  if (rows.length === 0) {
-    return main ? [main] : [];
+  imageUrls?: string[] | null;
+} | null | undefined): string[] {
+  if (!product) return [];
+
+  const list: string[] = [];
+
+  // Primary image
+  if (product.imageUrl && typeof product.imageUrl === 'string') {
+    list.push(product.imageUrl);
   }
-  if (main && !urls.includes(main)) {
-    return [main, ...urls];
+
+  // Related ProductImage[] objects
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    const sorted = [...product.images].sort(
+      (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+    );
+    for (const img of sorted) {
+      if (img?.imageUrl && typeof img.imageUrl === 'string' && !list.includes(img.imageUrl)) {
+        list.push(img.imageUrl);
+      }
+    }
   }
-  return urls;
+
+  // String array imageUrls if present
+  if (Array.isArray((product as any).imageUrls)) {
+    for (const url of (product as any).imageUrls) {
+      if (url && typeof url === 'string' && !list.includes(url)) {
+        list.push(url);
+      }
+    }
+  }
+
+  return list;
 }
 
 export function getPrimaryProductImageUrl(product: {
   imageUrl?: string | null;
   images?: ProductImage[] | null;
-}): string | null {
+  imageUrls?: string[] | null;
+} | null | undefined): string | null {
   return getOrderedProductImageUrls(product)[0] || null;
 }

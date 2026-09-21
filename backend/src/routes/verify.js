@@ -53,9 +53,9 @@ router.get('/:code', authenticate, async (req, res, next) => {
          LEFT JOIN delivery_schedules ds ON v.delivery_schedule_id = ds.id
          LEFT JOIN subscriptions s ON ds.subscription_id = s.id
          WHERE v.uc_code = $1 
-           AND (o.user_id = $2 OR s.user_id = $2)
+           AND (o.user_id::text = $2::text OR s.user_id::text = $2::text)
          LIMIT 1`,
-        [code, userId]
+        [code, String(userId)]
       );
     }
 

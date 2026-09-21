@@ -15,6 +15,8 @@ import {
   getCartItemOrderSubtotalContribution,
   getCartItemPriceDetails,
   getCartItemPriceLineAmount,
+  getPhotoboothCartProject,
+  getPhotoboothPrintsLabel,
   shouldShowCartPriceLine,
 } from '@/lib/utils/cartPricing';
 import Link from 'next/link';
@@ -29,6 +31,18 @@ import { normalizeDeliveryRatesConfig, resolveDeliveryRate } from '@/lib/utils/d
 import { useDeliveryTimeOffConfig } from '@/hooks/useDeliveryTimeOffConfig';
 import DeliveryTimeOffModal from '@/components/DeliveryTimeOffModal';
 import styles from './checkout.module.css';
+
+function collectPhotobookProjectIdsFromCart(
+  items: Array<{ customizations?: { photobookProject?: { projectId?: string } } }>,
+): string[] {
+  return items
+    .map((it) => it.customizations?.photobookProject?.projectId)
+    .filter((id): id is string => !!id);
+}
+
+async function finalizePhotobookProjectsAfterPayment(_projectIds: string[]): Promise<void> {
+  // Photobook post-purchase finalization hook
+}
 
 const AddressLocationPicker = dynamic(() => import('@/components/AddressLocationPicker'), { ssr: false });
 
@@ -156,6 +170,19 @@ export default function CheckoutPage() {
   const [saveAddress, setSaveAddress] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [savingAddressForCheckout, setSavingAddressForCheckout] = useState(false);
+  const addressFormRef = useRef<HTMLFormElement>(null);
+
+  const scrollToAddressForm = () => {
+    setTimeout(() => {
+      if (addressFormRef.current) {
+        addressFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const firstInput = addressFormRef.current.querySelector<HTMLInputElement>('input:not([type="hidden"])');
+        if (firstInput) {
+          firstInput.focus({ preventScroll: true });
+        }
+      }
+    }, 100);
+  };
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -176,6 +203,7 @@ export default function CheckoutPage() {
   const [subscriptionCartItem, setSubscriptionCartItem] = useState<SubscriptionCartItem | null>(null);
   const [platformFee, setPlatformFee] = useState(0);
   const [deliveryRatesConfig, setDeliveryRatesConfig] = useState<{ warehouseLatitude?: number; warehouseLongitude?: number; ranges: Array<{ startMeters: number; endMeters: number; rate: number }> }>({ ranges: [] });
+  const [codConfig, setCodConfig] = useState<{ enabled: boolean }>({ enabled: true });
   const [backendPlatformFee, setBackendPlatformFee] = useState<number | null>(null);
   const [backendDeliveryCharges, setBackendDeliveryCharges] = useState<number | null>(null);
   const [backendFeesLoading, setBackendFeesLoading] = useState(false);
@@ -315,6 +343,35 @@ export default function CheckoutPage() {
     };
 
     loadDeliveryRates();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCodConfig = async () => {
+      try {
+        const data = await contentApi.getByType('cod');
+        if (data) {
+          const enabled = (data.metadata?.enabled !== undefined ? data.metadata.enabled === true : data.isActive) ?? true;
+          const isActuallyActive = enabled && data.isActive !== false;
+          if (!cancelled) {
+            setCodConfig({ enabled: isActuallyActive });
+            if (!isActuallyActive) {
+              setPaymentMethod((prev) => (prev === 'cod' ? 'online' : prev));
+            }
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setCodConfig({ enabled: true });
+        }
+      }
+    };
+
+    loadCodConfig();
     return () => {
       cancelled = true;
     };
@@ -569,6 +626,7 @@ export default function CheckoutPage() {
       latitude: undefined,
       longitude: undefined,
     });
+    scrollToAddressForm();
   };
 
   // Save new address to account when "Save this address" is checked (used by form submit and summary Checkout button)
@@ -840,6 +898,7 @@ export default function CheckoutPage() {
           productId: String(it.productId),
           variationId: it.variationId ?? undefined,
           quantity: it.quantity,
+          customizations: it.customizations ?? null,
           productName: photobooth ? (getPhotoboothPrintsLabel(it) ?? 'Photobooth print') : (p?.name ?? 'Product'),
           variationSize: photobooth
             ? undefined
@@ -1092,7 +1151,7 @@ export default function CheckoutPage() {
           onClick={() => { if (isAddressFulfilled && currentStep === 'address') setStep('review'); }}
         >
           <span className={styles.stepNumber}>3</span>
-          <span className={styles.stepLabel}>Place Order</span>
+          <span className={styles.stepLabel}>Pay</span>
         </div>
       </div>
 
@@ -1256,6 +1315,7 @@ export default function CheckoutPage() {
                                 setShowCreateNewAddress(true);
                                 setSelectedAddressId(null);
                                 fillAddressForm(address);
+                                scrollToAddressForm();
                               }}
                             >
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1280,7 +1340,7 @@ export default function CheckoutPage() {
 
                   {/* Address Form - Show when creating new address or no saved addresses */}
                   {(showCreateNewAddress || savedAddresses.length === 0) && (
-                    <form onSubmit={handleAddressSubmit} className={styles.addressForm} noValidate>
+                    <form ref={addressFormRef} onSubmit={handleAddressSubmit} className={styles.addressForm} noValidate>
                       {addressError && (
                         <div className={styles.errorMessage}>{addressError}</div>
                       )}
@@ -1566,31 +1626,36 @@ export default function CheckoutPage() {
                 <span className={styles.totalSavingsLabel}>Your total savings</span>
                 <span className={styles.savings}>₹{savings.toFixed(2)}</span>
               </div>
-              <div className={styles.paymentMethods}>
-                <div className={styles.paymentMethodItem}>
-                  <span className={styles.paymentMethodLabel}>COD</span>
-                  <span className={styles.paymentMethodAvailable}>Available</span>
+              {codConfig.enabled && (
+                <div className={styles.paymentMethods}>
+                  <div className={styles.paymentMethodItem}>
+                    <span className={styles.paymentMethodLabel}>COD</span>
+                    <span className={styles.paymentMethodAvailable}>Available</span>
+                  </div>
+                  <div className={styles.paymentMethodItem}>
+                    <span className={styles.paymentMethodLabel}>Online Payment</span>
+                    <span className={styles.paymentMethodAvailable}>Available</span>
+                  </div>
                 </div>
-                <div className={styles.paymentMethodItem}>
-                  <span className={styles.paymentMethodLabel}>Online Payment</span>
-                  <span className={styles.paymentMethodAvailable}>Available</span>
-                </div>
-              </div>
+              )}
 
               {/* Step 3 only: explicit payment method selection */}
               {currentStep === 'review' && (
                 <div className={styles.paymentChoice}>
                   <div className={styles.paymentChoiceTitle}>Choose payment method:</div>
-                  <label className={styles.paymentChoiceOption}>
+                  <label className={`${styles.paymentChoiceOption} ${!codConfig.enabled ? styles.paymentChoiceOptionDisabled : ''}`}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="cod"
-                      checked={paymentMethod === 'cod'}
-                      onChange={() => setPaymentMethod('cod')}
+                      disabled={!codConfig.enabled}
+                      checked={codConfig.enabled && paymentMethod === 'cod'}
+                      onChange={() => {
+                        if (codConfig.enabled) setPaymentMethod('cod');
+                      }}
                     />
                     <span className={styles.paymentChoiceLabelWithIcon}>
-                      <span>Cash on delivery (COD)</span>
+                      <span>Cash on delivery (COD) {!codConfig.enabled && '(Unavailable)'}</span>
                       <span className={styles.paymentChoiceCashBadge} aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none">
                           <rect x="3" y="6.5" width="18" height="11" rx="2.2" stroke="currentColor" strokeWidth="1.8" />

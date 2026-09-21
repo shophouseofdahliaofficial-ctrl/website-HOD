@@ -934,8 +934,7 @@
   }
 
   .pageTitle {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
+    display: none;
   }
 
   .sidebar {

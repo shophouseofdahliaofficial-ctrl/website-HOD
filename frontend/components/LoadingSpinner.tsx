@@ -4,19 +4,19 @@ export default function LoadingSpinner({ fullHeight = false }: { fullHeight?: bo
   return (
     <div style={{
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: fullHeight ? '100vh' : '400px',
       width: '100%',
       color: '#666',
-      gap: '1rem'
+      gap: '10px'
     }}>
       <svg
-        width="40"
-        height="40"
+        width="24"
+        height="24"
         viewBox="0 0 50 50"
-        style={{ animation: 'spin 1s linear infinite' }}
+        style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}
       >
         <circle
           cx="25"
@@ -37,7 +37,7 @@ export default function LoadingSpinner({ fullHeight = false }: { fullHeight?: bo
           strokeLinecap="round"
         />
       </svg>
-      <span style={{ fontSize: '1rem', fontWeight: 500, letterSpacing: '-1px' }}>Loading...</span>
+      <span style={{ fontSize: 'calc(1rem - 3px)', fontWeight: 500, letterSpacing: '-0.5px' }}>Loading...</span>
       <style>{`
         @keyframes spin {
           100% { transform: rotate(360deg); }

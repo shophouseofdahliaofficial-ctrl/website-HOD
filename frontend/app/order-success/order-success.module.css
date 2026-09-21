@@ -195,10 +195,26 @@
   text-decoration: underline;
 }
 
+.itemVariationList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.15rem 0 0.35rem 0;
+}
+
 .itemVariant {
-  font-size: 0.875rem;
-  color: #666;
-  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.itemGiftWrap {
+  font-size: 0.82rem;
+  color: #e11d48;
+  font-weight: 600;
+  margin: 0.2rem 0 0.35rem 0;
 }
 
 .itemQuantity {

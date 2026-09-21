@@ -166,19 +166,21 @@
 
 .loadingContainer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   min-height: 65vh;
   width: 100%;
   padding: 2rem;
+  gap: 10px;
 }
 
 .loadingText {
   font-family: var(--font-inter), 'Inter', -apple-system, sans-serif;
   color: #666;
-  font-size: 1.05rem;
+  font-size: calc(1.05rem - 3px);
   font-weight: 500;
+  letter-spacing: -0.5px;
 }
 
 .emptyState {

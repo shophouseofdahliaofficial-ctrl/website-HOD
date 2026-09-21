@@ -1,5 +1,6 @@
 const { query, getClient } = require('../config/database');
 const { transformSubscription } = require('../utils/transform');
+const addressModel = require('./address');
 
 /**
  * Subscription Model
@@ -42,6 +43,12 @@ let schemaEnsured = false;
 async function ensureSubscriptionSchema() {
   if (schemaEnsured) return;
 
+  try {
+    await addressModel.ensureAddressSchema();
+  } catch (err) {
+    console.warn('[milko-backend] address schema check failed in subscription schema ensure:', err.message);
+  }
+
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS total_qty NUMERIC(12, 2) NOT NULL DEFAULT 0;`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS delivered_qty NUMERIC(12, 2) NOT NULL DEFAULT 0;`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS remaining_qty NUMERIC(12, 2) NOT NULL DEFAULT 0;`);
@@ -56,7 +63,10 @@ async function ensureSubscriptionSchema() {
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS renewal_order_id VARCHAR(255);`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS autopay_failure_reason TEXT;`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS address_id INTEGER;`);
-  await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS checkout_order_id UUID;`);
+  await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS checkout_order_id VARCHAR(255);`);
+  try {
+    await query(`ALTER TABLE subscriptions ALTER COLUMN checkout_order_id TYPE VARCHAR(255) USING checkout_order_id::text;`);
+  } catch (_) {}
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS autopay_status VARCHAR(50);`);
   await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_checkout_order_id ON subscriptions(checkout_order_id) WHERE checkout_order_id IS NOT NULL;`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS duration_days INTEGER;`);
@@ -73,7 +83,10 @@ async function ensureSubscriptionSchema() {
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS trial_shifted BOOLEAN NOT NULL DEFAULT FALSE;`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS payment_method VARCHAR(20) NOT NULL DEFAULT 'online';`);
   await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS frequency VARCHAR(20) NOT NULL DEFAULT 'daily';`);
-  await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS trial_checkout_order_id UUID;`);
+  await query(`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS trial_checkout_order_id VARCHAR(255);`);
+  try {
+    await query(`ALTER TABLE subscriptions ALTER COLUMN trial_checkout_order_id TYPE VARCHAR(255) USING trial_checkout_order_id::text;`);
+  } catch (_) {}
   await query(
     `ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS upgrade_from_trial_subscription_id INTEGER REFERENCES subscriptions(id);`,
   );
@@ -207,7 +220,7 @@ const getSubscriptionsByUserId = async (userId) => {
      LEFT JOIN products p ON s.product_id = p.id
      LEFT JOIN addresses a ON s.address_id = a.id
      LEFT JOIN product_variations pv ON s.product_variation_id = pv.id
-     LEFT JOIN orders trial_co ON trial_co.id = s.trial_checkout_order_id AND trial_co.user_id = s.user_id
+     LEFT JOIN orders trial_co ON trial_co.id::text = s.trial_checkout_order_id::text AND trial_co.user_id = s.user_id
      WHERE s.user_id = $1
        AND (
          s.status != 'pending'
@@ -248,7 +261,7 @@ const getSubscriptionByRazorpayId = async (razorpayId) => {
      LEFT JOIN products p ON s.product_id = p.id
      LEFT JOIN addresses a ON s.address_id = a.id
      LEFT JOIN product_variations pv ON s.product_variation_id = pv.id
-     LEFT JOIN orders trial_co ON trial_co.id = s.trial_checkout_order_id AND trial_co.user_id = s.user_id
+     LEFT JOIN orders trial_co ON trial_co.id::text = s.trial_checkout_order_id::text AND trial_co.user_id = s.user_id
      WHERE s.razorpay_subscription_id = $1
      LIMIT 1`,
     [razorpayId]
@@ -330,8 +343,8 @@ const getSubscriptionById = async (subscriptionId) => {
      LEFT JOIN products p ON s.product_id = p.id
      LEFT JOIN addresses a ON s.address_id = a.id
      LEFT JOIN product_variations pv ON s.product_variation_id = pv.id
-     LEFT JOIN orders checkout_co ON checkout_co.id = COALESCE(s.trial_checkout_order_id, s.checkout_order_id)
-     LEFT JOIN orders trial_co ON trial_co.id = s.trial_checkout_order_id
+     LEFT JOIN orders checkout_co ON checkout_co.id::text = COALESCE(s.trial_checkout_order_id, s.checkout_order_id)::text
+     LEFT JOIN orders trial_co ON trial_co.id::text = s.trial_checkout_order_id::text
      WHERE s.id = $1`,
     [subscriptionId]
   );
@@ -403,8 +416,8 @@ const getSubscriptionByIdForUser = async (subscriptionId, userId) => {
      LEFT JOIN products p ON s.product_id = p.id
      LEFT JOIN addresses a ON s.address_id = a.id
      LEFT JOIN product_variations pv ON s.product_variation_id = pv.id
-     LEFT JOIN orders checkout_co ON checkout_co.id = COALESCE(s.trial_checkout_order_id, s.checkout_order_id) AND checkout_co.user_id = s.user_id
-     LEFT JOIN orders trial_co ON trial_co.id = s.trial_checkout_order_id AND trial_co.user_id = s.user_id
+     LEFT JOIN orders checkout_co ON checkout_co.id::text = COALESCE(s.trial_checkout_order_id, s.checkout_order_id)::text AND checkout_co.user_id = s.user_id
+     LEFT JOIN orders trial_co ON trial_co.id::text = s.trial_checkout_order_id::text AND trial_co.user_id = s.user_id
      WHERE s.id = $1 AND s.user_id::text = $2::text`,
     [subscriptionId, String(userId)]
   );

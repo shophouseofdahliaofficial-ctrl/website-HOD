@@ -7,11 +7,38 @@ export type CartItemPriceDetails = {
   unitOff: number;
 };
 
+export function getPhotoboothCartProject(it: CartItem) {
+  if (!it?.customizations) return null;
+  return (
+    it.customizations.photoboothProject ||
+    it.customizations.photobooth ||
+    (it.customizations.photoboothProjectId ? { id: it.customizations.photoboothProjectId } : null)
+  );
+}
+
+export function getPhotoboothPrintsLabel(it: CartItem): string | null {
+  const photobooth = getPhotoboothCartProject(it);
+  if (!photobooth) return null;
+
+  const count = photobooth.polaroidCount || (Array.isArray(photobooth.capturedPhotos) ? photobooth.capturedPhotos.length : 1);
+  const unit = photobooth.projectType === 'strip' ? 'strip' : 'polaroid';
+  const unitLabel = count === 1 ? unit : `${unit}s`;
+  if (photobooth.label) {
+    return `${photobooth.label} (${count} ${unitLabel})`;
+  }
+  return `${count} ${unitLabel}`;
+}
+
 export function shouldShowCartPriceLine(it: CartItem, p?: Product | null): boolean {
   return true;
 }
 
 export function getCartItemCheckoutLineLabel(it: CartItem, p?: Product | null): string {
+  const photobooth = getPhotoboothCartProject(it);
+  if (photobooth) {
+    return getPhotoboothPrintsLabel(it) ?? 'Photobooth print';
+  }
+
   const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
   return `${it.quantity} × ${p?.name || 'Product'}${v ? ` (${v.size})` : ''}`;
 }

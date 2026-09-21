@@ -3,19 +3,48 @@
  * Creates a flying product image animation from source element to cart icon
  */
 
+import { cartIconRefStore } from './cartIconRef';
+
 export interface CartAnimationOptions {
   imageUrl: string;
   sourceElement: HTMLElement;
-  targetElement: HTMLElement;
+  targetElement?: HTMLElement | null;
   onComplete?: () => void;
 }
 
-export function animateToCart({
-  imageUrl,
-  sourceElement,
-  targetElement,
-  onComplete,
-}: CartAnimationOptions): void {
+export function animateToCart(
+  optionsOrSource: CartAnimationOptions | HTMLElement | null | undefined,
+  maybeTarget?: HTMLElement | null,
+  maybeImageUrl?: string,
+  maybeOnComplete?: () => void,
+): void {
+  let imageUrl = '';
+  let sourceElement: HTMLElement | null | undefined = null;
+  let targetElement: HTMLElement | null | undefined = null;
+  let onComplete: (() => void) | undefined = undefined;
+
+  if (optionsOrSource && 'sourceElement' in optionsOrSource) {
+    imageUrl = optionsOrSource.imageUrl || '';
+    sourceElement = optionsOrSource.sourceElement;
+    targetElement = optionsOrSource.targetElement;
+    onComplete = optionsOrSource.onComplete;
+  } else if (optionsOrSource instanceof HTMLElement || (optionsOrSource && typeof (optionsOrSource as any).getBoundingClientRect === 'function')) {
+    sourceElement = optionsOrSource as HTMLElement;
+    targetElement = maybeTarget;
+    imageUrl = maybeImageUrl || '';
+    onComplete = maybeOnComplete;
+  }
+
+  // Fallback target resolution if not supplied or not in DOM
+  if (!targetElement || (typeof document !== 'undefined' && !document.body.contains(targetElement))) {
+    targetElement = cartIconRefStore.getAny() || null;
+  }
+
+  if (!sourceElement || !targetElement) {
+    if (onComplete) onComplete();
+    return;
+  }
+
   // Get positions
   const sourceRect = sourceElement.getBoundingClientRect();
   const targetRect = targetElement.getBoundingClientRect();

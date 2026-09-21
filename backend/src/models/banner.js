@@ -99,10 +99,10 @@ const createBanner = async (bannerData) => {
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, NOW(), NOW())
      RETURNING *`,
     [
-      title,
-      description,
-      imageUrl,
-      imagePublicId,
+      title || '',
+      description || '',
+      imageUrl || '',
+      imagePublicId || null,
       mobileImageUrl || null,
       mobileImagePublicId || null,
       link || null,

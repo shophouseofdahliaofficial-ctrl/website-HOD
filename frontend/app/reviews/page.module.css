@@ -13,6 +13,12 @@
   letter-spacing: -0.5px;
 }
 
+@media (min-width: 768px) {
+  .title {
+    display: none;
+  }
+}
+
 .loading {
   text-align: center;
   padding: 3rem;
@@ -63,14 +69,17 @@
 }
 
 .retryBtn {
-  padding: 0.65rem 1.25rem;
-  background: #111;
+  padding: 0.6rem 0.65rem;
+  background: #ab6468;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 300;
   cursor: pointer;
+  letter-spacing: 0px;
+  border: 1px solid #8d464b;
+  box-shadow: inset 0px 0px 4px 0px #f9f9f9;
 }
 
 .retryBtn:hover {
@@ -177,13 +186,13 @@
 
 .doneBtn {
   padding: 0.65rem 1.25rem;
-    background: #bbffd9;
-    color: #00ab65;
-    border: 1px solid #bbffd9;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: not-allowed;
+  background: #bbffd9;
+  color: #00ab65;
+  border: 1px solid #bbffd9;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: not-allowed;
 }
 
 .detailedFeedbackReadOnly {

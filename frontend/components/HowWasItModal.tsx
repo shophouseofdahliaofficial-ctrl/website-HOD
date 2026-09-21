@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import styles from './HowWasItModal.module.css';
@@ -21,16 +21,25 @@ const WO_OPTIONS = ['Yes', 'Maybe', 'No'] as const;
 export default function HowWasItModal({ isOpen, onClose, order, productId: productIdProp, onSubmitSuccess }: HowWasItModalProps) {
   const { showToast } = useToast();
   const [qualityStars, setQualityStars] = useState(0);
-  const [deliveryAgentStars, setDeliveryAgentStars] = useState(0);
   const [onTimeStars, setOnTimeStars] = useState(0);
   const [valueForMoneyStars, setValueForMoneyStars] = useState(0);
   const [wouldOrderAgain, setWouldOrderAgain] = useState<'Yes' | 'Maybe' | 'No' | null>(null);
   const [reviewComment, setReviewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Prevent background website scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   const reset = () => {
     setQualityStars(0);
-    setDeliveryAgentStars(0);
     setOnTimeStars(0);
     setValueForMoneyStars(0);
     setWouldOrderAgain(null);
@@ -57,7 +66,7 @@ export default function HowWasItModal({ isOpen, onClose, order, productId: produ
       showToast('Missing product for this rating', 'error');
       return;
     }
-    if (qualityStars < 1 || qualityStars > 5 || deliveryAgentStars < 1 || deliveryAgentStars > 5 ||
+    if (qualityStars < 1 || qualityStars > 5 ||
         onTimeStars < 1 || onTimeStars > 5 || valueForMoneyStars < 1 || valueForMoneyStars > 5 ||
         !wouldOrderAgain) {
       showToast('Please rate all sections and choose Would you order again', 'error');
@@ -69,7 +78,6 @@ export default function HowWasItModal({ isOpen, onClose, order, productId: produ
         `/api/orders/${order.id}/detailed-feedback`,
         {
           qualityStars,
-          deliveryAgentStars,
           onTimeStars,
           valueForMoneyStars,
           wouldOrderAgain,
@@ -121,54 +129,64 @@ export default function HowWasItModal({ isOpen, onClose, order, productId: produ
 
   return (
     <div className={styles.overlay} onClick={handleClose}>
-      <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.panel}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button className={styles.closeBtn} onClick={handleClose} aria-label="Close">×</button>
-        <h2 className={styles.title}>How was it?</h2>
+        <div
+          className={styles.panelBody}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <h2 className={styles.title}>How was it?</h2>
 
-        {StarRow({ value: qualityStars, onChange: setQualityStars, label: 'Quality of the product' })}
-        {StarRow({ value: deliveryAgentStars, onChange: setDeliveryAgentStars, label: 'Delivery agent behaviour' })}
-        {StarRow({ value: onTimeStars, onChange: setOnTimeStars, label: 'On time delivery' })}
-        {StarRow({ value: valueForMoneyStars, onChange: setValueForMoneyStars, label: 'Value for money' })}
+          {StarRow({ value: qualityStars, onChange: setQualityStars, label: 'Quality of the product' })}
+          {StarRow({ value: onTimeStars, onChange: setOnTimeStars, label: 'On time delivery' })}
+          {StarRow({ value: valueForMoneyStars, onChange: setValueForMoneyStars, label: 'Value for money' })}
 
-        <div className={styles.starRow}>
-          <div className={styles.subTitle}>Would you order again</div>
-          <div className={styles.woRow} role="group" aria-label="Would you order again">
-            {WO_OPTIONS.map((o) => (
-              <button
-                key={o}
-                type="button"
-                className={`${styles.woBtn} ${wouldOrderAgain === o ? styles.woBtnActive : ''}`}
-                onClick={() => setWouldOrderAgain(o)}
-                aria-pressed={wouldOrderAgain === o}
-              >
-                {o}
-              </button>
-            ))}
+          <div className={styles.starRow}>
+            <div className={styles.subTitle}>Would you order again</div>
+            <div className={styles.woRow} role="group" aria-label="Would you order again">
+              {WO_OPTIONS.map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  className={`${styles.woBtn} ${wouldOrderAgain === o ? styles.woBtnActive : ''}`}
+                  onClick={() => setWouldOrderAgain(o)}
+                  aria-pressed={wouldOrderAgain === o}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.starRow}>
+            <div className={styles.subTitle}>Write a review (optional)</div>
+            <textarea
+              className={styles.reviewTextarea}
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value.slice(0, 500))}
+              placeholder="Share your experience with this product..."
+              rows={4}
+              maxLength={500}
+              aria-label="Review message"
+            />
+            <div className={styles.reviewTextareaMeta}>{reviewComment.length}/500</div>
           </div>
         </div>
 
-        <div className={styles.starRow}>
-          <div className={styles.subTitle}>Write a review (optional)</div>
-          <textarea
-            className={styles.reviewTextarea}
-            value={reviewComment}
-            onChange={(e) => setReviewComment(e.target.value.slice(0, 500))}
-            placeholder="Share your experience with this product..."
-            rows={4}
-            maxLength={500}
-            aria-label="Review message"
-          />
-          <div className={styles.reviewTextareaMeta}>{reviewComment.length}/500</div>
+        <div className={styles.panelFooter}>
+          <button
+            type="button"
+            className={styles.submitBtn}
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? 'Submitting...' : 'Submit'}
+          </button>
         </div>
-
-        <button
-          type="button"
-          className={styles.submitBtn}
-          onClick={handleSubmit}
-          disabled={submitting}
-        >
-          {submitting ? 'Submitting...' : 'Submit'}
-        </button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -48,6 +48,8 @@ export default function AdminTopBar() {
     { name: 'About Us', path: '/admin/content/about', description: 'Edit company story, story details, and biography' },
     { name: 'Contact Details', path: '/admin/content/contact', description: 'Edit store phone numbers, address, and email links' },
     { name: 'Reviews Settings', path: '/admin/content/reviews', description: 'Configure Trustpilot and Google review URLs' },
+    { name: 'Gifting', path: '/admin/content/gifting', description: 'Configure gift wrapping price per product and toggle customer availability' },
+    { name: 'COD Settings', path: '/admin/content/cod', description: 'Enable or disable Cash on Delivery across cart and checkout' },
   ];
 
   // Close search results when clicking outside

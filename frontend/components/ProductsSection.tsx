@@ -332,21 +332,59 @@ export default function ProductsSection() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       >
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                       </svg>
                     </button>
                   </div>
                   <div className={styles.productInfo}>
-                    {/* Row 1: Product Name and Price */}
+                    {/* Row 1: Product Name and Quick Add */}
                     <div className={styles.productTitleRow}>
                       <h3 className={styles.productName}>{product.name}</h3>
-                      <span className={styles.productPrice}>{getDisplayPrice(product)}</span>
+                      <button
+                        type="button"
+                        className={styles.quickAddButton}
+                        disabled={isOutOfStock}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isOutOfStock) {
+                            showToast('Out of stock', 'error');
+                            return;
+                          }
+
+                          const variation = getFirstVariationForCard(product);
+                          const result = addItem({
+                            productId: product.id,
+                            quantity: 1,
+                            variationId: variation?.id,
+                          }, product.maxQuantity);
+                          if (result.appliedQuantity <= 0) {
+                            showToast(`Maximum order quantity is ${product.maxQuantity ?? 99}`, 'error');
+                            return;
+                          }
+
+                          showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
+
+                          const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
+                          const sourceElement = e.currentTarget;
+
+                          if (sourceElement && imageUrl) {
+                            animateToCart({
+                              imageUrl,
+                              sourceElement,
+                              targetElement: cartIconRefStore.getAny(),
+                            });
+                          }
+                        }}
+                        aria-label={isOutOfStock ? 'Out of stock' : 'Quick add to cart'}
+                      >
+                        <span>Quick Add +</span>
+                      </button>
                     </div>
 
-                    {/* Row 2: Category and rating */}
+                    {/* Row 2: Price and rating */}
                     <div className={styles.productCategoryRow}>
-                      <div className={styles.productCategory}>
-                        {categoryLabel}
+                      <div className={styles.productPrice}>
+                        {getCardPriceDisplay(product, '₹')}
                       </div>
                       <div className={styles.productRatingCompact}>
                         {(getProductReviewCount(product)) > 0 ? (
@@ -402,15 +440,14 @@ export default function ProductsSection() {
 
                           showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
 
-                          const imageUrl = getPrimaryProductImageUrl(product) || '';
+                          const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
                           const sourceElement = e.currentTarget;
-                          const targetElement = cartIconRefStore.getAny();
 
-                          if (sourceElement && targetElement && imageUrl) {
+                          if (sourceElement && imageUrl) {
                             animateToCart({
                               imageUrl,
                               sourceElement,
-                              targetElement,
+                              targetElement: cartIconRefStore.getAny(),
                             });
                           }
                         }}

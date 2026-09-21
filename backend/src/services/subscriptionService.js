@@ -343,7 +343,7 @@ const createSubscription = async (subscriptionData) => {
     await client.query('BEGIN');
 
     if (addressId) {
-      const addrRes = await client.query(`SELECT id, postal_code FROM addresses WHERE id = $1 AND user_id = $2`, [addressId, userId]);
+      const addrRes = await client.query(`SELECT id, postal_code FROM addresses WHERE id::text = $1::text AND user_id::text = $2::text`, [String(addressId), String(userId)]);
       if (addrRes.rows.length === 0) {
         throw new ValidationError('Invalid delivery address');
       }
@@ -689,7 +689,7 @@ const activateSubscription = async (subscriptionId) => {
     //   evening-slot / after-window purchases when payment verify runs next calendar morning.
     let activationInstantForShift = new Date();
     if (s.checkout_order_id) {
-      const ordRes = await client.query(`SELECT created_at FROM orders WHERE id = $1 LIMIT 1`, [s.checkout_order_id]);
+      const ordRes = await client.query(`SELECT created_at FROM orders WHERE id::text = $1::text LIMIT 1`, [String(s.checkout_order_id)]);
       const ct = ordRes.rows[0]?.created_at;
       if (ct) activationInstantForShift = new Date(ct);
     } else {
@@ -1077,7 +1077,7 @@ const cancelTodaysDelivery = async (subscriptionId, userId) => {
 };
 
 async function loadTrialPackDeliveryAddressJson(userId, addressId) {
-  const addrRes = await query(`SELECT * FROM addresses WHERE id = $1 AND user_id = $2`, [addressId, userId]);
+  const addrRes = await query(`SELECT * FROM addresses WHERE id::text = $1::text AND user_id::text = $2::text`, [String(addressId), String(userId)]);
   if (addrRes.rows.length === 0) {
     throw new ValidationError('Invalid delivery address');
   }
@@ -1187,7 +1187,7 @@ async function getTrialPackExpectedOrderAmountPaise(razorpayOrderId, userId) {
   );
   const addressId = rows.rows[0].address_id;
   if (addressId == null) return null;
-  const addrRes = await query(`SELECT * FROM addresses WHERE id = $1 AND user_id = $2`, [addressId, userId]);
+  const addrRes = await query(`SELECT * FROM addresses WHERE id::text = $1::text AND user_id::text = $2::text`, [String(addressId), String(userId)]);
   if (addrRes.rows.length === 0) return null;
   const addrRow = addrRes.rows[0];
   const deliveryAddressJson = {
@@ -1992,8 +1992,8 @@ const renewExpiredSubscriptionVerify = async (subscriptionId, userId, razorpayOr
  */
 async function resolveOrCreateAddressIdFromOrderDeliveryJson(client, orderId, userId) {
   const r = await client.query(
-    `SELECT delivery_address FROM orders WHERE id = $1 AND user_id = $2 LIMIT 1`,
-    [orderId, userId]
+    `SELECT delivery_address FROM orders WHERE id::text = $1::text AND user_id::text = $2::text LIMIT 1`,
+    [String(orderId), String(userId)]
   );
   const raw = r.rows[0]?.delivery_address;
   if (raw == null) return null;
@@ -2008,6 +2008,7 @@ async function resolveOrCreateAddressIdFromOrderDeliveryJson(client, orderId, us
     addr = raw;
   }
   if (!addr || typeof addr !== 'object') return null;
+  await addressModel.ensureAddressSchema();
 
   const parseRefId = (v) => {
     if (v === null || v === undefined || v === '') return null;
@@ -2018,7 +2019,7 @@ async function resolveOrCreateAddressIdFromOrderDeliveryJson(client, orderId, us
   for (const c of refCandidates) {
     const refId = parseRefId(c);
     if (refId == null) continue;
-    const ok = await client.query(`SELECT id FROM addresses WHERE id = $1 AND user_id = $2`, [refId, userId]);
+    const ok = await client.query(`SELECT id FROM addresses WHERE id::text = $1::text AND user_id::text = $2::text`, [String(refId), String(userId)]);
     if (ok.rows.length > 0) return refId;
   }
 
@@ -2042,13 +2043,15 @@ async function resolveOrCreateAddressIdFromOrderDeliveryJson(client, orderId, us
 
   const ins = await client.query(
     `
-    INSERT INTO addresses (user_id, name, street, city, state, postal_code, country, phone, latitude, longitude, is_default, created_at, updated_at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,false,NOW(),NOW())
+    INSERT INTO addresses (user_id, name, type, street, street_address, city, state, postal_code, country, phone, latitude, longitude, is_default, created_at, updated_at)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false,NOW(),NOW())
     RETURNING id
     `,
     [
       userId,
       name,
+      name,
+      street,
       street,
       city,
       state,
@@ -2076,16 +2079,16 @@ const createFromCheckoutOrder = async (orderId) => {
     await client.query('BEGIN');
 
     const existingRes = await client.query(
-      `SELECT id, status, address_id FROM subscriptions WHERE checkout_order_id = $1 LIMIT 1`,
-      [orderId]
+      `SELECT id, status, address_id FROM subscriptions WHERE checkout_order_id::text = $1::text LIMIT 1`,
+      [String(orderId)]
     );
     if (existingRes.rows.length > 0) {
       const existingId = existingRes.rows[0].id;
       const existingStatus = existingRes.rows[0].status;
       const existingAddrId = existingRes.rows[0].address_id;
       const payRes = await client.query(
-        `SELECT payment_status, user_id FROM orders WHERE id = $1 LIMIT 1`,
-        [orderId]
+        `SELECT payment_status, user_id FROM orders WHERE id::text = $1::text LIMIT 1`,
+        [String(orderId)]
       );
       const orderUserId = payRes.rows[0]?.user_id;
       if (existingAddrId == null && orderUserId) {
@@ -2109,10 +2112,10 @@ const createFromCheckoutOrder = async (orderId) => {
       `
       SELECT id, user_id, payment_status, created_at, payment_method
       FROM orders
-      WHERE id = $1
+      WHERE id::text = $1::text
       LIMIT 1
       `,
-      [orderId]
+      [String(orderId)]
     );
     if (orderRes.rows.length === 0) {
       await client.query('COMMIT');
@@ -2124,12 +2127,12 @@ const createFromCheckoutOrder = async (orderId) => {
       `
       SELECT product_id, product_name, variation_size, unit_price, variation_id
       FROM order_items
-      WHERE order_id = $1
+      WHERE order_id::text = $1::text
         AND LOWER(product_name) LIKE 'subscription for %'
       ORDER BY created_at ASC
       LIMIT 1
       `,
-      [orderId]
+      [String(orderId)]
     );
     if (itemRes.rows.length === 0) {
       await client.query('COMMIT');
@@ -2256,8 +2259,8 @@ const createFromCheckoutOrder = async (orderId) => {
 const activateSubscriptionForCheckoutOrderIfPending = async (orderId) => {
   await subscriptionModel.ensureSubscriptionSchema();
   const res = await query(
-    `SELECT id, status FROM subscriptions WHERE checkout_order_id = $1 LIMIT 1`,
-    [orderId]
+    `SELECT id, status FROM subscriptions WHERE checkout_order_id::text = $1::text LIMIT 1`,
+    [String(orderId)]
   );
   if (res.rows.length === 0) return null;
   if (String(res.rows[0].status || '').toLowerCase() === 'active') {
@@ -2272,8 +2275,8 @@ const activateSubscriptionForCheckoutOrderIfPending = async (orderId) => {
 const activateTrialSubscriptionsForTrialOrderIfPending = async (orderId) => {
   await subscriptionModel.ensureSubscriptionSchema();
   const res = await query(
-    `SELECT id, status FROM subscriptions WHERE trial_checkout_order_id = $1 AND is_trial = TRUE ORDER BY id ASC`,
-    [orderId],
+    `SELECT id, status FROM subscriptions WHERE trial_checkout_order_id::text = $1::text AND is_trial = TRUE ORDER BY id ASC`,
+    [String(orderId)],
   );
   if (!res.rows.length) return [];
   const activated = [];

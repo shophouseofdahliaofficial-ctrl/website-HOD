@@ -25,6 +25,7 @@ export default function OrderSuccessPage() {
     variationSize?: string;
     imageUrl?: string | null;
     taxPercent?: number;
+    customizations?: any;
   }>>([]);
   const [deliveryAddress, setDeliveryAddress] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -83,6 +84,7 @@ export default function OrderSuccessPage() {
           imageUrl?: string | null;
           unitPrice?: number;
           taxPercent?: number;
+          customizations?: any;
         }) => {
           const product = map[stored.productId] ?? null;
           const variation = product && stored.variationId
@@ -108,6 +110,7 @@ export default function OrderSuccessPage() {
             variationSize: stored.variationSize,
             imageUrl: stored.imageUrl,
             taxPercent: isSubscriptionItem ? Number(taxPercent) : Number(taxPercent),
+            customizations: stored.customizations || null,
           };
         });
 
@@ -140,12 +143,97 @@ export default function OrderSuccessPage() {
         setLoading(false);
       } catch (error) {
         console.error('Failed to load order data:', error);
-        router.push('/');
+        setLoading(false);
       }
     };
 
     loadOrderData();
   }, [router]);
+
+  const getCustomizationDescriptionParts = (
+    item: {
+      productId: string;
+      variationId?: string;
+      product: Product | null;
+      variation?: { size?: string } | null;
+      variationSize?: string;
+      customizations?: any;
+    },
+    p?: Product | null
+  ) => {
+    const descParts: string[] = [];
+
+    // 1. Customizable product combinations
+    if (p && p.isCustomizable && item.variationId) {
+      const combo = (p.customizationCombinations || []).find((c) => String(c.id) === String(item.variationId));
+      if (combo && combo.combinationKeys) {
+        Object.keys(combo.combinationKeys).forEach((groupId) => {
+          const valId = combo.combinationKeys[groupId];
+          const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+          const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+          if (group && val) {
+            descParts.push(`${group.title}: ${val.name}`);
+          }
+        });
+      }
+    }
+
+    // 2. Direct selectedOptions in customizations
+    if (p && descParts.length === 0 && item.customizations?.selectedOptions && typeof item.customizations.selectedOptions === 'object') {
+      const selectedOpts = item.customizations.selectedOptions;
+      Object.keys(selectedOpts).forEach((groupId) => {
+        const valId = selectedOpts[groupId];
+        const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+        const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+        if (group && val) {
+          descParts.push(`${group.title}: ${val.name}`);
+        }
+      });
+    }
+
+    // 3. Standard variations in product.variations
+    if (p && descParts.length === 0 && item.variationId) {
+      const v = (p.variations || []).find((x) => String(x.id) === String(item.variationId));
+      if (v?.size) {
+        const trimmed = String(v.size).trim();
+        const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
+        descParts.push(formatted);
+      }
+    }
+
+    // 4. Fallback if variation size is stored directly in item or item.variation
+    if (descParts.length === 0) {
+      const fallbackSize =
+        item.variationSize ||
+        item.variation?.size ||
+        (item as any).size ||
+        item.customizations?.size ||
+        (item.customizations?.variation as any)?.size;
+      if (fallbackSize) {
+        const trimmed = String(fallbackSize).trim();
+        const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
+        descParts.push(formatted);
+      }
+    }
+
+    // 5. Text personalization
+    if (p && item.customizations && item.customizations.textPersonalization) {
+      const textPers = item.customizations.textPersonalization;
+      (p.customizationOptions || []).forEach((group) => {
+        if (group.type === 'text_input') {
+          (group.values || []).forEach((val) => {
+            const inputKey = `${group.id}_${val.id}`;
+            const textVal = textPers[inputKey] || '';
+            if (textVal.trim()) {
+              descParts.push(`${val.label}: "${textVal.trim()}"`);
+            }
+          });
+        }
+      });
+    }
+
+    return descParts;
+  };
 
   useEffect(() => {
     // Marks the cart session as converted to an order, so it won't count as abandoned.
@@ -276,7 +364,29 @@ export default function OrderSuccessPage() {
                         </Link>
                       </p>
                     )}
-                    {variationText && <p className={styles.itemVariant}>{variationText}</p>}
+                    {(() => {
+                      const descParts = getCustomizationDescriptionParts(item, item.product);
+                      if (descParts.length > 0) {
+                        return (
+                          <div className={styles.itemVariationList}>
+                            {descParts.map((desc) => (
+                              <span key={desc} className={styles.itemVariant}>{desc}</span>
+                            ))}
+                          </div>
+                        );
+                      }
+                      if (variationText) {
+                        const formatted = /^size\s*:/i.test(variationText) || variationText.includes(':') ? variationText : `Size: ${variationText}`;
+                        return <p className={styles.itemVariant}>{formatted}</p>;
+                      }
+                      return null;
+                    })()}
+                    {item.customizations?.giftWrap && (
+                      <p className={styles.itemGiftWrap}>
+                        🎁 Premium Gift Wrap (+₹{item.customizations.giftWrap.price})
+                        {item.customizations.giftWrap.comment && ` - "${item.customizations.giftWrap.comment}"`}
+                      </p>
+                    )}
                     <p className={styles.itemQuantity}>Qty: {item.quantity}</p>
                   </div>
                   <div className={styles.itemPrice}>

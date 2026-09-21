@@ -49,13 +49,53 @@ async function ensureOrdersSchema() {
   await query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);`);
 
+  // Core order columns that might be missing on legacy database schemas
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'INR';`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS platform_fee DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_charges DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS total DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS wallet_used DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_address JSONB;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address JSONB;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_amount DECIMAL(10, 2) DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10, 2) DEFAULT 0;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS final_amount DECIMAL(10, 2) DEFAULT 0;`);
+
+  try {
+    await query(`ALTER TABLE orders ALTER COLUMN total_amount DROP NOT NULL;`);
+    await query(`ALTER TABLE orders ALTER COLUMN total_amount SET DEFAULT 0;`);
+  } catch (_) {}
+  try {
+    await query(`ALTER TABLE orders ALTER COLUMN discount_amount DROP NOT NULL;`);
+    await query(`ALTER TABLE orders ALTER COLUMN discount_amount SET DEFAULT 0;`);
+  } catch (_) {}
+  try {
+    await query(`ALTER TABLE orders ALTER COLUMN final_amount DROP NOT NULL;`);
+    await query(`ALTER TABLE orders ALTER COLUMN final_amount SET DEFAULT 0;`);
+  } catch (_) {}
+  try {
+    await query(`ALTER TABLE orders ALTER COLUMN shipping_address DROP NOT NULL;`);
+  } catch (_) {}
+  try {
+    await query(`ALTER TABLE orders ALTER COLUMN delivery_address DROP NOT NULL;`);
+  } catch (_) {}
+
+  try {
+    await query(`ALTER TABLE order_items ALTER COLUMN total_price DROP NOT NULL;`);
+    await query(`ALTER TABLE order_items ALTER COLUMN total_price SET DEFAULT 0;`);
+  } catch (_) {}
+  try {
+    await query(`ALTER TABLE order_items ALTER COLUMN line_total DROP NOT NULL;`);
+    await query(`ALTER TABLE order_items ALTER COLUMN line_total SET DEFAULT 0;`);
+  } catch (_) {}
+
   // Razorpay order ID for online payments (link to Razorpay gateway)
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(255);`);
   await query(`CREATE INDEX IF NOT EXISTS idx_orders_razorpay_order_id ON orders(razorpay_order_id) WHERE razorpay_order_id IS NOT NULL;`);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS card_last4 VARCHAR(4);`);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS card_network VARCHAR(50);`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS platform_fee DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS wallet_used DECIMAL(10, 2) NOT NULL DEFAULT 0;`);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT;`);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS creator_slug VARCHAR(255);`);
 
@@ -78,21 +118,103 @@ async function ensureOrdersSchema() {
   // Nationwide delivery flag
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_nationwide_delivery BOOLEAN NOT NULL DEFAULT false;`);
 
+  // Order items columns
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS line_total DECIMAL(10, 2) DEFAULT 0;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS total_price DECIMAL(10, 2) DEFAULT 0;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variation_size TEXT;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variation_id INTEGER;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS customizations JSONB;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS customization_data JSONB;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS gift_wrap JSONB;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS photobooth_project_id UUID;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS photobook_project_id UUID;`);
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS photobook_image_check_url TEXT;`);
+
+  // Sync data between legacy / new columns
+  await query(`
+    UPDATE orders SET currency = 'INR' WHERE currency IS NULL OR currency = '';
+    UPDATE orders SET delivery_address = shipping_address WHERE delivery_address IS NULL AND shipping_address IS NOT NULL;
+    UPDATE orders SET shipping_address = delivery_address WHERE shipping_address IS NULL AND delivery_address IS NOT NULL;
+    UPDATE orders SET total = COALESCE(total, final_amount, total_amount, 0) WHERE total IS NULL OR total = 0;
+    UPDATE orders SET subtotal = COALESCE(subtotal, total_amount, total, 0) WHERE subtotal IS NULL OR subtotal = 0;
+    UPDATE orders SET discount = COALESCE(discount, discount_amount, 0) WHERE discount IS NULL;
+    UPDATE order_items SET line_total = COALESCE(line_total, total_price, unit_price * quantity, 0) WHERE line_total IS NULL OR line_total = 0;
+    UPDATE order_items SET total_price = COALESCE(total_price, line_total, unit_price * quantity, 0) WHERE total_price IS NULL OR total_price = 0;
+    UPDATE order_items SET customizations = customization_data WHERE customizations IS NULL AND customization_data IS NOT NULL;
+    UPDATE order_items SET customization_data = customizations WHERE customization_data IS NULL AND customizations IS NOT NULL;
+  `);
+
   // Update status CHECK to allow package_prepared, out_for_delivery, refunded (for DBs created before these were added)
   await query(`ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;`);
   await query(`ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN ('placed', 'confirmed', 'package_prepared', 'shipped', 'in_transit', 'reached_destination_hub', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'));`);
 
+  // Detect orders.id and users.id data types to prevent incompatible foreign key constraint error (UUID vs INTEGER)
+  let orderIdType = 'UUID';
+  try {
+    const colRes = await query(`
+      SELECT udt_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'orders' AND column_name = 'id'
+      LIMIT 1
+    `);
+    if (colRes.rows && colRes.rows.length > 0) {
+      const udt = (colRes.rows[0].udt_name || '').toLowerCase();
+      if (udt === 'int4' || udt === 'int8' || udt === 'integer' || udt === 'bigint') {
+        orderIdType = 'INTEGER';
+      } else if (udt === 'uuid') {
+        orderIdType = 'UUID';
+      } else if (udt === 'varchar' || udt === 'text') {
+        orderIdType = 'TEXT';
+      }
+    }
+  } catch (err) {
+    console.warn('[order.js] Failed to query orders.id type:', err.message);
+  }
+
+  let userIdType = 'UUID';
+  try {
+    const colRes = await query(`
+      SELECT udt_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'id'
+      LIMIT 1
+    `);
+    if (colRes.rows && colRes.rows.length > 0) {
+      const udt = (colRes.rows[0].udt_name || '').toLowerCase();
+      if (udt === 'int4' || udt === 'int8' || udt === 'integer' || udt === 'bigint') {
+        userIdType = 'INTEGER';
+      } else if (udt === 'uuid') {
+        userIdType = 'UUID';
+      }
+    }
+  } catch (err) {
+    console.warn('[order.js] Failed to query users.id type:', err.message);
+  }
+
   // order_feedback: one row per order, rating (emoji: least/neutral/most), + detailed (quality_stars, delivery_agent_stars, on_time_stars, value_for_money_stars, would_order_again)
-  await query(`
-    CREATE TABLE IF NOT EXISTS order_feedback (
-      order_id UUID PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
-      user_id UUID NOT NULL REFERENCES users(id),
-      rating TEXT NOT NULL CHECK (rating IN ('least','neutral','most')),
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-  await query(`ALTER TABLE order_feedback DROP CONSTRAINT IF EXISTS order_feedback_rating_check;`);
-  await query(`ALTER TABLE order_feedback ALTER COLUMN rating DROP NOT NULL;`);
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS order_feedback (
+        order_id ${orderIdType} PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
+        user_id ${userIdType} NOT NULL REFERENCES users(id),
+        rating TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+  } catch (fbErr) {
+    console.warn('[order.js] FK creation failed for order_feedback, creating without inline constraint:', fbErr.message);
+    await query(`
+      CREATE TABLE IF NOT EXISTS order_feedback (
+        order_id ${orderIdType} PRIMARY KEY,
+        user_id ${userIdType} NOT NULL,
+        rating TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `).catch(() => {});
+  }
+
+  await query(`ALTER TABLE order_feedback DROP CONSTRAINT IF EXISTS order_feedback_rating_check;`).catch(() => {});
+  await query(`ALTER TABLE order_feedback ALTER COLUMN rating DROP NOT NULL;`).catch(() => {});
   await query(`
     DO $$ BEGIN
       ALTER TABLE order_feedback ADD CONSTRAINT order_feedback_rating_check
@@ -100,30 +222,49 @@ async function ensureOrdersSchema() {
     EXCEPTION WHEN duplicate_object THEN NULL;
     END $$;
   `).catch(() => {});
-  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS quality_stars INTEGER;`);
-  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS delivery_agent_stars INTEGER;`);
-  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS on_time_stars INTEGER;`);
-  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS value_for_money_stars INTEGER;`);
-  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS would_order_again TEXT;`);
+  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS quality_stars INTEGER;`).catch(() => {});
+  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS delivery_agent_stars INTEGER;`).catch(() => {});
+  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS on_time_stars INTEGER;`).catch(() => {});
+  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS value_for_money_stars INTEGER;`).catch(() => {});
+  await query(`ALTER TABLE order_feedback ADD COLUMN IF NOT EXISTS would_order_again TEXT;`).catch(() => {});
 
-  await query(`
-    CREATE TABLE IF NOT EXISTS order_product_detailed_feedback (
-      order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      quality_stars INTEGER CHECK (quality_stars IS NULL OR (quality_stars >= 1 AND quality_stars <= 5)),
-      delivery_agent_stars INTEGER CHECK (delivery_agent_stars IS NULL OR (delivery_agent_stars >= 1 AND delivery_agent_stars <= 5)),
-      on_time_stars INTEGER CHECK (on_time_stars IS NULL OR (on_time_stars >= 1 AND on_time_stars <= 5)),
-      value_for_money_stars INTEGER CHECK (value_for_money_stars IS NULL OR (value_for_money_stars >= 1 AND value_for_money_stars <= 5)),
-      would_order_again TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY (order_id, product_id)
-    );
-  `);
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS order_product_detailed_feedback (
+        order_id ${orderIdType} NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        user_id ${userIdType} NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        quality_stars INTEGER CHECK (quality_stars IS NULL OR (quality_stars >= 1 AND quality_stars <= 5)),
+        delivery_agent_stars INTEGER CHECK (delivery_agent_stars IS NULL OR (delivery_agent_stars >= 1 AND delivery_agent_stars <= 5)),
+        on_time_stars INTEGER CHECK (on_time_stars IS NULL OR (on_time_stars >= 1 AND on_time_stars <= 5)),
+        value_for_money_stars INTEGER CHECK (value_for_money_stars IS NULL OR (value_for_money_stars >= 1 AND value_for_money_stars <= 5)),
+        would_order_again TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (order_id, product_id)
+      );
+    `);
+  } catch (dfbErr) {
+    console.warn('[order.js] FK creation failed for order_product_detailed_feedback, creating without inline constraint:', dfbErr.message);
+    await query(`
+      CREATE TABLE IF NOT EXISTS order_product_detailed_feedback (
+        order_id ${orderIdType} NOT NULL,
+        product_id INTEGER NOT NULL,
+        user_id ${userIdType} NOT NULL,
+        quality_stars INTEGER CHECK (quality_stars IS NULL OR (quality_stars >= 1 AND quality_stars <= 5)),
+        delivery_agent_stars INTEGER CHECK (delivery_agent_stars IS NULL OR (delivery_agent_stars >= 1 AND delivery_agent_stars <= 5)),
+        on_time_stars INTEGER CHECK (on_time_stars IS NULL OR (on_time_stars >= 1 AND on_time_stars <= 5)),
+        value_for_money_stars INTEGER CHECK (value_for_money_stars IS NULL OR (value_for_money_stars >= 1 AND value_for_money_stars <= 5)),
+        would_order_again TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (order_id, product_id)
+      );
+    `).catch(() => {});
+  }
   await query(
     `CREATE INDEX IF NOT EXISTS idx_order_product_feedback_user ON order_product_detailed_feedback(user_id);`
-  );
+  ).catch(() => {});
 
   await query(
     `
@@ -176,21 +317,73 @@ async function ensureOrdersSchema() {
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_awb VARCHAR(255);`).catch(() => {});
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_courier VARCHAR(255);`).catch(() => {});
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_order_id VARCHAR(255);`).catch(() => {});
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variation_size TEXT;`).catch(() => {});
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variation_id INTEGER;`).catch(() => {});
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS line_total DECIMAL(10, 2);`).catch(() => {});
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit_price DECIMAL(10, 2);`).catch(() => {});
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_name TEXT;`).catch(() => {});
+  await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_id INTEGER;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS photobooth_project_id UUID;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS photobook_project_id UUID;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS photobook_image_check_url TEXT;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS customizations JSONB;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS gift_wrap JSONB;`).catch(() => {});
   await query(`
-    UPDATE order_items oi
-    SET photobook_image_check_url = p.preview_url
-    FROM photobook_projects p
-    WHERE oi.photobook_project_id = p.id
-      AND oi.photobook_image_check_url IS NULL
-      AND p.preview_url IS NOT NULL
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'order_items' AND column_name = 'total_price'
+      ) THEN
+        UPDATE order_items SET line_total = total_price WHERE line_total IS NULL AND total_price IS NOT NULL;
+      END IF;
+    END $$;
+  `).catch(() => {});
+  await query(`
+    DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'photobook_projects' AND column_name = 'preview_url'
+      ) THEN
+        UPDATE order_items oi
+        SET photobook_image_check_url = p.preview_url
+        FROM photobook_projects p
+        WHERE oi.photobook_project_id = p.id
+          AND oi.photobook_image_check_url IS NULL
+          AND p.preview_url IS NOT NULL;
+      END IF;
+    END $$;
   `).catch(() => {});
 
   schemaEnsured = true;
+}
+
+let cachedOrderIdType = null;
+
+async function getOrderIdType() {
+  if (cachedOrderIdType) return cachedOrderIdType;
+  try {
+    const colRes = await query(`
+      SELECT udt_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'orders' AND column_name = 'id'
+      LIMIT 1
+    `);
+    if (colRes.rows && colRes.rows.length > 0) {
+      const udt = (colRes.rows[0].udt_name || '').toLowerCase();
+      if (udt === 'int4' || udt === 'int8' || udt === 'integer' || udt === 'bigint') {
+        cachedOrderIdType = 'INTEGER';
+      } else if (udt === 'uuid') {
+        cachedOrderIdType = 'UUID';
+      } else {
+        cachedOrderIdType = 'TEXT';
+      }
+    } else {
+      cachedOrderIdType = 'INTEGER';
+    }
+  } catch {
+    cachedOrderIdType = 'INTEGER';
+  }
+  return cachedOrderIdType;
 }
 
 async function createOrder({
@@ -217,38 +410,88 @@ async function createOrder({
 }) {
   await ensureOrdersSchema();
 
-  const orderRes = await query(
-    `
-    INSERT INTO orders (
-      id, user_id, order_number, status, payment_method, payment_status,
-      currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
-    )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
-    RETURNING id, user_id, order_number, status, payment_method, payment_status, currency,
-              subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
-    `,
-    [
-      id,
-      userId,
-      orderNumber,
-      status,
-      paymentMethod,
-      paymentStatus,
-      currency,
-      subtotal,
-      discount,
-      platformFee,
-      deliveryCharges,
-      total,
-      walletUsed,
-      deliveryAddress,
-      razorpayOrderId,
-      savingsAmount,
-      couponCode,
-      isNationwideDelivery,
-      creatorSlug,
-    ]
-  );
+  const finalOrderNumber = orderNumber || ('HOD-' + Date.now() + '-' + Math.floor(1000 + Math.random() * 9000));
+  const idType = await getOrderIdType();
+  const isIntegerId = idType === 'INTEGER';
+  const isNumericId = id != null && /^\d+$/.test(String(id));
+
+  let orderRes;
+  if (isIntegerId || (!isNumericId && idType !== 'UUID')) {
+    orderRes = await query(
+      `
+      INSERT INTO orders (
+        user_id, order_number, status, payment_method, payment_status,
+        currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug,
+        total_amount, discount_amount, final_amount, shipping_address
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+      RETURNING id, user_id, order_number, status, payment_method, payment_status, currency,
+                subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
+      `,
+      [
+        userId,
+        finalOrderNumber,
+        status,
+        paymentMethod,
+        paymentStatus,
+        currency,
+        subtotal,
+        discount,
+        platformFee,
+        deliveryCharges,
+        total,
+        walletUsed,
+        deliveryAddress,
+        razorpayOrderId,
+        savingsAmount,
+        couponCode,
+        isNationwideDelivery,
+        creatorSlug,
+        subtotal || total || 0,
+        discount || 0,
+        total || 0,
+        deliveryAddress || null,
+      ]
+    );
+  } else {
+    orderRes = await query(
+      `
+      INSERT INTO orders (
+        id, user_id, order_number, status, payment_method, payment_status,
+        currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug,
+        total_amount, discount_amount, final_amount, shipping_address
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+      RETURNING id, user_id, order_number, status, payment_method, payment_status, currency,
+                subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
+      `,
+      [
+        id,
+        userId,
+        finalOrderNumber,
+        status,
+        paymentMethod,
+        paymentStatus,
+        currency,
+        subtotal,
+        discount,
+        platformFee,
+        deliveryCharges,
+        total,
+        walletUsed,
+        deliveryAddress,
+        razorpayOrderId,
+        savingsAmount,
+        couponCode,
+        isNationwideDelivery,
+        creatorSlug,
+        subtotal || total || 0,
+        discount || 0,
+        total || 0,
+        deliveryAddress || null,
+      ]
+    );
+  }
 
   const order = orderRes.rows[0];
 
@@ -256,9 +499,9 @@ async function createOrder({
     await query(
       `
       INSERT INTO order_items (
-        order_id, product_id, variation_id, product_name, variation_size, unit_price, quantity, line_total, photobooth_project_id, photobook_project_id, photobook_image_check_url, customizations, gift_wrap
+        order_id, product_id, variation_id, product_name, variation_size, unit_price, quantity, line_total, total_price, photobooth_project_id, photobook_project_id, photobook_image_check_url, customizations, customization_data, gift_wrap
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       `,
       [
         order.id,
@@ -269,9 +512,11 @@ async function createOrder({
         it.unitPrice,
         it.quantity,
         it.lineTotal,
+        it.lineTotal || (it.unitPrice * it.quantity) || 0,
         it.photoboothProjectId || null,
         it.photobookProjectId || null,
         it.photobookImageCheckUrl || null,
+        it.customizations ? JSON.stringify(it.customizations) : null,
         it.customizations ? JSON.stringify(it.customizations) : null,
         it.giftWrap ? JSON.stringify(it.giftWrap) : (it.customizations?.giftWrap ? JSON.stringify(it.customizations.giftWrap) : null),
       ]
@@ -337,14 +582,14 @@ async function listOrdersForUser(userId) {
       o.created_at,
       o.delivery_date
     FROM orders o
-    WHERE o.user_id = $1
+    WHERE o.user_id::text = $1::text
       AND (
         o.payment_method = 'cod'
         OR o.payment_status IN ('paid', 'cod', 'refunded')
       )
     ORDER BY o.created_at DESC
     `,
-    [userId]
+    [String(userId)]
   );
 
   const orders = orderRes.rows;
@@ -364,8 +609,8 @@ async function listOrdersForUser(userId) {
       oi.product_id,
       oi.photobooth_project_id,
       oi.photobook_project_id,
-      COALESCE(oi.photobook_image_check_url, pbook.preview_url) AS photobook_image_check_url,
-      COALESCE(pb.generated_pdf_url, pbook.generated_pdf_url) AS generated_pdf_url,
+      COALESCE(oi.photobook_image_check_url, pb.preview_url) AS photobook_image_check_url,
+      pb.generated_pdf_url AS generated_pdf_url,
       p.image_url,
       p.buy_again_enabled,
       opdf.quality_stars,
@@ -533,9 +778,9 @@ async function getOrderByIdForUser(userId, orderId) {
       u.email AS user_email
     FROM orders o
     LEFT JOIN users u ON u.id = o.user_id
-    WHERE o.id = $1 AND o.user_id = $2
+    WHERE o.id::text = $1::text AND o.user_id::text = $2::text
     `,
-    [orderId, userId]
+    [String(orderId), String(userId)]
   );
 
   if (orderRes.rows.length === 0) return null;
@@ -553,8 +798,8 @@ async function getOrderByIdForUser(userId, orderId) {
       oi.product_id,
       oi.photobooth_project_id,
       oi.photobook_project_id,
-      COALESCE(oi.photobook_image_check_url, pbook.preview_url) AS photobook_image_check_url,
-      COALESCE(pb.generated_pdf_url, pbook.generated_pdf_url) AS generated_pdf_url,
+      COALESCE(oi.photobook_image_check_url, pb.preview_url) AS photobook_image_check_url,
+      pb.generated_pdf_url AS generated_pdf_url,
       p.image_url,
       p.buy_again_enabled,
       oi.customizations,
@@ -681,12 +926,12 @@ async function submitDetailedFeedback(orderId, userId, data) {
 
   const q = (v) => (v != null && Number.isFinite(Number(v)) && (v = parseInt(String(v), 10)) >= 1 && v <= 5) ? v : null;
   const qs = q(qualityStars);
-  const das = q(deliveryAgentStars);
+  const das = deliveryAgentStars != null ? q(deliveryAgentStars) : (qs || 5);
   const ots = q(onTimeStars);
   const vfms = q(valueForMoneyStars);
   const woa = String(wouldOrderAgain || '').trim();
   if (!['Yes', 'Maybe', 'No'].includes(woa)) throw new Error('wouldOrderAgain must be Yes, Maybe, or No');
-  if (!qs || !das || !ots || !vfms) throw new Error('qualityStars, deliveryAgentStars, onTimeStars, valueForMoneyStars must be 1–5');
+  if (!qs || !ots || !vfms) throw new Error('qualityStars, onTimeStars, valueForMoneyStars must be 1–5');
 
   const orderCheck = await query(`SELECT id, status FROM orders WHERE id = $1 AND user_id = $2`, [orderId, userId]);
   if (orderCheck.rows.length === 0) throw new Error('Order not found');
@@ -902,8 +1147,8 @@ async function getOrderByIdForAdmin(orderId) {
       oi.product_id,
       oi.photobooth_project_id,
       oi.photobook_project_id,
-      COALESCE(oi.photobook_image_check_url, pbook.preview_url) AS photobook_image_check_url,
-      COALESCE(pb.generated_pdf_url, pbook.generated_pdf_url) AS generated_pdf_url,
+      COALESCE(oi.photobook_image_check_url, pb.preview_url) AS photobook_image_check_url,
+      pb.generated_pdf_url AS generated_pdf_url,
       p.image_url,
       p.buy_again_enabled,
       oi.customizations,
@@ -1250,7 +1495,7 @@ async function listOutForDeliveryStops() {
 const TRIAL_PACK_ORDER_EXCLUSION_SQL = `NOT EXISTS (
   SELECT 1 FROM subscriptions st
   WHERE st.is_trial IS TRUE
-    AND (st.trial_checkout_order_id = o.id OR (
+    AND (st.trial_checkout_order_id::text = o.id::text OR (
       o.razorpay_order_id IS NOT NULL AND BTRIM(o.razorpay_order_id::text) <> ''
       AND st.razorpay_subscription_id::text = BTRIM(o.razorpay_order_id::text)
     ))

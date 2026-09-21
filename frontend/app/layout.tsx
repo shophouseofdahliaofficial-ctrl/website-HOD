@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 import './globals.css';
-import { Instrument_Serif, Inter } from 'next/font/google';
+import { Instrument_Serif, Inter, Epilogue } from 'next/font/google';
 import localFont from 'next/font/local';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -27,6 +27,12 @@ import { DEFAULT_KEYWORDS, GA_MEASUREMENT_ID, SITE_DESCRIPTION, SITE_NAME, getSi
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const epilogue = Epilogue({
+  subsets: ['latin'],
+  variable: '--font-epilogue',
   display: 'swap',
 });
 
@@ -98,7 +104,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable} ${chupsItalic.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${epilogue.variable} ${instrumentSerif.variable} ${chupsItalic.variable}`} suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
