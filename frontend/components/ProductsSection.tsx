@@ -456,7 +456,7 @@ export default function ProductsSection() {
         product={quickAddProduct}
         isOpen={Boolean(quickAddProduct)}
         onClose={() => setQuickAddProduct(null)}
-        categoryName={quickAddProduct?.categoryId ? categoryMap.getCategoryName(quickAddProduct.categoryId) : undefined}
+        categoryName={quickAddProduct?.categoryId ? categoryMap.get(quickAddProduct.categoryId) : undefined}
       />
     </div>
   );
