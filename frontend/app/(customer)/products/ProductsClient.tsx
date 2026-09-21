@@ -14,6 +14,7 @@ import { getFirstVariationForCard, getCardDiscountOff, getCardPriceDisplay, getP
 import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/utils/productImages';
 import { getAverageProductRating, getProductReviewCount } from '@/lib/utils/productReviewStats';
 import { useCategoryMap } from '@/hooks/useCategoryMap';
+import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
 import { animateToCart } from '@/lib/utils/cartAnimation';
 import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import styles from './products.module.css';

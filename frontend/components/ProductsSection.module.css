@@ -1131,7 +1131,7 @@
   border: 1px solid #e9e9e9;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   cursor: pointer;
   white-space: nowrap;
@@ -1141,9 +1141,11 @@
 }
 
 .quickAddButton:hover {
-  background: #ffd5e3;
+  background: #e9e9e9;
   border-color: #ff0155;
-  transform: scale(1.04);
+
+  border: 1px solid #e9e9e9 !Important;
+  color: black;
 }
 
 .quickAddButton:active {
@@ -1217,7 +1219,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #4a5568;
-  padding-right: 2px;
+  padding-right: 3px;
 }
 
 .starIconSmall {
