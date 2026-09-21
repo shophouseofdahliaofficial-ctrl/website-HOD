@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,300..900;1,300..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-@import './custom-cursors.css';
 
 * {
   box-sizing: border-box;
@@ -162,12 +161,7 @@ a {
   border: 0;
 }
 
-/* Default pink arrow — set on root only so children inherit (avoids span/div overriding buttons) */
-html {
-  cursor: var(--milko-cursor-default) !important;
-}
-
-/* Pink hand on clickable elements */
+/* Interactive elements cursor */
 a,
 button,
 label,
@@ -181,18 +175,8 @@ input[type="radio"],
 [role="button"],
 [role="link"],
 [role="menuitem"],
-[role="tab"],
-.qtyButton,
-.qtyInput,
-.photobookIconButton,
-.pbFilmstripAddBtn,
-.pbFilmstripDeleteBtn,
-.photobookThumb,
-.pbLayoutWireframe,
-.pbUploadBtn,
-.pbBgSwatchWrapper,
-.pbAddTextBtn {
-  cursor: var(--milko-cursor-pointer) !important;
+[role="tab"] {
+  cursor: pointer;
 }
 
 /* Let text fields and editable fields keep their text I-beam cursor for standard input UX */
