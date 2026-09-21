@@ -25,7 +25,7 @@
 .card {
   position: relative;
   width: 100%;
-  max-width: 390px;
+  max-width: 410px;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(24px) saturate(190%);
   -webkit-backdrop-filter: blur(24px) saturate(190%);
@@ -136,12 +136,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 260px;
+  max-height: 270px;
   overflow-y: auto;
   padding-right: 2px;
 }
 
-/* Custom scrollbar for variations if needed */
 .body::-webkit-scrollbar {
   width: 4px;
 }
@@ -168,8 +167,8 @@
 
 .selectedValueText {
   font-size: 0.82rem;
-  font-weight: 500;
-  color: #64748b;
+  font-weight: 600;
+  color: #0284c7;
 }
 
 .variationsGrid {
@@ -178,7 +177,7 @@
   gap: 8px;
 }
 
-/* Copied variation design matching ProductDetailsModal */
+/* Variation Button Design matching ProductDetailsModal */
 .variationButton {
   padding: 0.45rem 0.9rem;
   background: #ffffff;
@@ -222,6 +221,80 @@
   font-size: 0.76rem;
   font-weight: 500;
   opacity: 0.85;
+}
+
+/* Color swatch group */
+.colorSelectorPalette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.colorSwatchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.colorSwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+}
+
+.colorSwatchActive {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ff0155;
+}
+
+/* Image selector card */
+.imageSelectorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.imageSelectorCard {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 2px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.15s ease;
+}
+
+.imageSelectorCard:hover {
+  border-color: #1a73e8;
+}
+
+.imageSelectorCardActive {
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+.imageSelectorThumbnail {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
 }
 
 /* Quantity selector */

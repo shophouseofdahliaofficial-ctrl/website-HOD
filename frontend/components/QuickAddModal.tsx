@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
-import { Product, ProductVariation } from '@/types';
+import { Product, ProductVariation, VariationGroup, VariantValue } from '@/types';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { productsApi } from '@/lib/api';
@@ -19,6 +19,11 @@ interface QuickAddModalProps {
   categoryName?: string;
 }
 
+const removePriceFromName = (name: string): string => {
+  if (!name) return '';
+  return name.replace(/\s*(?:\(\s*[+-]?\s*(?:₹|Rs\.?)\s*\d+(?:\.\d+)?\s*\)|[+-]?\s*(?:₹|Rs\.?)\s*\d+(?:\.\d+)?)/gi, '').trim();
+};
+
 export default function QuickAddModal({
   product,
   isOpen,
@@ -29,43 +34,35 @@ export default function QuickAddModal({
   const { showToast } = useToast();
   const [productDetails, setProductDetails] = useState<Product | null>(null);
   const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
+  const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState<number>(1);
   const cardRef = useRef<HTMLDivElement>(null);
   const addBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Active product source
-  const currentProduct = productDetails || product;
+  // Active product source (prefer detailed product once fetched, fallback to product prop)
+  const displayProduct: Product | null = productDetails || product;
 
-  // Load detailed product if necessary (to get full variations or options)
+  // Load detailed product if necessary
   useEffect(() => {
     let isMounted = true;
     if (isOpen && product?.id) {
-      setSelectedVariationId(null);
       setQuantity(1);
-      
-      // If product already has variations loaded
-      if (product.variations && product.variations.length > 0) {
-        const firstAvail = product.variations.find((v) => v.isAvailable) || product.variations[0];
-        if (firstAvail) setSelectedVariationId(firstAvail.id);
-      }
+      setSelectedVariationId(null);
+      setSelectedCustomizations({});
 
-      // Fetch full details if needed
+      // Fetch full details
       productsApi
         .getById(product.id, true)
         .then((data) => {
           if (isMounted && data) {
             setProductDetails(data);
-            if (data.variations && data.variations.length > 0) {
-              const firstAvail = data.variations.find((v) => v.isAvailable) || data.variations[0];
-              if (firstAvail) {
-                setSelectedVariationId((prev) => prev || firstAvail.id);
-              }
-            }
           }
         })
         .catch(() => {});
     } else {
       setProductDetails(null);
+      setSelectedVariationId(null);
+      setSelectedCustomizations({});
     }
     return () => {
       isMounted = false;
@@ -84,37 +81,117 @@ export default function QuickAddModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const variations = useMemo(() => {
-    if (!currentProduct?.variations) return [];
-    return [...currentProduct.variations].sort(
+  // Standard variations
+  const variations: ProductVariation[] = useMemo(() => {
+    if (!displayProduct?.variations) return [];
+    return [...displayProduct.variations].sort(
       (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
     );
-  }, [currentProduct?.variations]);
+  }, [displayProduct?.variations]);
+
+  // Auto-select first available standard variation
+  useEffect(() => {
+    if (variations.length > 0) {
+      setSelectedVariationId((prev) => {
+        if (prev && variations.some((v) => v.id === prev)) return prev;
+        const firstAvail = variations.find((v) => v.isAvailable) || variations[0];
+        return firstAvail ? firstAvail.id : null;
+      });
+    }
+  }, [variations]);
 
   const selectedVariation: ProductVariation | null = useMemo(() => {
     if (!variations.length) return null;
     return variations.find((v) => v.id === selectedVariationId) || variations[0] || null;
   }, [variations, selectedVariationId]);
 
-  // Price calculations
-  const basePrice = useMemo(() => {
-    if (!currentProduct) return 0;
-    if (currentProduct.sellingPrice !== null && currentProduct.sellingPrice !== undefined && Number.isFinite(Number(currentProduct.sellingPrice))) {
-      return Number(currentProduct.sellingPrice);
+  // Customizable options
+  const isCustomizable = Boolean(
+    displayProduct?.isCustomizable &&
+    displayProduct?.customizationOptions &&
+    displayProduct.customizationOptions.length > 0
+  );
+
+  const customizationOptions: VariationGroup[] = useMemo(() => {
+    if (!isCustomizable || !displayProduct?.customizationOptions) return [];
+    return displayProduct.customizationOptions.filter(
+      (g) => g.type !== 'text_input' && g.type !== 'uploads'
+    );
+  }, [isCustomizable, displayProduct?.customizationOptions]);
+
+  // Auto-initialize customization options with first active value
+  useEffect(() => {
+    if (customizationOptions.length > 0) {
+      setSelectedCustomizations((prev) => {
+        const updated = { ...prev };
+        let hasChanges = false;
+        customizationOptions.forEach((g) => {
+          if (!updated[g.id] && g.values && g.values.length > 0) {
+            const firstAvail = g.values.find((val) => (val as any).isActive !== false) || g.values[0];
+            if (firstAvail) {
+              updated[g.id] = firstAvail.id;
+              hasChanges = true;
+            }
+          }
+        });
+        return hasChanges ? updated : prev;
+      });
     }
-    return Number(currentProduct.pricePerLitre || 0);
-  }, [currentProduct]);
+  }, [customizationOptions]);
+
+  // Matching customization combination
+  const currentCombination = useMemo(() => {
+    if (!displayProduct?.customizationCombinations || displayProduct.customizationCombinations.length === 0) {
+      return null;
+    }
+    const entries = Object.entries(selectedCustomizations);
+    if (entries.length === 0) return null;
+
+    return displayProduct.customizationCombinations.find((combo) => {
+      if (combo.isActive === false) return false;
+      const keys = combo.combinationKeys || {};
+      return Object.entries(keys).every(
+        ([groupId, valueId]) => String(selectedCustomizations[groupId]) === String(valueId)
+      );
+    });
+  }, [displayProduct?.customizationCombinations, selectedCustomizations]);
+
+  // Base pricing
+  const basePrice = useMemo(() => {
+    if (!displayProduct) return 0;
+    if (displayProduct.sellingPrice !== null && displayProduct.sellingPrice !== undefined && Number.isFinite(Number(displayProduct.sellingPrice))) {
+      return Number(displayProduct.sellingPrice);
+    }
+    return Number(displayProduct.pricePerLitre || 0);
+  }, [displayProduct]);
 
   const baseCompareAtPrice = useMemo(() => {
-    if (!currentProduct) return null;
-    if (currentProduct.compareAtPrice !== null && currentProduct.compareAtPrice !== undefined && Number.isFinite(Number(currentProduct.compareAtPrice))) {
-      return Number(currentProduct.compareAtPrice);
+    if (!displayProduct) return null;
+    if (displayProduct.compareAtPrice !== null && displayProduct.compareAtPrice !== undefined && Number.isFinite(Number(displayProduct.compareAtPrice))) {
+      return Number(displayProduct.compareAtPrice);
     }
     return null;
-  }, [currentProduct]);
+  }, [displayProduct]);
 
+  // Unit Price Calculation
   const unitPrice = useMemo(() => {
-    if (!currentProduct) return 0;
+    if (!displayProduct) return 0;
+
+    if (isCustomizable) {
+      if (currentCombination?.price != null && Number.isFinite(Number(currentCombination.price))) {
+        return Number(currentCombination.price);
+      }
+      let sum = basePrice;
+      Object.entries(selectedCustomizations).forEach(([groupId, valId]) => {
+        const group = customizationOptions.find((g) => g.id === groupId);
+        const val = group?.values?.find((v) => String(v.id) === String(valId));
+        if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+          sum += val.price;
+        }
+      });
+      return sum;
+    }
+
     if (selectedVariation) {
       if (selectedVariation.price != null && Number.isFinite(Number(selectedVariation.price))) {
         return Number(selectedVariation.price);
@@ -122,29 +199,65 @@ export default function QuickAddModal({
       const mult = Number(selectedVariation.priceMultiplier) || 1;
       return basePrice * mult;
     }
-    return basePrice;
-  }, [currentProduct, selectedVariation, basePrice]);
 
+    return basePrice;
+  }, [displayProduct, isCustomizable, currentCombination, customizationOptions, selectedCustomizations, selectedVariation, basePrice]);
+
+  // Unit Compare At Price Calculation
   const unitComparePrice = useMemo(() => {
-    if (!currentProduct) return null;
+    if (!displayProduct) return null;
+
+    if (isCustomizable) {
+      if (currentCombination?.compareAtPrice != null && Number.isFinite(Number(currentCombination.compareAtPrice))) {
+        return Number(currentCombination.compareAtPrice);
+      }
+      if (baseCompareAtPrice != null) {
+        let cmpSum = baseCompareAtPrice;
+        Object.entries(selectedCustomizations).forEach(([groupId, valId]) => {
+          const group = customizationOptions.find((g) => g.id === groupId);
+          const val = group?.values?.find((v) => String(v.id) === String(valId));
+          if (val && typeof (val as any).compareAtPrice === 'number' && Number.isFinite((val as any).compareAtPrice)) {
+            cmpSum += (val as any).compareAtPrice;
+          }
+        });
+        return cmpSum;
+      }
+      return null;
+    }
+
     if (selectedVariation?.compareAtPrice != null && Number.isFinite(Number(selectedVariation.compareAtPrice))) {
       return Number(selectedVariation.compareAtPrice);
     }
+
     if (baseCompareAtPrice) {
       const mult = selectedVariation ? (Number(selectedVariation.priceMultiplier) || 1) : 1;
       return baseCompareAtPrice * mult;
     }
+
     return null;
-  }, [currentProduct, selectedVariation, baseCompareAtPrice]);
+  }, [displayProduct, isCustomizable, currentCombination, customizationOptions, selectedCustomizations, selectedVariation, baseCompareAtPrice]);
 
   const totalPrice = unitPrice * quantity;
   const totalComparePrice = unitComparePrice ? unitComparePrice * quantity : null;
 
-  if (!isOpen || !currentProduct) return null;
+  if (!isOpen || !displayProduct) return null;
 
-  const imageUrl = getPrimaryProductImageUrl(currentProduct) || (currentProduct as any).imageUrl || '';
-  const isOutOfStock = currentProduct.isOutOfStock || (selectedVariation ? !selectedVariation.isAvailable : false);
-  const maxQty = currentProduct.maxQuantity ?? 99;
+  // Selected thumbnail image
+  let activeImageUrl = getPrimaryProductImageUrl(displayProduct) || (displayProduct as any).imageUrl || '';
+  if (isCustomizable) {
+    // Check if any selected option has an imageUrl
+    for (const [groupId, valId] of Object.entries(selectedCustomizations)) {
+      const group = customizationOptions.find((g) => g.id === groupId);
+      const val = group?.values?.find((v) => String(v.id) === String(valId));
+      if ((val as any)?.imageUrl) {
+        activeImageUrl = (val as any).imageUrl;
+        break;
+      }
+    }
+  }
+
+  const isOutOfStock = displayProduct.isOutOfStock || (selectedVariation ? !selectedVariation.isAvailable : false);
+  const maxQty = displayProduct.maxQuantity ?? 99;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -157,13 +270,22 @@ export default function QuickAddModal({
       triggerSparkleBurst(addBtnRef.current);
     }
 
+    const variationIdToUse = isCustomizable
+      ? (currentCombination?.id ?? undefined)
+      : (selectedVariation?.id ?? undefined);
+
+    const customizationsToPass = isCustomizable
+      ? { selectedOptions: selectedCustomizations }
+      : undefined;
+
     const result = addItem(
       {
-        productId: currentProduct.id,
+        productId: displayProduct.id,
         quantity,
-        variationId: selectedVariation?.id,
+        variationId: variationIdToUse,
+        customizations: customizationsToPass,
       },
-      currentProduct.maxQuantity
+      displayProduct.maxQuantity
     );
 
     if (result.appliedQuantity <= 0) {
@@ -172,19 +294,19 @@ export default function QuickAddModal({
     }
 
     showToast(
-      result.ok ? `Added ${currentProduct.name} to cart` : `Maximum order quantity is ${maxQty}`,
+      result.ok ? `Added ${displayProduct.name} to cart` : `Maximum order quantity is ${maxQty}`,
       result.ok ? 'success' : 'error'
     );
 
-    if (addBtnRef.current && imageUrl) {
+    if (addBtnRef.current && activeImageUrl) {
       animateToCart({
-        imageUrl,
+        imageUrl: activeImageUrl,
         sourceElement: addBtnRef.current,
         targetElement: cartIconRefStore.getAny(),
       });
     }
 
-    // Open desktop cart drawer if desktop
+    // Open desktop cart drawer if on desktop
     if (typeof window !== 'undefined' && window.innerWidth >= 768) {
       window.dispatchEvent(new CustomEvent('open-desktop-cart'));
     }
@@ -196,7 +318,6 @@ export default function QuickAddModal({
     <div
       className={styles.overlay}
       onClick={(e) => {
-        // Click outside the card closes modal
         if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
           onClose();
         }
@@ -210,10 +331,10 @@ export default function QuickAddModal({
         {/* Header with Product Preview & Close */}
         <div className={styles.header}>
           <div className={styles.imageWrapper}>
-            {imageUrl ? (
+            {activeImageUrl ? (
               <Image
-                src={imageUrl}
-                alt={currentProduct.name}
+                src={activeImageUrl}
+                alt={displayProduct.name}
                 width={52}
                 height={52}
                 className={styles.productImg}
@@ -223,11 +344,11 @@ export default function QuickAddModal({
             )}
           </div>
           <div className={styles.headerInfo}>
-            <h3 className={styles.productName} title={currentProduct.name}>
-              {currentProduct.name}
+            <h3 className={styles.productName} title={displayProduct.name}>
+              {displayProduct.name}
             </h3>
             <span className={styles.categoryBadge}>
-              {categoryName || currentProduct.variationLabel || currentProduct.variationTitle || 'Select option'}
+              {categoryName || displayProduct.variationLabel || displayProduct.variationTitle || 'Select option'}
             </span>
           </div>
           <button
@@ -245,19 +366,110 @@ export default function QuickAddModal({
 
         {/* Body / Variations Section */}
         <div className={styles.body}>
-          {variations.length > 0 && (
+          {/* Customization Options (if product is customizable) */}
+          {isCustomizable && customizationOptions.map((g) => {
+            const selectedValId = selectedCustomizations[g.id];
+            const selectedVal = (g.values || []).find((v) => String(v.id) === String(selectedValId));
+
+            return (
+              <div key={g.id} className={styles.variationPicker}>
+                <div className={styles.variationLabel}>
+                  <span>{g.title || 'Option'}:</span>
+                  {selectedVal && (
+                    <span className={styles.selectedValueText}>
+                      {removePriceFromName(selectedVal.name)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Color swatch palette */}
+                {g.type === 'colour_palette' ? (
+                  <div className={styles.colorSelectorPalette}>
+                    {(g.values || []).map((val) => {
+                      const isSelected = String(selectedValId) === String(val.id);
+                      return (
+                        <button
+                          key={val.id}
+                          type="button"
+                          className={`${styles.colorSwatchWrapper} ${isSelected ? styles.colorSwatchActive : ''}`}
+                          onClick={() => {
+                            setSelectedCustomizations((prev) => ({ ...prev, [g.id]: val.id }));
+                          }}
+                          title={val.name}
+                        >
+                          <span
+                            className={styles.colorSwatch}
+                            style={{ backgroundColor: (val as any).hexCode || (val as any).colorHex || '#ccc' }}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : g.type === 'image_selector' ? (
+                  /* Image selector cards */
+                  <div className={styles.imageSelectorGrid}>
+                    {(g.values || []).map((val) => {
+                      const isSelected = String(selectedValId) === String(val.id);
+                      return (
+                        <button
+                          key={val.id}
+                          type="button"
+                          className={`${styles.imageSelectorCard} ${isSelected ? styles.imageSelectorCardActive : ''}`}
+                          onClick={() => {
+                            setSelectedCustomizations((prev) => ({ ...prev, [g.id]: val.id }));
+                          }}
+                        >
+                          {(val as any).imageUrl && (
+                            <img src={(val as any).imageUrl} alt={val.name} className={styles.imageSelectorThumbnail} />
+                          )}
+                          <span>{removePriceFromName(val.name)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Standard button option chips */
+                  <div className={styles.variationsGrid}>
+                    {(g.values || []).map((val) => {
+                      const isSelected = String(selectedValId) === String(val.id);
+                      return (
+                        <button
+                          key={val.id}
+                          type="button"
+                          className={`${styles.variationButton} ${isSelected ? styles.variationActive : ''}`}
+                          onClick={() => {
+                            setSelectedCustomizations((prev) => ({ ...prev, [g.id]: val.id }));
+                          }}
+                        >
+                          <span>{removePriceFromName(val.name)}</span>
+                          {typeof val.price === 'number' && Number.isFinite(val.price) && val.price > 0 && (
+                            <span className={styles.variationPriceTag}>
+                              +₹{val.price.toFixed(0)}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Standard Variations (if not customizable) */}
+          {!isCustomizable && variations.length > 0 && (
             <div className={styles.variationPicker}>
               <div className={styles.variationLabel}>
                 <span>
-                  {(currentProduct as any).variationGroupTitle ||
-                    (currentProduct as any).variationTitle ||
-                    (currentProduct as any).variationLabel ||
+                  {(displayProduct as any).variationGroupTitle ||
+                    (displayProduct as any).variationTitle ||
+                    (displayProduct as any).variationLabel ||
                     'Size / Style'}
                   :
                 </span>
                 {selectedVariation && (
                   <span className={styles.selectedValueText}>
-                    {selectedVariation.size}
+                    {removePriceFromName(selectedVariation.size)}
                   </span>
                 )}
               </div>
@@ -274,7 +486,7 @@ export default function QuickAddModal({
                       }`}
                       onClick={() => setSelectedVariationId(v.id)}
                     >
-                      <span>{v.size}</span>
+                      <span>{removePriceFromName(v.size)}</span>
                       {v.price != null && Number.isFinite(Number(v.price)) && (
                         <span className={styles.variationPriceTag}>
                           • ₹{Number(v.price).toFixed(0)}
