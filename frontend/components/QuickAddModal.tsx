@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { Product, ProductVariation, VariationGroup, VariantValue } from '@/types';
 import { useCart } from '@/contexts/CartContext';
@@ -32,12 +33,17 @@ export default function QuickAddModal({
 }: QuickAddModalProps) {
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const [mounted, setMounted] = useState(false);
   const [productDetails, setProductDetails] = useState<Product | null>(null);
   const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
   const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState<number>(1);
   const cardRef = useRef<HTMLDivElement>(null);
   const addBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Active product source (prefer detailed product once fetched, fallback to product prop)
   const displayProduct: Product | null = productDetails || product;
@@ -232,7 +238,7 @@ export default function QuickAddModal({
   const totalPrice = unitPrice * quantity;
   const totalComparePrice = unitComparePrice ? unitComparePrice * quantity : null;
 
-  if (!isOpen || !displayProduct) return null;
+  if (!isOpen || !displayProduct || !mounted) return null;
 
   // Selected thumbnail image
   let activeImageUrl = getPrimaryProductImageUrl(displayProduct) || (displayProduct as any).imageUrl || '';
@@ -305,7 +311,7 @@ export default function QuickAddModal({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div
       className={styles.overlay}
       onClick={(e) => {
@@ -544,6 +550,7 @@ export default function QuickAddModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
