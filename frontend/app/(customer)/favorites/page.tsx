@@ -16,9 +16,9 @@ import { getAverageProductRating, getProductReviewCount } from '@/lib/utils/prod
 import { useCategoryMap } from '@/hooks/useCategoryMap';
 import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
 import { animateToCart } from '@/lib/utils/cartAnimation';
-import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import CustomerSidebarLayout from '@/components/customer/CustomerSidebarLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import QuickAddModal from '@/components/QuickAddModal';
 import cardStyles from '@/components/ProductsSection.module.css';
 import styles from './favorites.module.css';
 
@@ -32,6 +32,7 @@ export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   // Load favorites mapping
   useEffect(() => {
     if (authLoading || !user) return;
@@ -221,30 +222,7 @@ export default function FavoritesPage() {
                           showToast('Out of stock', 'error');
                           return;
                         }
-
-                        const variation = getFirstVariationForCard(product);
-                        const result = addItem({
-                          productId: product.id,
-                          quantity: 1,
-                          variationId: variation?.id,
-                        }, product.maxQuantity);
-                        if (result.appliedQuantity <= 0) {
-                          showToast(`Maximum order quantity is ${product.maxQuantity ?? 99}`, 'error');
-                          return;
-                        }
-
-                        showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
-
-                        const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
-                        const sourceElement = e.currentTarget;
-
-                        if (sourceElement && imageUrl) {
-                          animateToCart({
-                            imageUrl,
-                            sourceElement,
-                            targetElement: cartIconRefStore.getAny(),
-                          });
-                        }
+                        setQuickAddProduct(product);
                       }}
                       aria-label={isOutOfStock ? 'Out of stock' : 'Quick add to cart'}
                     >
@@ -281,6 +259,12 @@ export default function FavoritesPage() {
         </div>
       )}
 
+      <QuickAddModal
+        product={quickAddProduct}
+        isOpen={Boolean(quickAddProduct)}
+        onClose={() => setQuickAddProduct(null)}
+        categoryName={quickAddProduct?.categoryId ? categoryMap.getCategoryName(quickAddProduct.categoryId) : undefined}
+      />
     </CustomerSidebarLayout>
   );
 }

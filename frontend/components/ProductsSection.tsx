@@ -19,6 +19,7 @@ import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/uti
 import { getAverageProductRating, getProductReviewCount } from '@/lib/utils/productReviewStats';
 import { useCategoryMap } from '@/hooks/useCategoryMap';
 import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
+import QuickAddModal from '@/components/QuickAddModal';
 import styles from './ProductsSection.module.css';
 
 /**
@@ -36,6 +37,7 @@ export default function ProductsSection() {
   const { showToast } = useToast();
   const categoryMap = useCategoryMap();
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+  const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
   // Sync favorites persistently from localStorage scoped to logged-in user
   useEffect(() => {
@@ -350,30 +352,7 @@ export default function ProductsSection() {
                             showToast('Out of stock', 'error');
                             return;
                           }
-
-                          const variation = getFirstVariationForCard(product);
-                          const result = addItem({
-                            productId: product.id,
-                            quantity: 1,
-                            variationId: variation?.id,
-                          }, product.maxQuantity);
-                          if (result.appliedQuantity <= 0) {
-                            showToast(`Maximum order quantity is ${product.maxQuantity ?? 99}`, 'error');
-                            return;
-                          }
-
-                          showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
-
-                          const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
-                          const sourceElement = e.currentTarget;
-
-                          if (sourceElement && imageUrl) {
-                            animateToCart({
-                              imageUrl,
-                              sourceElement,
-                              targetElement: cartIconRefStore.getAny(),
-                            });
-                          }
+                          setQuickAddProduct(product);
                         }}
                         aria-label={isOutOfStock ? 'Out of stock' : 'Quick add to cart'}
                       >
@@ -473,6 +452,12 @@ export default function ProductsSection() {
         </div>
       </div>
 
+      <QuickAddModal
+        product={quickAddProduct}
+        isOpen={Boolean(quickAddProduct)}
+        onClose={() => setQuickAddProduct(null)}
+        categoryName={quickAddProduct?.categoryId ? categoryMap.getCategoryName(quickAddProduct.categoryId) : undefined}
+      />
     </div>
   );
 }

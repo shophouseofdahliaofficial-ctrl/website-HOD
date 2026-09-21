@@ -19,6 +19,7 @@ import { useCategoryMap } from '@/hooks/useCategoryMap';
 import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
 import { animateToCart } from '@/lib/utils/cartAnimation';
 import { cartIconRefStore } from '@/lib/utils/cartIconRef';
+import QuickAddModal from '@/components/QuickAddModal';
 
 /**
  * Search Results Page
@@ -37,6 +38,7 @@ function SearchContent() {
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Sync favorites persistently from localStorage scoped to logged-in user
@@ -291,30 +293,7 @@ function SearchContent() {
                                   showToast('Out of stock', 'error');
                                   return;
                                 }
-
-                                const variation = getFirstVariationForCard(product);
-                                const result = addItem({
-                                  productId: product.id,
-                                  quantity: 1,
-                                  variationId: variation?.id,
-                                }, product.maxQuantity);
-                                if (result.appliedQuantity <= 0) {
-                                  showToast(`Maximum order quantity is ${product.maxQuantity ?? 99}`, 'error');
-                                  return;
-                                }
-
-                                showToast(result.ok ? 'Added to cart' : `Maximum order quantity is ${product.maxQuantity ?? 99}`, result.ok ? 'success' : 'error');
-
-                                const imageUrl = getPrimaryProductImageUrl(product) || (product as any).imageUrl || '';
-                                const sourceElement = e.currentTarget;
-
-                                if (sourceElement && imageUrl) {
-                                  animateToCart({
-                                    imageUrl,
-                                    sourceElement,
-                                    targetElement: cartIconRefStore.getAny(),
-                                  });
-                                }
+                                setQuickAddProduct(product);
                               }}
                               aria-label={isOutOfStock ? 'Out of stock' : 'Quick add to cart'}
                             >
@@ -448,6 +427,12 @@ function SearchContent() {
         )}
       </div>
 
+      <QuickAddModal
+        product={quickAddProduct}
+        isOpen={Boolean(quickAddProduct)}
+        onClose={() => setQuickAddProduct(null)}
+        categoryName={quickAddProduct?.categoryId ? categoryMap.getCategoryName(quickAddProduct.categoryId) : undefined}
+      />
     </div>
   );
 }
