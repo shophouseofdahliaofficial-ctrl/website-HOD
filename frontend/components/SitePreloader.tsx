@@ -137,10 +137,10 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
         const blinkState = { alpha: 0 };
         const drawBlinkFrame = () => {
           ctx.clearRect(0, 0, width, height);
-          ctx.fillStyle = '#530000';
+          ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, width, height);
           if (blinkState.alpha > 0.01) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${blinkState.alpha.toFixed(3)})`;
+            ctx.fillStyle = `rgba(83, 0, 0, ${blinkState.alpha.toFixed(3)})`;
             ctx.fillRect(dotPx, dotPy, dotSize, dotSize);
           }
         };
@@ -192,15 +192,15 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                 const effectiveDist = dist + noise;
 
                 if (effectiveDist > rThreshold + 16) {
-                  // Solid dark red background mask
-                  ctx.fillStyle = '#530000';
-                  ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
-                } else if (effectiveDist > rThreshold) {
-                  // Active boundary pixel crest: crisp white pixel squares
+                  // Solid full white background mask
                   ctx.fillStyle = '#ffffff';
                   ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
+                } else if (effectiveDist > rThreshold) {
+                  // Active boundary pixel crest: signature burgundy pixel squares
+                  ctx.fillStyle = '#530000';
+                  ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
                 } else if (effectiveDist > rThreshold - 85) {
-                  // Dissolve slowly into the screen: progressive shrinking scale & fading alpha
+                  // Dissolve slowly into the screen: progressive shrinking scale & fading alpha burgundy pixels
                   const distanceBehind = rThreshold - effectiveDist;
                   const dissolveRatio = 1 - distanceBehind / 85;
                   const spawnChance = (0.42 * dissolveRatio + 0.15) * noiseScale;
@@ -208,7 +208,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                     const alpha = Math.pow(dissolveRatio, 1.25);
                     const pScale = 0.35 + 0.65 * dissolveRatio;
                     const pOffset = (PIXEL_SIZE * (1 - pScale)) / 2;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+                    ctx.fillStyle = `rgba(83, 0, 0, ${alpha.toFixed(3)})`;
                     ctx.fillRect(px + pOffset, py + pOffset, PIXEL_SIZE * pScale, PIXEL_SIZE * pScale);
                   }
                 }

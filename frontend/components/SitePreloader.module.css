@@ -4,7 +4,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: #530000;
+  background-color: #ffffff;
   z-index: 9999;
   user-select: none;
   overflow: hidden;
@@ -58,11 +58,11 @@
   justify-content: center;
   padding: 0.05em 0.25em;
   background: linear-gradient(110deg,
-      rgba(255, 255, 255, 0.4) 0%,
-      rgba(255, 255, 255, 0.5) 35%,
-      #ffffff 50%,
-      rgba(255, 255, 255, 0.5) 65%,
-      rgba(255, 255, 255, 0.4) 100%);
+      rgba(83, 0, 0, 0.65) 0%,
+      #530000 35%,
+      #9e1111 50%,
+      #530000 65%,
+      rgba(83, 0, 0, 0.65) 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -93,9 +93,9 @@
   font-size: clamp(0.75rem, 1.2vw, 0.88rem);
   letter-spacing: 0.02em;
   text-transform: capitalize;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(83, 0, 0, 0.65);
   margin: 0;
-  font-weight: 400;
+  font-weight: 500;
   font-style: normal;
   display: block;
 }
