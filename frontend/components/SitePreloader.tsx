@@ -156,32 +156,39 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
           tl.to({}, { duration: 0.18 }); // breathing pause between blinks
         }
 
-        // Step 4: After 3 blinks, mask expands at equal constant speed from start to finish
+        // Step 4: After 3 blinks, mask starts slowly from center dot and accelerates fast across screen
         const progressObj = { val: 0 };
         let hasTriggeredVideo = false;
 
         tl.to(progressObj, {
           val: 1,
-          duration: 1.85,
-          ease: 'none', // Equal linear speed across the entire expansion
+          duration: 1.75,
+          ease: 'power2.in', // Begins slowly as pixels emerge, then accelerates rapidly
           onUpdate: () => {
-            if (progressObj.val >= 0.88 && !hasTriggeredVideo) {
+            if (progressObj.val >= 0.85 && !hasTriggeredVideo) {
               hasTriggeredVideo = true;
               onVideoTrigger?.();
             }
 
             ctx.clearRect(0, 0, width, height);
 
+            // Dynamic pixel square size: starts at 16px and grows larger (up to 38px) as the aperture expands
+            const curPixelSize = Math.round(16 + Math.pow(progressObj.val, 1.15) * 22);
+            const curCols = Math.ceil(width / curPixelSize);
+            const curRows = Math.ceil(height / curPixelSize);
+            const tileSize = curPixelSize + 0.8; // 0.8px subpixel overlap eliminates all rasterization seam lines
+
             const rThreshold = progressObj.val * (maxDist * 1.35);
             // Smooth noise ramp: 0 at exact start (starts from 1 single square) and builds organic noise as circle grows
             const noiseScale = Math.min(1.0, progressObj.val * 3.5);
+            const dissolveZone = Math.max(85, curPixelSize * 4.5);
 
-            for (let c = 0; c < cols; c++) {
-              for (let r = 0; r < rows; r++) {
-                const px = c * PIXEL_SIZE;
-                const py = r * PIXEL_SIZE;
-                const dist = Math.hypot(px + PIXEL_SIZE / 2 - cx, py + PIXEL_SIZE / 2 - cy);
-                const angle = Math.atan2(py + PIXEL_SIZE / 2 - cy, px + PIXEL_SIZE / 2 - cx);
+            for (let c = 0; c < curCols; c++) {
+              for (let r = 0; r < curRows; r++) {
+                const px = c * curPixelSize;
+                const py = r * curPixelSize;
+                const dist = Math.hypot(px + curPixelSize / 2 - cx, py + curPixelSize / 2 - cy);
+                const angle = Math.atan2(py + curPixelSize / 2 - cy, px + curPixelSize / 2 - cx);
 
                 // Multi-frequency organic stepped noise curve scaling with radius
                 const wave1 = Math.sin(angle * 5) * 0.18;
@@ -191,25 +198,54 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
 
                 const effectiveDist = dist + noise;
 
-                if (effectiveDist > rThreshold + 16) {
-                  // Solid full white background mask
+                const coronaZone = curPixelSize * 3.5; // Corona band right ahead of the expanding crest
+
+                if (effectiveDist > rThreshold + curPixelSize + coronaZone) {
+                  // Outer white mask: clean solid white far from the expanding shape
                   ctx.fillStyle = '#ffffff';
-                  ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
+                  ctx.fillRect(px, py, tileSize, tileSize);
+                } else if (effectiveDist > rThreshold + curPixelSize) {
+                  // Forward fringe: random scattered pixel squares budding close to the outgrowing perimeter
+                  const distAhead = effectiveDist - (rThreshold + curPixelSize);
+                  const proximity = 1 - (distAhead / coronaZone); // 1 near crest, 0 at outer corona edge
+                  const scatterChance = (0.52 * Math.pow(proximity, 1.2) + 0.08) * noiseScale;
+                  const cellRand = pseudoRandom(c * 137 + r * 283);
+
+                  if (cellRand < scatterChance) {
+                    const scatterScale = 0.4 + 0.6 * proximity;
+                    const pOffset = (curPixelSize * (1 - scatterScale)) / 2;
+                    const scatterAlpha = Math.min(1.0, 0.35 + proximity * 0.65);
+
+                    if (proximity > 0.7) {
+                      // Close to crest: transparent cutout with sharp burgundy square
+                      ctx.fillStyle = `rgba(83, 0, 0, ${scatterAlpha.toFixed(3)})`;
+                      ctx.fillRect(px + pOffset, py + pOffset, curPixelSize * scatterScale, curPixelSize * scatterScale);
+                    } else {
+                      // Outer fringe: white tile base with budding burgundy pixel accent
+                      ctx.fillStyle = '#ffffff';
+                      ctx.fillRect(px, py, tileSize, tileSize);
+                      ctx.fillStyle = `rgba(83, 0, 0, ${scatterAlpha.toFixed(3)})`;
+                      ctx.fillRect(px + pOffset, py + pOffset, curPixelSize * scatterScale, curPixelSize * scatterScale);
+                    }
+                  } else {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(px, py, tileSize, tileSize);
+                  }
                 } else if (effectiveDist > rThreshold) {
-                  // Active boundary pixel crest: signature burgundy pixel squares
+                  // Active boundary pixel crest: signature burgundy pixel squares (growing in size)
                   ctx.fillStyle = '#530000';
-                  ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
-                } else if (effectiveDist > rThreshold - 85) {
+                  ctx.fillRect(px, py, tileSize, tileSize);
+                } else if (effectiveDist > rThreshold - dissolveZone) {
                   // Dissolve slowly into the screen: progressive shrinking scale & fading alpha burgundy pixels
                   const distanceBehind = rThreshold - effectiveDist;
-                  const dissolveRatio = 1 - distanceBehind / 85;
+                  const dissolveRatio = 1 - distanceBehind / dissolveZone;
                   const spawnChance = (0.42 * dissolveRatio + 0.15) * noiseScale;
                   if (pseudoRandom(c * 43 + r * 67) < spawnChance) {
                     const alpha = Math.pow(dissolveRatio, 1.25);
                     const pScale = 0.35 + 0.65 * dissolveRatio;
-                    const pOffset = (PIXEL_SIZE * (1 - pScale)) / 2;
+                    const pOffset = (curPixelSize * (1 - pScale)) / 2;
                     ctx.fillStyle = `rgba(83, 0, 0, ${alpha.toFixed(3)})`;
-                    ctx.fillRect(px + pOffset, py + pOffset, PIXEL_SIZE * pScale, PIXEL_SIZE * pScale);
+                    ctx.fillRect(px + pOffset, py + pOffset, curPixelSize * pScale, curPixelSize * pScale);
                   }
                 }
               }
