@@ -126,13 +126,9 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
         const height = (cvs.height = window.innerHeight);
         const cols = Math.ceil(width / PIXEL_SIZE);
         const rows = Math.ceil(height / PIXEL_SIZE);
-        const centerCol = Math.floor(cols / 2);
-        const centerRow = Math.floor(rows / 2);
-        const centerPx = centerCol * PIXEL_SIZE;
-        const centerPy = centerRow * PIXEL_SIZE;
-        const cx = width / 2;
-        const cy = height / 2;
-        const maxDist = Math.hypot(cx, cy);
+        const dotSize = Math.round(PIXEL_SIZE * 1.2); // +20% bigger initial blinking dot
+        const dotPx = Math.round(cx - dotSize / 2);
+        const dotPy = Math.round(cy - dotSize / 2);
 
         // Step 3: Single center dot blinks 3 times (appears immediately, fades out smoothly)
         const blinkState = { alpha: 0 };
@@ -142,7 +138,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
           ctx.fillRect(0, 0, width, height);
           if (blinkState.alpha > 0.01) {
             ctx.fillStyle = `rgba(255, 255, 255, ${blinkState.alpha.toFixed(3)})`;
-            ctx.fillRect(centerPx, centerPy, PIXEL_SIZE, PIXEL_SIZE);
+            ctx.fillRect(dotPx, dotPy, dotSize, dotSize);
           }
         };
 
@@ -192,7 +188,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
 
                 const effectiveDist = dist + noise;
 
-                if (effectiveDist > rThreshold + 18) {
+                if (effectiveDist > rThreshold + 16) {
                   // Solid dark red background mask
                   ctx.fillStyle = '#530000';
                   ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
@@ -200,14 +196,17 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                   // Active boundary pixel crest: crisp white pixel squares
                   ctx.fillStyle = '#ffffff';
                   ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
-                } else if (effectiveDist > rThreshold - 45) {
-                  // Floating white dithered pixel bits trailing behind the expanding edge
+                } else if (effectiveDist > rThreshold - 85) {
+                  // Dissolve slowly into the screen: progressive shrinking scale & fading alpha
                   const distanceBehind = rThreshold - effectiveDist;
-                  const spawnChance = Math.max(0, 0.48 - distanceBehind * 0.01) * noiseScale;
+                  const dissolveRatio = 1 - distanceBehind / 85;
+                  const spawnChance = (0.42 * dissolveRatio + 0.15) * noiseScale;
                   if (pseudoRandom(c * 43 + r * 67) < spawnChance) {
-                    const alpha = Math.max(0.15, 1 - distanceBehind / 45);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
-                    ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
+                    const alpha = Math.pow(dissolveRatio, 1.25);
+                    const pScale = 0.35 + 0.65 * dissolveRatio;
+                    const pOffset = (PIXEL_SIZE * (1 - pScale)) / 2;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+                    ctx.fillRect(px + pOffset, py + pOffset, PIXEL_SIZE * pScale, PIXEL_SIZE * pScale);
                   }
                 }
               }
