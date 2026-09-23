@@ -101,10 +101,18 @@ export default function PixelCubeModelTransition({
             continue;
           }
 
-          const isDark = Math.random() > 0.25;
-          const color = isDark
-            ? (Math.random() > 0.5 ? '#530000' : '#3a0000')
-            : (Math.random() > 0.5 ? '#800000' : '#ffffff');
+          // Curated palette of pure white and its architectural luxury shades (alabaster, ivory, pearl, off-white)
+          const WHITE_SHADES = [
+            '#ffffff',
+            '#faf8f5',
+            '#f2eee9',
+            '#e6ded6',
+            '#ded4c9',
+            '#f6f3ef',
+            '#eae3db',
+            '#ffffff',
+          ];
+          const color = WHITE_SHADES[Math.floor(Math.random() * WHITE_SHADES.length)];
 
           cubes.push({
             col: c,
