@@ -150,11 +150,11 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
           tl.set(blinkState, { alpha: 1.0, onUpdate: drawBlinkFrame });
           tl.to(blinkState, {
             alpha: 0.0,
-            duration: 0.22,
+            duration: 0.44,
             ease: 'power2.out',
             onUpdate: drawBlinkFrame,
           });
-          tl.to({}, { duration: 0.06 }); // short pause between blinks
+          tl.to({}, { duration: 0.12 }); // pause between blinks
         }
 
         // Step 4: After 3 blinks, mask expands at equal constant speed from start to finish
