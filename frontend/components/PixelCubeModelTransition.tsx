@@ -101,23 +101,11 @@ export default function PixelCubeModelTransition({
             continue;
           }
 
-          // Curated palette of pure white and its architectural luxury shades (alabaster, ivory, pearl, off-white)
-          const WHITE_SHADES = [
-            '#ffffff',
-            '#faf8f5',
-            '#f2eee9',
-            '#e6ded6',
-            '#ded4c9',
-            '#f6f3ef',
-            '#eae3db',
-            '#ffffff',
-          ];
-          const color = WHITE_SHADES[Math.floor(Math.random() * WHITE_SHADES.length)];
-
+          // 100% Pure White Pixel Cubes Only
           cubes.push({
             col: c,
             row: r,
-            baseColor: color,
+            baseColor: '#ffffff',
             // Truly randomized disappear timing per individual cube across the entire silhouette
             disappearStart: Math.random() * (DURATION - 0.12),
             disappearDuration: 0.08 + Math.random() * 0.08,
