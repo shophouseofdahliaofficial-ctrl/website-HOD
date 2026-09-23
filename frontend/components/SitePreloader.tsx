@@ -126,6 +126,9 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
         const height = (cvs.height = window.innerHeight);
         const cols = Math.ceil(width / PIXEL_SIZE);
         const rows = Math.ceil(height / PIXEL_SIZE);
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxDist = Math.hypot(cx, cy);
         const dotSize = Math.round(PIXEL_SIZE * 1.2); // +20% bigger initial blinking dot
         const dotPx = Math.round(cx - dotSize / 2);
         const dotPy = Math.round(cy - dotSize / 2);
