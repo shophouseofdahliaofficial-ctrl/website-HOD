@@ -51,7 +51,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
       canvas.height = window.innerHeight;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.fillStyle = '#530000';
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
