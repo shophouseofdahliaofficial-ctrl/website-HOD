@@ -156,32 +156,40 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
           tl.to({}, { duration: 0.18 }); // breathing pause between blinks
         }
 
-        // Step 4: After 3 blinks, mask starts slowly from center dot and accelerates fast across screen
+        // Step 4: Ultra-slow cinematic growth (4.6s) with a wider, expansive forward spread
         const progressObj = { val: 0 };
         let hasTriggeredVideo = false;
 
         tl.to(progressObj, {
           val: 1,
-          duration: 1.75,
-          ease: 'power2.in', // Begins slowly as pixels emerge, then accelerates rapidly
+          duration: 4.6, // Ultra-slow, deliberate cinematic pace
+          ease: 'power2.inOut', // Starts gently and swells outward in wide spread
           onUpdate: () => {
-            if (progressObj.val >= 0.85 && !hasTriggeredVideo) {
+            if (progressObj.val >= 0.72 && !hasTriggeredVideo) {
               hasTriggeredVideo = true;
               onVideoTrigger?.();
             }
 
             ctx.clearRect(0, 0, width, height);
 
-            // Dynamic pixel square size: starts at 16px and grows larger (up to 38px) as the aperture expands
-            const curPixelSize = Math.round(16 + Math.pow(progressObj.val, 1.15) * 22);
+            // Dynamic pixel square size: starts at 16px and grows larger (up to 44px) as the aperture expands
+            const curPixelSize = Math.round(16 + Math.pow(progressObj.val, 0.9) * 28);
             const curCols = Math.ceil(width / curPixelSize);
             const curRows = Math.ceil(height / curPixelSize);
             const tileSize = curPixelSize + 0.8; // 0.8px subpixel overlap eliminates all rasterization seam lines
 
-            const rThreshold = progressObj.val * (maxDist * 1.35);
+            const rThreshold = progressObj.val * (maxDist * 1.45);
             // Smooth noise ramp: 0 at exact start (starts from 1 single square) and builds organic noise as circle grows
             const noiseScale = Math.min(1.0, progressObj.val * 3.5);
-            const dissolveZone = Math.max(85, curPixelSize * 4.5);
+            const dissolveZone = Math.max(160, curPixelSize * 8.0); // Ultra-wide trailing dissolution spread
+            const coronaZone = curPixelSize * 8.5; // Expansive forward spread zone reaching far ahead of the crest
+
+            // Luxury alphanumeric cipher character set
+            const GLYPHS = ['H', 'O', 'D', '0', '1', '7', '8', '9', 'A', 'E', 'X', 'Z', 'V', 'K', '3', '4', 'F', '+', '§', 'Ø', '9', '2'];
+            const fontSize = Math.max(8, Math.round(curPixelSize * 0.5));
+            ctx.font = `600 ${fontSize}px 'Inter', -apple-system, monospace, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
             for (let c = 0; c < curCols; c++) {
               for (let r = 0; r < curRows; r++) {
@@ -198,17 +206,15 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
 
                 const effectiveDist = dist + noise;
 
-                const coronaZone = curPixelSize * 3.5; // Corona band right ahead of the expanding crest
-
                 if (effectiveDist > rThreshold + curPixelSize + coronaZone) {
                   // Outer white mask: clean solid white far from the expanding shape
                   ctx.fillStyle = '#ffffff';
                   ctx.fillRect(px, py, tileSize, tileSize);
                 } else if (effectiveDist > rThreshold + curPixelSize) {
-                  // Forward fringe: random scattered pixel squares budding close to the outgrowing perimeter
+                  // Forward fringe: expansive scattered pixel squares budding far and wide ahead of the perimeter
                   const distAhead = effectiveDist - (rThreshold + curPixelSize);
                   const proximity = 1 - (distAhead / coronaZone); // 1 near crest, 0 at outer corona edge
-                  const scatterChance = (0.52 * Math.pow(proximity, 1.2) + 0.08) * noiseScale;
+                  const scatterChance = (0.62 * Math.pow(proximity, 0.9) + 0.14) * noiseScale;
                   const cellRand = pseudoRandom(c * 137 + r * 283);
 
                   if (cellRand < scatterChance) {
@@ -217,24 +223,40 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                     const scatterAlpha = Math.min(1.0, 0.35 + proximity * 0.65);
 
                     if (proximity > 0.7) {
-                      // Close to crest: transparent cutout with sharp burgundy square
+                      // Close to crest: transparent cutout with sharp burgundy square + white alphanumeric glyph
                       ctx.fillStyle = `rgba(83, 0, 0, ${scatterAlpha.toFixed(3)})`;
                       ctx.fillRect(px + pOffset, py + pOffset, curPixelSize * scatterScale, curPixelSize * scatterScale);
+                      if (scatterScale > 0.55 && pseudoRandom(c * 47 + r * 73) < 0.55) {
+                        const gIdx = Math.floor((pseudoRandom(c * 101 + r * 131) + progressObj.val * 4) * GLYPHS.length) % GLYPHS.length;
+                        ctx.fillStyle = `rgba(255, 255, 255, ${scatterAlpha.toFixed(3)})`;
+                        ctx.fillText(GLYPHS[gIdx], px + curPixelSize / 2, py + curPixelSize / 2);
+                      }
                     } else {
                       // Outer fringe: white tile base with budding burgundy pixel accent
                       ctx.fillStyle = '#ffffff';
                       ctx.fillRect(px, py, tileSize, tileSize);
                       ctx.fillStyle = `rgba(83, 0, 0, ${scatterAlpha.toFixed(3)})`;
                       ctx.fillRect(px + pOffset, py + pOffset, curPixelSize * scatterScale, curPixelSize * scatterScale);
+                      if (scatterScale > 0.6 && pseudoRandom(c * 47 + r * 73) < 0.45) {
+                        const gIdx = Math.floor((pseudoRandom(c * 101 + r * 131) + progressObj.val * 4) * GLYPHS.length) % GLYPHS.length;
+                        ctx.fillStyle = `rgba(255, 255, 255, ${(scatterAlpha * 0.9).toFixed(3)})`;
+                        ctx.fillText(GLYPHS[gIdx], px + curPixelSize / 2, py + curPixelSize / 2);
+                      }
                     }
                   } else {
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(px, py, tileSize, tileSize);
                   }
                 } else if (effectiveDist > rThreshold) {
-                  // Active boundary pixel crest: signature burgundy pixel squares (growing in size)
+                  // Active boundary pixel crest: signature burgundy pixel squares with crisp alphanumeric glyphs
                   ctx.fillStyle = '#530000';
                   ctx.fillRect(px, py, tileSize, tileSize);
+
+                  if (curPixelSize >= 17 && pseudoRandom(c * 23 + r * 41) < 0.6) {
+                    const gIdx = Math.floor((pseudoRandom(c * 67 + r * 89) + progressObj.val * 5) * GLYPHS.length) % GLYPHS.length;
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.fillText(GLYPHS[gIdx], px + curPixelSize / 2, py + curPixelSize / 2);
+                  }
                 } else if (effectiveDist > rThreshold - dissolveZone) {
                   // Dissolve slowly into the screen: progressive shrinking scale & fading alpha burgundy pixels
                   const distanceBehind = rThreshold - effectiveDist;
@@ -246,6 +268,13 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                     const pOffset = (curPixelSize * (1 - pScale)) / 2;
                     ctx.fillStyle = `rgba(83, 0, 0, ${alpha.toFixed(3)})`;
                     ctx.fillRect(px + pOffset, py + pOffset, curPixelSize * pScale, curPixelSize * pScale);
+
+                    // Alphanumeric character in dissolving cubes
+                    if (pScale > 0.52 && pseudoRandom(c * 31 + r * 53) < 0.5) {
+                      const gIdx = Math.floor((pseudoRandom(c * 71 + r * 97) + progressObj.val * 3) * GLYPHS.length) % GLYPHS.length;
+                      ctx.fillStyle = `rgba(255, 255, 255, ${(alpha * 0.85).toFixed(3)})`;
+                      ctx.fillText(GLYPHS[gIdx], px + curPixelSize / 2, py + curPixelSize / 2);
+                    }
                   }
                 }
               }
