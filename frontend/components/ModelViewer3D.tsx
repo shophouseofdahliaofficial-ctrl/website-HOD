@@ -18,19 +18,21 @@ interface ModelViewer3DProps {
   texturePath?: string;
   autoRotateSpeed?: number;
   playAnimation?: boolean;
+  initialRotation?: number; // radians offset for distinct starting angle
 }
 
 export default function ModelViewer3D({
-  modelPath = '/12248_Bird_v1_L2.obj',
-  texturePath = '/12248_Bird_v1_diff.jpg',
+  modelPath = '/fashion+model+3d+model-reduced (1).glb',
+  texturePath = '',
   autoRotateSpeed = 12.0,
   playAnimation = false,
+  initialRotation = 0,
 }: ModelViewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const autoRotateSpeedRef = useRef(autoRotateSpeed);
   autoRotateSpeedRef.current = autoRotateSpeed;
-  const [loading, setLoading] = useState(() => !geometryCache.has(modelPath));
+  const [loading, setLoading] = useState(() => !geometryCache.has(modelPath) && !glbCache.has(modelPath));
   const [progress, setProgress] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -53,11 +55,17 @@ export default function ModelViewer3D({
     // 1. Scene setup
     const scene = new THREE.Scene();
 
-    // 2. Camera setup
+    // 2. Camera setup with custom starting orbital angle
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 3.4);
+    const startAngle = initialRotation || 0;
+    const cameraDistance = 3.55;
+    camera.position.set(
+      cameraDistance * Math.sin(startAngle),
+      0,
+      cameraDistance * Math.cos(startAngle)
+    );
 
     // 3. Renderer setup
     const renderer = new THREE.WebGLRenderer({
@@ -69,7 +77,7 @@ export default function ModelViewer3D({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.20;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -106,31 +114,41 @@ export default function ModelViewer3D({
       }
     });
 
-    // 5. Studio Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.2);
+    // 5. 360-Degree Studio Fashion Lighting Setup (Balanced Front & Back Illumination)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
     scene.add(ambientLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0dad4, 1.4);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdfd9d5, 0.82);
     hemiLight.position.set(0, 20, 0);
     scene.add(hemiLight);
 
-    // Key front light
-    const keyLight = new THREE.DirectionalLight(0xfffaf5, 2.4);
-    keyLight.position.set(4, 7, 5);
-    scene.add(keyLight);
+    // Front-Right Key Light
+    const frontKeyLight = new THREE.DirectionalLight(0xfff8f4, 1.45);
+    frontKeyLight.position.set(4, 7, 5);
+    scene.add(frontKeyLight);
 
-    // Fill soft side light
-    const fillLight = new THREE.DirectionalLight(0xf0f3f8, 1.4);
-    fillLight.position.set(-5, 4, 3);
-    scene.add(fillLight);
+    // Front-Left Fill Light
+    const frontFillLight = new THREE.DirectionalLight(0xf2f6fa, 0.95);
+    frontFillLight.position.set(-4, 5, 4);
+    scene.add(frontFillLight);
 
-    // Rim light for silhouette definition
-    const rimLight = new THREE.DirectionalLight(0xffffff, 1.8);
-    rimLight.position.set(0, 6, -5);
+    // Back-Left Key Light (vibrant rear illumination when model rotates)
+    const backKeyLight = new THREE.DirectionalLight(0xfff8f4, 1.40);
+    backKeyLight.position.set(-4, 7, -5);
+    scene.add(backKeyLight);
+
+    // Back-Right Fill Light (eliminates dull shadows across rear angles)
+    const backFillLight = new THREE.DirectionalLight(0xf2f6fa, 0.95);
+    backFillLight.position.set(4, 5, -4);
+    scene.add(backFillLight);
+
+    // Top Silhouette Rim Light
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.10);
+    rimLight.position.set(0, 8, -2);
     scene.add(rimLight);
 
-    // Bottom bounce
-    const groundLight = new THREE.DirectionalLight(0xfcf8f5, 0.6);
+    // Subtle ground bounce
+    const groundLight = new THREE.DirectionalLight(0xfcf8f5, 0.35);
     groundLight.position.set(0, -5, 2);
     scene.add(groundLight);
 
@@ -194,64 +212,74 @@ export default function ModelViewer3D({
     const isGlb = modelPath.toLowerCase().endsWith('.glb') || modelPath.toLowerCase().endsWith('.gltf');
     const isObj = modelPath.toLowerCase().endsWith('.obj');
     const cachedGeo = geometryCache.get(modelPath);
+    const cachedGlb = glbCache.get(modelPath);
+
+    const setupGlbModel = (gltf: any) => {
+      const model = gltf.scene ? gltf.scene.clone(true) : gltf.clone(true);
+      model.traverse((child: any) => {
+        if (child.isMesh || child.isSkinnedMesh) {
+          const mesh = child as THREE.Mesh;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          mesh.frustumCulled = false;
+          if (mesh.material) {
+            const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            mats.forEach((m) => {
+              m.side = THREE.DoubleSide;
+              m.needsUpdate = true;
+            });
+          }
+        }
+      });
+
+      if (gltf.animations && gltf.animations.length > 0 && playAnimation) {
+        mixer = new THREE.AnimationMixer(model);
+        const action = mixer.clipAction(gltf.animations[0]);
+        action.play();
+      }
+
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+
+      const maxDim = Math.max(size.x, size.y, size.z) || 50;
+      const targetHeight = 2.05;
+      const scale = targetHeight / maxDim;
+      model.scale.setScalar(scale);
+
+      model.position.x = -center.x * scale;
+      model.position.y = -center.y * scale;
+      model.position.z = -center.z * scale;
+
+      modelGroup.add(model);
+      setLoading(false);
+    };
 
     // 8. Load or Reuse Cached Geometry / Models
     const isBird = modelPath.toLowerCase().includes('bird');
     if (isGlb) {
-      const gltfLoader = new GLTFLoader();
-      gltfLoader.load(
-        modelPath,
-        (gltf) => {
-          const model = gltf.scene;
-          model.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh || (child as any).isSkinnedMesh) {
-              const mesh = child as THREE.Mesh;
-              mesh.castShadow = true;
-              mesh.receiveShadow = true;
-              mesh.frustumCulled = false;
-              if (mesh.material) {
-                const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                mats.forEach((m) => {
-                  m.side = THREE.DoubleSide;
-                  m.needsUpdate = true;
-                });
-              }
+      if (cachedGlb) {
+        setupGlbModel(cachedGlb);
+      } else {
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.load(
+          modelPath,
+          (gltf) => {
+            glbCache.set(modelPath, gltf);
+            setupGlbModel(gltf);
+          },
+          (xhr) => {
+            if (xhr.total > 0) {
+              setProgress(Math.round((xhr.loaded / xhr.total) * 100));
             }
-          });
-
-          if (gltf.animations && gltf.animations.length > 0 && playAnimation) {
-            mixer = new THREE.AnimationMixer(model);
-            const action = mixer.clipAction(gltf.animations[0]);
-            action.play();
+          },
+          (error) => {
+            console.error('Error loading GLB 3D model:', error);
+            setLoadError('Failed to load 3D model.');
+            setLoading(false);
           }
-
-          const box = new THREE.Box3().setFromObject(model);
-          const size = box.getSize(new THREE.Vector3());
-          const center = box.getCenter(new THREE.Vector3());
-
-          const maxDim = Math.max(size.x, size.y, size.z) || 50;
-          const targetHeight = 2.2;
-          const scale = targetHeight / maxDim;
-          model.scale.setScalar(scale);
-
-          model.position.x = -center.x * scale;
-          model.position.y = -center.y * scale;
-          model.position.z = -center.z * scale;
-
-          modelGroup.add(model);
-          setLoading(false);
-        },
-        (xhr) => {
-          if (xhr.total > 0) {
-            setProgress(Math.round((xhr.loaded / xhr.total) * 100));
-          }
-        },
-        (error) => {
-          console.error('Error loading GLB 3D model:', error);
-          setLoadError('Failed to load 3D model.');
-          setLoading(false);
-        }
-      );
+        );
+      }
     } else if (isObj && cachedGeo) {
       const mesh = new THREE.Mesh(cachedGeo, baseMaterial);
       meshRef = mesh;

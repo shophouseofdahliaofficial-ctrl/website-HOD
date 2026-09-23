@@ -5,6 +5,7 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import ModelViewer3D from './ModelViewer3D';
 import ScrambleText from './ScrambleText';
+import PixelCubeModelTransition from './PixelCubeModelTransition';
 import styles from './Circular3DOrbitShowcase.module.css';
 
 interface ShowcaseItem {
@@ -30,47 +31,83 @@ const ITEMS: ShowcaseItem[] = [
   {
     id: 'item-2',
     number: '02',
-    title: 'Nathan Walkin',
-    subtitle: 'Dynamic Human Motion · Curated 3D Specimen',
+    title: 'Dahlia Couturier',
+    subtitle: 'Sculptural Draped Form · Haute Couture Edition',
     tag: 'Collector Series',
-    modelPath: '/rp_nathan_animated_003_walking.fbx',
-    texturePath: '/rp_nathan_animated_003_dif.jpg',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
   },
   {
     id: 'item-3',
     number: '03',
-    title: 'Mallard Drake',
-    subtitle: 'Signature Heritage Fauna · Handcrafted Edition',
-    tag: 'Heritage Fauna',
-    modelPath: '/12248_Bird_v1_L2.obj',
-    texturePath: '/12248_Bird_v1_diff.jpg',
+    title: 'Atelier Silhouette',
+    subtitle: 'Monochromatic Structural Form · Studio Series',
+    tag: 'Heritage Archive',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
   },
   {
     id: 'item-4',
     number: '04',
-    title: 'Nathan Stride',
-    subtitle: 'Fluid Kinematics Silhouette · Studio Edition',
+    title: 'Maison Mannequin',
+    subtitle: 'Precision Tailored Form · Collector Edition',
     tag: 'Collector Series',
-    modelPath: '/rp_nathan_animated_003_walking.fbx',
-    texturePath: '/rp_nathan_animated_003_dif.jpg',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
   },
   {
     id: 'item-5',
     number: '05',
-    title: 'Atelier Specimen',
-    subtitle: 'Sculptural Runway Form · Monochrome Edition',
+    title: 'Runway Form',
+    subtitle: 'Architectural Draping · Archive 2026',
     tag: 'Runway Archive',
-    modelPath: '/tripo_convert_28a65a5a-0e3a-403f-b084-1c63a0c3363c.obj',
-    texturePath: '/fashion_model_3d_model_basecolor.JPEG',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
   },
   {
     id: 'item-6',
     number: '06',
     title: 'House Of Dahlia Relic',
-    subtitle: 'Architectural Sculptural Presence · Timeless Form',
+    subtitle: 'Timeless Sculptural Presence · Signature Specimen',
     tag: 'Maison Exclusive',
-    modelPath: '/12248_Bird_v1_L2.obj',
-    texturePath: '/12248_Bird_v1_diff.jpg',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
+  },
+  {
+    id: 'item-7',
+    number: '07',
+    title: 'Velvet Silhouette',
+    subtitle: 'Fluid Tailored Anatomy · Edition 07',
+    tag: 'Runway Archive',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
+  },
+  {
+    id: 'item-8',
+    number: '08',
+    title: 'Sovereign Form',
+    subtitle: 'Grand Proportion & Minimalist Drape',
+    tag: 'Limited Haute Couture',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
+  },
+  {
+    id: 'item-9',
+    number: '09',
+    title: 'Celestial Mannequin',
+    subtitle: 'Kinetic Geometry & Haute Couture Line',
+    tag: 'Atelier Capsule',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
+  },
+  {
+    id: 'item-10',
+    number: '10',
+    title: 'Elysian Sculpture',
+    subtitle: 'Masterpiece Monolith · Eternal Specimen',
+    tag: 'Permanent Collection',
+    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    texturePath: '',
   },
 ];
 
@@ -132,6 +169,9 @@ export default function Circular3DOrbitShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardInfoRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
+  const toggleBtnRef = useRef<HTMLButtonElement>(null);
+
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Layout mode state: 0 = Horizontal Lineup (Initial Phase 2), 1 = Vertical Centered Carousel
   const [layoutProgress, setLayoutProgress] = useState(0);
@@ -140,6 +180,51 @@ export default function Circular3DOrbitShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [uiVisible, setUiVisible] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400);
+
+  // Distinct orbital starting points for each model rotating in the same direction
+  const ROTATION_OFFSETS = [
+    0,                     // Model 1
+    (Math.PI * 2) * 0.35,  // Model 2
+    (Math.PI * 2) * 0.72,  // Model 3
+    (Math.PI * 2) * 0.18,  // Model 4
+    (Math.PI * 2) * 0.85,  // Model 5
+    (Math.PI * 2) * 0.45,  // Model 6
+    (Math.PI * 2) * 0.60,  // Model 7
+    (Math.PI * 2) * 0.12,  // Model 8
+    (Math.PI * 2) * 0.92,  // Model 9
+    (Math.PI * 2) * 0.28,  // Model 10
+  ];
+
+  // Curated product codes for horizontal hover indicator
+  const PRODUCT_CODES = [
+    'Product No. 324',
+    'Product No. 812',
+    'Product No. 409',
+    'Product No. 655',
+    'Product No. 190',
+    'Product No. 488',
+    'Product No. 774',
+    'Product No. 021',
+    'Product No. 916',
+    'Product No. 543',
+  ];
+
+  // Track scroll entry from Phase 1 to Phase 2 to trigger pixelated cubic model transition
+  const [hasEnteredPhase2, setHasEnteredPhase2] = useState(false);
+
+  useEffect(() => {
+    const handleScrollEntry = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      if (scrollY > 60) {
+        setHasEnteredPhase2(true);
+      } else {
+        setHasEnteredPhase2(false);
+      }
+    };
+    window.addEventListener('scroll', handleScrollEntry, { passive: true });
+    handleScrollEntry();
+    return () => window.removeEventListener('scroll', handleScrollEntry);
+  }, []);
 
   // Animation values tracked by GSAP
   const animRef = useRef({ layout: 0, virtualIndex: 0 });
@@ -236,6 +321,100 @@ export default function Circular3DOrbitShowcase() {
     };
   }, [totalItems]);
 
+  // Toggle handler: switches between horizontal lineup and vertical carousel with smooth reverse animation
+  const toggleLayoutMode = () => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    gsap.killTweensOf(animRef.current);
+
+    if (!isVerticalMode) {
+      // HORIZONTAL -> VERTICAL
+      if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
+      if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
+      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
+
+      setIsVerticalMode(true);
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setUiVisible(true);
+          isTransitioningRef.current = false;
+        },
+      });
+
+      // Morph 3D models to vertical center column
+      tl.to(
+        animRef.current,
+        {
+          layout: 1.0,
+          virtualIndex: activeIndex,
+          duration: 1.25,
+          ease: 'power3.inOut',
+          onUpdate: () => {
+            setLayoutProgress(animRef.current.layout);
+            setVirtualIndex(animRef.current.virtualIndex);
+          },
+        },
+        0
+      );
+
+      // ONLY fade in left text and UI after models have cleared the left area
+      if (cardInfoRef.current && indicatorRef.current) {
+        tl.to(
+          [cardInfoRef.current, indicatorRef.current],
+          { opacity: 1, duration: 0.45, ease: 'power2.out' },
+          0.85
+        );
+      }
+      if (toggleBtnRef.current) {
+        tl.to(
+          toggleBtnRef.current,
+          { opacity: 1, duration: 0.45, ease: 'power2.out' },
+          0.85
+        );
+      }
+    } else {
+      // VERTICAL -> HORIZONTAL
+      // Immediately fade out left text and UI so it dissolves before models move
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setIsVerticalMode(false);
+          setUiVisible(false);
+          isTransitioningRef.current = false;
+        },
+      });
+
+      if (cardInfoRef.current && indicatorRef.current) {
+        tl.to(
+          [cardInfoRef.current, indicatorRef.current],
+          { opacity: 0, duration: 0.35, ease: 'power2.in' },
+          0
+        );
+      }
+      if (toggleBtnRef.current) {
+        tl.to(
+          toggleBtnRef.current,
+          { opacity: 0, duration: 0.35, ease: 'power2.in' },
+          0
+        );
+      }
+
+      tl.to(
+        animRef.current,
+        {
+          layout: 0.0,
+          duration: 1.25,
+          ease: 'power3.inOut',
+          onUpdate: () => {
+            setLayoutProgress(animRef.current.layout);
+            setVirtualIndex(animRef.current.virtualIndex);
+          },
+        },
+        0.15
+      );
+    }
+  };
+
   // Click handler: smoothly turns horizontal line into vertical stack centered on clicked model
   const handleModelClick = (clickedIndex: number) => {
     // Synchronize page scroll position so scroll loop remains at selected item
@@ -252,9 +431,13 @@ export default function Circular3DOrbitShowcase() {
     }
 
     if (!isVerticalMode) {
+      // HORIZONTAL -> VERTICAL on click
+      if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
+      if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
+      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
+
       setIsVerticalMode(true);
       setActiveIndex(clickedIndex);
-      setUiVisible(true);
       isTransitioningRef.current = true;
 
       // Kill any running tweens
@@ -262,18 +445,18 @@ export default function Circular3DOrbitShowcase() {
 
       const tl = gsap.timeline({
         onComplete: () => {
+          setUiVisible(true);
           isTransitioningRef.current = false;
         },
       });
 
       // 1. Smoothly morph layout from horizontal (0) to vertical (1)
-      // and align virtualIndex to the clicked model
       tl.to(
         animRef.current,
         {
           layout: 1.0,
           virtualIndex: clickedIndex,
-          duration: 1.35,
+          duration: 1.25,
           ease: 'power3.inOut',
           onUpdate: () => {
             setLayoutProgress(animRef.current.layout);
@@ -283,19 +466,19 @@ export default function Circular3DOrbitShowcase() {
         0
       );
 
-      // 2. Reveal Left Card Info and Right Indicator with GSAP
+      // 2. ONLY reveal Left Card Info, Right Indicator, and Toggle Button AFTER models clear the left
       if (cardInfoRef.current && indicatorRef.current) {
-        tl.fromTo(
-          cardInfoRef.current,
-          { opacity: 0, x: -35 },
-          { opacity: 1, x: 0, duration: 0.9, ease: 'power2.out' },
-          0.45
+        tl.to(
+          [cardInfoRef.current, indicatorRef.current],
+          { opacity: 1, duration: 0.45, ease: 'power2.out' },
+          0.85
         );
-        tl.fromTo(
-          indicatorRef.current,
-          { opacity: 0, x: 35 },
-          { opacity: 1, x: 0, duration: 0.9, ease: 'power2.out' },
-          0.5
+      }
+      if (toggleBtnRef.current) {
+        tl.to(
+          toggleBtnRef.current,
+          { opacity: 1, duration: 0.45, ease: 'power2.out' },
+          0.85
         );
       }
     } else {
@@ -331,15 +514,13 @@ export default function Circular3DOrbitShowcase() {
           ref={cardInfoRef}
           className={styles.cardInfo}
           style={{
-            opacity: uiVisible ? 1 : 0,
-            pointerEvents: isVerticalMode ? 'auto' : 'none',
-            visibility: uiVisible ? 'visible' : 'hidden',
+            pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
         >
           <div className={styles.textStack}>
             {ITEMS.map((item, index) => {
               const textD = index - virtualIndex;
-              const isTextVisible = isVerticalMode && Math.abs(textD) <= 1.0;
+              const isTextVisible = uiVisible && Math.abs(textD) <= 1.0;
 
               const textY = textD * 28;
               const textOpacity = Math.max(0, Math.min(1, 1 - Math.pow(Math.abs(textD) / 0.62, 1.4)));
@@ -372,7 +553,7 @@ export default function Circular3DOrbitShowcase() {
             href="/collections"
             className={styles.shopButton}
             style={{
-              opacity: isVerticalMode ? 1 : 0,
+              opacity: uiVisible ? 1 : 0,
             }}
           >
             <ScrambleText text="Shop" />
@@ -395,7 +576,7 @@ export default function Circular3DOrbitShowcase() {
             // --- Vertical Layout Coordinates (layoutProgress = 1) ---
             const vOffsetPx = 0;
             const vOffsetYVh = d * 60;
-            const vScale = Math.max(0.40, 0.99 - Math.abs(d) * 0.27);
+            const vScale = Math.max(0.36, 0.89 - Math.abs(d) * 0.25); // 10% smaller centered model in vertical mode
             const vOpacity = Math.max(0, 1.0 - Math.pow(Math.abs(d) / 0.95, 1.35));
             const vBlur = Math.min(16, Math.pow(Math.abs(d), 1.2) * 14);
 
@@ -422,22 +603,33 @@ export default function Circular3DOrbitShowcase() {
                   pointerEvents: !isVerticalMode ? 'auto' : isFocused ? 'auto' : 'auto',
                 }}
               >
-                {/* Click trigger overlay for seamless click response on any model */}
+                {/* Click & Hover trigger overlay for seamless hover scramble & click response */}
                 {(!isVerticalMode || !isFocused) && (
                   <button
                     type="button"
                     className={styles.cardClickTrigger}
                     onClick={() => handleModelClick(index)}
+                    onMouseEnter={() => {
+                      if (!isVerticalMode) setHoveredIndex(index);
+                    }}
+                    onMouseLeave={() => {
+                      if (!isVerticalMode) setHoveredIndex((prev) => (prev === index ? null : prev));
+                    }}
                     aria-label={`Select 3D model ${item.title}`}
                   />
                 )}
 
-                {/* 3D Model Instance (Continuously rotates smoothly in both horizontal & vertical modes) */}
+                {/* 3D Model Instance with Pixelated Cubic Transition and Individual Starting Angle */}
                 <div className={styles.modelContainerWrap}>
+                  <PixelCubeModelTransition
+                    modelIndex={index}
+                    triggerEntry={hasEnteredPhase2}
+                  />
                   <ModelViewer3D
                     modelPath={item.modelPath}
                     texturePath={item.texturePath}
                     autoRotateSpeed={10.0}
+                    initialRotation={ROTATION_OFFSETS[index] || 0}
                   />
                 </div>
               </div>
@@ -451,8 +643,7 @@ export default function Circular3DOrbitShowcase() {
           className={styles.orbitIndicator}
           style={{
             opacity: uiVisible ? 1 : 0,
-            pointerEvents: isVerticalMode ? 'auto' : 'none',
-            visibility: uiVisible ? 'visible' : 'hidden',
+            pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
         >
           <div className={styles.counterText}>
@@ -468,6 +659,33 @@ export default function Circular3DOrbitShowcase() {
               }}
             />
           </div>
+        </div>
+
+        {/* 4. Mode Toggle Button at Bottom-Left (hidden in horizontal mode, reveals smoothly in vertical mode) */}
+        <button
+          ref={toggleBtnRef}
+          type="button"
+          onClick={toggleLayoutMode}
+          className={styles.toggleModeBtn}
+          style={{
+            opacity: uiVisible ? 1 : 0,
+            pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
+          }}
+          aria-label="Return to Horizontal 3D Showcase"
+        >
+          <ScrambleText text="Horizontal" />
+        </button>
+
+        {/* 5. Bottom Center Product Scramble Indicator (Reveals on Hover in Horizontal Mode) */}
+        <div
+          className={`${styles.bottomCenterIndicator} ${!isVerticalMode && hoveredIndex !== null ? styles.bottomCenterIndicatorVisible : ''}`}
+        >
+          <ScrambleText
+            text={hoveredIndex !== null ? PRODUCT_CODES[hoveredIndex] || 'Product No. 324' : 'Product No. 324'}
+            triggerOnChange={true}
+            triggerKey={hoveredIndex}
+            speed="fast"
+          />
         </div>
       </div>
     </div>

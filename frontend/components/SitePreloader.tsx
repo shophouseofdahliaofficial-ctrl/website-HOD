@@ -6,7 +6,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import gsap from 'gsap';
-import { textureCache, geometryCache } from './ModelViewer3D';
+import { textureCache, geometryCache, glbCache } from './ModelViewer3D';
 import styles from './SitePreloader.module.css';
 
 interface SitePreloaderProps {
@@ -22,11 +22,7 @@ interface AssetDef {
 }
 
 const ASSETS: AssetDef[] = [
-  { url: '/fashion+model+3d+model-reduced (1).glb', type: 'glb', weight: 40 },
-  { url: '/rp_nathan_animated_003_walking.fbx', type: 'fbx', weight: 25 },
-  { url: '/rp_nathan_animated_003_dif.jpg', type: 'texture', weight: 15 },
-  { url: '/12248_Bird_v1_L2.obj', type: 'obj', weight: 10 },
-  { url: '/12248_Bird_v1_diff.jpg', type: 'texture', weight: 10 },
+  { url: '/fashion+model+3d+model-reduced (1).glb', type: 'glb', weight: 100 },
 ];
 
 export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigger }: SitePreloaderProps) {
@@ -291,7 +287,8 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
       if (asset.type === 'glb') {
         gltfLoader.load(
           asset.url,
-          () => {
+          (gltf) => {
+            glbCache.set(asset.url, gltf);
             progressMap.set(asset.url, 1.0);
             completedCount++;
             targetPercentRef.current = computeWeightedProgress() * 100;
