@@ -60,7 +60,7 @@
   background: linear-gradient(110deg,
       rgba(83, 0, 0, 0.65) 0%,
       #530000 35%,
-      #9e1111 50%,
+      #915f5f 50%,
       #530000 65%,
       rgba(83, 0, 0, 0.65) 100%);
   background-size: 250% 100%;
@@ -91,9 +91,9 @@
 .subText {
   font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(0.75rem, 1.2vw, 0.88rem);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.0em;
   text-transform: capitalize;
-  color: rgba(83, 0, 0, 0.65);
+  color: rgba(83, 0, 0);
   margin: 0;
   font-weight: 500;
   font-style: normal;
