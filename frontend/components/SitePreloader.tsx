@@ -113,7 +113,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
         );
       }
 
-      // Step 2: Pixelated circular mask begins smoothly, starts slowly, and accelerates outwards
+      // Step 2: Switch container background to transparent for canvas control
       if (cvs && ctx) {
         tl.add(() => {
           if (containerRef.current) {
@@ -126,17 +126,45 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
         const height = (cvs.height = window.innerHeight);
         const cols = Math.ceil(width / PIXEL_SIZE);
         const rows = Math.ceil(height / PIXEL_SIZE);
+        const centerCol = Math.floor(cols / 2);
+        const centerRow = Math.floor(rows / 2);
+        const centerPx = centerCol * PIXEL_SIZE;
+        const centerPy = centerRow * PIXEL_SIZE;
         const cx = width / 2;
         const cy = height / 2;
         const maxDist = Math.hypot(cx, cy);
 
+        // Step 3: Single center dot blinks 3 times (appears immediately, fades out smoothly)
+        const blinkState = { alpha: 0 };
+        const drawBlinkFrame = () => {
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = '#530000';
+          ctx.fillRect(0, 0, width, height);
+          if (blinkState.alpha > 0.01) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${blinkState.alpha.toFixed(3)})`;
+            ctx.fillRect(centerPx, centerPy, PIXEL_SIZE, PIXEL_SIZE);
+          }
+        };
+
+        for (let i = 0; i < 3; i++) {
+          tl.set(blinkState, { alpha: 1.0, onUpdate: drawBlinkFrame });
+          tl.to(blinkState, {
+            alpha: 0.0,
+            duration: 0.22,
+            ease: 'power2.out',
+            onUpdate: drawBlinkFrame,
+          });
+          tl.to({}, { duration: 0.06 }); // short pause between blinks
+        }
+
+        // Step 4: After 3 blinks, mask expands at equal constant speed from start to finish
         const progressObj = { val: 0 };
         let hasTriggeredVideo = false;
 
         tl.to(progressObj, {
           val: 1,
-          duration: 1.5,
-          ease: 'power3.in',
+          duration: 1.85,
+          ease: 'none', // Equal linear speed across the entire expansion
           onUpdate: () => {
             if (progressObj.val >= 0.88 && !hasTriggeredVideo) {
               hasTriggeredVideo = true;
@@ -147,7 +175,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
 
             const rThreshold = progressObj.val * (maxDist * 1.35);
             // Smooth noise ramp: 0 at exact start (starts from 1 single square) and builds organic noise as circle grows
-            const noiseScale = Math.min(1.0, progressObj.val * 3.2);
+            const noiseScale = Math.min(1.0, progressObj.val * 3.5);
 
             for (let c = 0; c < cols; c++) {
               for (let r = 0; r < rows; r++) {
