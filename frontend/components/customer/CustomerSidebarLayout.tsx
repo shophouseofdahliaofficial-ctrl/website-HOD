@@ -67,7 +67,6 @@ export default function CustomerSidebarLayout({ children }: { children: React.Re
       children: [
         { href: '/customer/giftcard?tab=redeem', label: 'Redeem Gift Card' },
         { href: '/customer/giftcard?tab=create', label: 'Create a Gift Card' },
-        { href: '/customer/giftcard?tab=pvc', label: 'Order a Physical Card' },
         { href: '/customer/giftcard?tab=history', label: 'Gift Card History' }
       ]
     },

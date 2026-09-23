@@ -608,7 +608,7 @@ export default function SubscribePage() {
             animation: 'loaderSpin 0.8s linear infinite',
             width: '22px',
             height: '22px',
-            color: '#ff0040',
+            color: '#AB6468',
             marginBottom: '0px',
             flexShrink: 0
           }}

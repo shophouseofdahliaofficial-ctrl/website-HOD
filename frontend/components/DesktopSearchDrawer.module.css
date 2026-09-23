@@ -1,0 +1,188 @@
+.searchDrawerContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header */
+.searchHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 0px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.searchHeaderTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e1e1e;
+  letter-spacing: -0.7px;
+  margin: 0;
+}
+
+.closeButton {
+  background: rgb(237 237 237);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #000000;
+  transition: background 0.2s, transform 0.15s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.closeButton:hover {
+  background: rgb(220 220 220);
+  transform: scale(0.96);
+}
+
+/* Search Input Bar */
+.searchBarWrapper {
+  padding: 4px 15px 15px 15px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.clearButton {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.15s;
+}
+
+.clearButton:hover {
+  color: #374151;
+}
+
+/* Results Content Area */
+.resultsScrollArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 14px 24px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.resultsScrollArea::-webkit-scrollbar {
+  width: 5px;
+}
+
+.resultsScrollArea::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+}
+
+.resultsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.resultsCount {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #585858;
+  text-transform: capitalize;
+  letter-spacing: 0;
+}
+
+/* 2 Products Per Row Grid */
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* Product Card Custom Typography & Layout Overrides */
+.productName {
+  font-size: 0.8rem !important;
+  line-height: 1.25 !important;
+}
+
+.productPrice {
+  font-size: 0.8rem !important;
+}
+
+.productCategoryRow {
+  margin-top: 0 !important;
+}
+
+.productCategory {
+  font-size: 0.7rem !important;
+}
+
+/* Image Border Radius Override */
+.productImage {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.productImage img,
+.productImage :global(.product-card-image-wrapper),
+.productImage :global(.product-card-hover-image-container) {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+/* Empty / Loading States */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  color: #d1d5db;
+  margin-bottom: 12px;
+}
+
+.emptyTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 6px 0;
+}
+
+.emptyDesc {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+  max-width: 240px;
+  line-height: 1.4;
+}
+
+.loadingSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #9ca3af;
+  gap: 8px;
+  font-size: 0.88rem;
+}

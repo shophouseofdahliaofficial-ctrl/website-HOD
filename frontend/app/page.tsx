@@ -1,119 +1,381 @@
-import Banner from '@/components/Banner';
-import ProductsSection from '@/components/ProductsSection';
-import MembershipSection from '@/components/MembershipSection';
-import VerifyPromoSection from '@/components/VerifyPromoSection';
-import Link from 'next/link';
-import { absoluteUrl, DEFAULT_KEYWORDS, SITE_ALTERNATE_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
+'use client';
 
-export const metadata = {
-  title: SITE_NAME,
-  description: SITE_DESCRIPTION,
-  keywords: DEFAULT_KEYWORDS,
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    type: 'website',
-    url: '/',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-  },
-};
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import gsap from 'gsap';
+import Logo from '@/components/Logo';
+import ScrambleText from '@/components/ScrambleText';
+import Circular3DOrbitShowcase from '@/components/Circular3DOrbitShowcase';
+import SitePreloader from '@/components/SitePreloader';
+import styles from './page.module.css';
 
 /**
- * Home Page
+ * Clean & Simple GSAP Homepage
+ * - Hero: #530000 with centered "House Of Dahlia", top-right links, and scroll indicator
+ * - Sticky Top Nav with smooth inverted colors over white section
+ * - Smooth scroll down transition into a full white page section
  */
 export default function HomePage() {
-  const structuredData = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: SITE_NAME,
-      alternateName: SITE_ALTERNATE_NAME,
-      url: SITE_URL,
-      description: SITE_DESCRIPTION,
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: `${absoluteUrl('/search')}?q={search_term_string}`,
-        'query-input': 'required name=search_term_string',
-      },
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      name: SITE_NAME,
-      alternateName: SITE_ALTERNATE_NAME,
-      url: SITE_URL,
-      description: SITE_DESCRIPTION,
-      areaServed: ['Gwalior', 'Madhya Pradesh', 'India'],
-      sameAs: [SITE_URL],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      name: 'House Of Dahlia main pages',
-      itemListElement: [
-        {
-          '@type': 'SiteNavigationElement',
-          position: 1,
-          name: 'Home',
-          url: absoluteUrl('/'),
-        },
-        {
-          '@type': 'SiteNavigationElement',
-          position: 2,
-          name: 'Membership',
-          url: absoluteUrl('/membership'),
-        },
-        {
-          '@type': 'SiteNavigationElement',
-          position: 3,
-          name: 'Products',
-          url: absoluteUrl('/products'),
-        },
-        {
-          '@type': 'SiteNavigationElement',
-          position: 4,
-          name: 'Orders',
-          url: absoluteUrl('/orders'),
-        },
-      ],
-    },
-  ];
+  const [isPreloaded, setIsPreloaded] = useState(false);
+  const [isInverted, setIsInverted] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const topNavRef = useRef<HTMLElement>(null);
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const nextSectionRef = useRef<HTMLElement>(null);
+  const pixelCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Strictly lock scroll to top of Phase 1 while preloader is running
+  useEffect(() => {
+    if (!isPreloaded) {
+      window.scrollTo(0, 0);
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const blockScroll = (e: Event) => {
+        e.preventDefault();
+      };
+
+      window.addEventListener('wheel', blockScroll, { passive: false });
+      window.addEventListener('touchmove', blockScroll, { passive: false });
+
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        window.removeEventListener('wheel', blockScroll);
+        window.removeEventListener('touchmove', blockScroll);
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [isPreloaded]);
+
+  const handleVideoTrigger = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.currentTime = 0;
+    video.playbackRate = 1.0;
+    video.play().catch(() => {});
+
+    // Smooth elegant fade-in as pixel mask reaches 95% of screen
+    gsap.fromTo(
+      video,
+      { opacity: 0 },
+      {
+        opacity: 0.45,
+        duration: 1.6,
+        ease: 'power2.out',
+      }
+    );
+
+    let isFadingOut = false;
+    const TARGET_TIME = 7.0;
+    const SLOWDOWN_START = 5.8;
+
+    const monitorPlayback = () => {
+      if (video && !video.paused) {
+        const time = video.currentTime;
+
+        // Trigger smooth fade-out as video approaches 7s
+        if (time >= SLOWDOWN_START && !isFadingOut) {
+          isFadingOut = true;
+          gsap.to(video, {
+            opacity: 0,
+            duration: 1.4,
+            ease: 'power2.out',
+            onComplete: () => {
+              if (video) {
+                video.pause();
+              }
+            },
+          });
+        }
+
+        if (time >= TARGET_TIME) {
+          try {
+            video.playbackRate = 1.0;
+          } catch {}
+          video.pause();
+          return;
+        }
+
+        // Smoothly ramp down speed from 1.0x to 0.2x between 5.8s and 7.0s
+        if (time >= SLOWDOWN_START) {
+          const progress = (time - SLOWDOWN_START) / (TARGET_TIME - SLOWDOWN_START);
+          const newRate = Math.max(0.18, 1.0 - Math.pow(progress, 1.5) * 0.82);
+          try {
+            video.playbackRate = newRate;
+          } catch {}
+        }
+      }
+
+      requestAnimationFrame(monitorPlayback);
+    };
+
+    requestAnimationFrame(monitorPlayback);
+  };
+
+  // Subtle interactive mouse parallax floating effect on hover
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const xToVideo = gsap.quickTo(video, 'x', { duration: 1.2, ease: 'power2.out' });
+    const yToVideo = gsap.quickTo(video, 'y', { duration: 1.2, ease: 'power2.out' });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      const { innerWidth, innerHeight } = window;
+      const xPercent = (clientX / innerWidth - 0.5) * 2;
+      const yPercent = (clientY / innerHeight - 0.5) * 2;
+
+      // Subtle float movement across x and y
+      xToVideo(xPercent * 20);
+      yToVideo(yPercent * 20);
+    };
+
+    const handleMouseLeave = () => {
+      xToVideo(0);
+      yToVideo(0);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
+
+  // Track scroll for dynamic nav color inversion, center title squeeze, and procedural pixel square transition
+  useEffect(() => {
+    // Fast pseudo-random generator
+    const pseudoRandom = (seed: number) => {
+      const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+      return x - Math.floor(x);
+    };
+
+    const renderPixelTransition = () => {
+      const canvas = pixelCanvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const scrollY = window.scrollY || window.pageYOffset;
+      const vh = window.innerHeight || 800;
+
+      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+      const height = (canvas.height = canvas.offsetHeight || vh);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // When fully at top (0px scroll), completely clear
+      if (scrollY <= 0) return;
+
+      const PIXEL_SIZE = 14;
+      const cols = Math.ceil(width / PIXEL_SIZE);
+      const rows = Math.ceil(height / PIXEL_SIZE);
+
+      // Smooth progression: baseline ascends from the bottom (rows) all the way to top (0)
+      const scrollRatio = Math.min(1.0, scrollY / (vh * 0.9));
+      
+      // If fully covered in white and already past transition threshold, fill solid once and return
+      if (scrollRatio >= 1.0) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        return;
+      }
+
+      // Gradual emergence factor to guarantee 0 height at scrollY = 0 and smooth exit when scrolling back up
+      const emergence = Math.min(1.0, scrollY / 180);
+
+      ctx.fillStyle = '#ffffff';
+
+      for (let c = 0; c < cols; c++) {
+        // Multi-frequency organic stepped noise curve matching reference image
+        const wave1 = Math.sin(c * 0.28) * 0.25;
+        const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
+        const randomSpike = (pseudoRandom(c * 7 + 13) - 0.5) * 0.45;
+        const colOffset = wave1 + wave2 + randomSpike;
+
+        // Base row calculation: starts exactly at rows (invisible) and ascends smoothly with scroll
+        const baselineRow = rows - Math.floor(scrollRatio * (rows + 15));
+        const jaggedOffset = Math.floor(colOffset * 10 * emergence);
+        const startRow = Math.max(0, Math.min(rows, baselineRow - jaggedOffset));
+
+        // Draw solid column pixels down to the bottom
+        for (let r = startRow; r < rows; r++) {
+          ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+        }
+
+        // Procedural floating pixel bits / dithered stair-steps above the boundary
+        if (startRow < rows && emergence > 0.05) {
+          for (let r = Math.max(0, startRow - 4); r < startRow; r++) {
+            const distanceAbove = startRow - r;
+            const spawnChance = Math.max(0, (0.6 - distanceAbove * 0.15) * emergence);
+            if (pseudoRandom(c * 43 + r * 67) < spawnChance) {
+              ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+          }
+        }
+      }
+    };
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      const vh = window.innerHeight || 800;
+
+      // Smoothly bend and squeeze center title with strong 3D perspective
+      if (titleRef.current) {
+        const scrollRatio = Math.min(1, Math.max(0, scrollY / vh));
+        const scaleX = Math.max(0.2, 1 - scrollRatio * 0.8);
+        const scaleY = Math.max(0.55, 1 - scrollRatio * 0.45);
+        const tiltX = scrollRatio * 62; // Deep 3D backward bend
+        titleRef.current.style.transform = `perspective(380px) rotateX(${tiltX.toFixed(2)}deg) scaleX(${scaleX.toFixed(4)}) scaleY(${scaleY.toFixed(4)})`;
+      }
+
+      if (nextSectionRef.current) {
+        const rect = nextSectionRef.current.getBoundingClientRect();
+        // Invert nav colors when the white section reaches top nav area (within 80px)
+        setIsInverted(rect.top <= 80);
+      }
+
+      renderPixelTransition();
+    };
+
+    const handleResize = () => {
+      renderPixelTransition();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const handleScrollDown = () => {
+    nextSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
-    <div>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      <Banner />
-      <ProductsSection />
-      <MembershipSection />
-      <VerifyPromoSection />
+    <div className={styles.pageWrapper}>
+      {!isPreloaded && (
+        <SitePreloader
+          onComplete={() => setIsPreloaded(true)}
+          onVideoTrigger={handleVideoTrigger}
+        />
+      )}
 
-      <nav aria-label="Key Pages" className="visuallyHidden">
-        <ul>
-          <li>
-            <Link href="/">Home</Link>
-          </li>
-          <li>
-            <Link href="/membership">Membership</Link>
-          </li>
-          <li>
-            <Link href="/products">Products</Link>
-          </li>
-          <li>
-            <Link href="/orders">Orders</Link>
-          </li>
-        </ul>
-      </nav>
+      {/* Top Header: Collections (Top-Left), Logo (Middle), Menu (Top-Right) */}
+      <header
+        ref={topNavRef}
+        className={`${styles.topHeader} ${isInverted ? styles.invertedNav : ''}`}
+      >
+        <div className={styles.headerLeft}>
+          <Link href="/collections" className={styles.navLink}>
+            <ScrambleText text="Collections" />
+          </Link>
+        </div>
+
+        <div className={styles.headerCenter}>
+          <Link
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`${styles.centerLogo} ${isInverted ? styles.visibleLogo : ''}`}
+            aria-label="House Of Dahlia Home"
+          >
+            <Logo imageClassName={styles.customLogoImg} />
+          </Link>
+        </div>
+
+        <div className={styles.headerRight}>
+          <button
+            type="button"
+            className={styles.navLinkButton}
+            aria-label="Toggle menu"
+          >
+            <ScrambleText text="Menu" />
+          </button>
+        </div>
+      </header>
+
+      {/* 1. Hero Fullscreen Section (#530000) */}
+      <section className={styles.heroSection}>
+        {/* Dull Background Video */}
+        <video
+          ref={videoRef}
+          className={styles.heroVideo}
+          muted
+          playsInline
+          preload="auto"
+        >
+          <source src="/cretae_a_video_in_back.mp4" type="video/mp4" />
+        </video>
+        <div className={styles.videoOverlay} />
+
+        {/* Centered Main Title */}
+        <div className={styles.canvasNotice}>
+          <h1 ref={titleRef} className={styles.title}>
+            House Of Dahlia
+          </h1>
+        </div>
+
+        {/* Bottom Center Scroll Indicator */}
+        <div
+          ref={scrollIndicatorRef}
+          className={styles.scrollIndicator}
+          onClick={handleScrollDown}
+          role="button"
+          tabIndex={0}
+          aria-label="Scroll down to content"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleScrollDown();
+            }
+          }}
+        >
+          <svg
+            className={styles.scrollArrow}
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <polyline points="19 12 12 19 5 12" />
+          </svg>
+          <span className={styles.scrollText}>
+            <ScrambleText text="Scroll down" />
+          </span>
+        </div>
+      </section>
+
+      {/* 2. White Section (Phase 2) Revealed on Scroll Down */}
+      <section ref={nextSectionRef} className={styles.whiteSection}>
+        {/* Leading Procedural Pixel Square Crest */}
+        <div className={styles.pixelTransitionContainer}>
+          <canvas ref={pixelCanvasRef} className={styles.pixelTransitionCanvas} />
+        </div>
+
+        {/* 3D Circular Orbit Carousel in Phase 2 */}
+        <div className={styles.whiteContentContainer}>
+          <Circular3DOrbitShowcase />
+        </div>
+      </section>
     </div>
   );
 }
-

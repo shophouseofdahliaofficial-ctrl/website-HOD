@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { subscriptionsApi, addressesApi, authApi } from '@/lib/api';
 import { Subscription, Address } from '@/types';

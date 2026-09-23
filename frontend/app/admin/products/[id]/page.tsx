@@ -304,6 +304,21 @@ export default function AdminProductEditPage() {
     });
   };
 
+  const handleSaveDetailBanners = async () => {
+    setSaving(true);
+    try {
+      await adminProductsApi.update(productId, { detailBanners });
+      const refreshed = await adminProductsApi.getById(productId);
+      setDetailBanners(refreshed.detailBanners || { images: [], adaptToFullImageRatio: false, displayMode: 'stacked' });
+      showToast('Detail banner images saved successfully', 'success');
+    } catch (error) {
+      console.error('Failed to save detail banners:', error);
+      showToast(getErrorMessage(error), 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleAddFlipbookSection = () => {
     const title = newFlipbookSectionTitle.trim();
     if (!title) {
@@ -1606,51 +1621,6 @@ export default function AdminProductEditPage() {
               </label>
             </div>
             <div className={styles.formGroup}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={isMembershipEligible}
-                  onChange={(e) => setIsMembershipEligible(e.target.checked)}
-                />
-                Eligible for Membership (show in membership section)
-              </label>
-            </div>
-            <div className={styles.formGroup}>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={isCustomizable}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    const previous = isCustomizable;
-                    setIsCustomizable(checked);
-                    void persistProductFlag('isCustomizable', checked, () => setIsCustomizable(previous));
-                  }}
-                />
-                Mark as Customizable (show customizable badge)
-              </label>
-            </div>
-            <div className={styles.formGroup}>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={photobookEditorEnabled}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    const previous = photobookEditorEnabled;
-                    setPhotobookEditorEnabled(checked);
-                    void persistProductFlag('photobookEditorEnabled', checked, () => setPhotobookEditorEnabled(previous));
-                  }}
-                />
-                Start customizing(enables the design editor)
-              </label>
-            </div>
-            {photobookEditorEnabled && (
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                Map photobook canvas size (cm) on each Image Selector option in the Variations tab.
-              </p>
-            )}
-            <div className={styles.formGroup}>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
@@ -1837,6 +1807,27 @@ export default function AdminProductEditPage() {
               )}
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <label
+                  className={styles.addButton}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    cursor: uploadingBannerImage ? 'not-allowed' : 'pointer',
+                    padding: '0.65rem 1.25rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerImageUpload}
+                    disabled={uploadingBannerImage}
+                    style={{ display: 'none' }}
+                  />
+                  <span>📤</span> {uploadingBannerImage ? 'Uploading...' : '+ Upload Banner from Device'}
+                </label>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -1856,7 +1847,21 @@ export default function AdminProductEditPage() {
                     fontWeight: 600,
                   }}
                 >
-                  <span>🖼️</span> + Add Banner from Media Library
+                  <span>🖼️</span> + Add from Media Library
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveDetailBanners}
+                  disabled={saving || savingAccordions}
+                  className={styles.saveButton}
+                  style={{
+                    backgroundColor: '#0284c7',
+                    padding: '0.65rem 1.25rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {saving ? 'Saving...' : '💾 Save Banner Images'}
                 </button>
               </div>
             </div>

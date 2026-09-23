@@ -26,7 +26,6 @@ export default function AdminHeader() {
     { name: 'Products', path: '/admin/products', description: 'Manage products' },
     { name: 'Banners', path: '/admin/banners', description: 'Manage banners' },
     { name: 'Orders', path: '/admin/customers', description: 'View orders' },
-    { name: 'Plans', path: '/admin/subscriptions', description: 'Manage recurring plans' },
     { name: 'Deliveries', path: '/admin/deliveries', description: 'Delivery schedule' },
     { name: 'More', path: '/admin/content', description: 'Manage site content' },
     { name: 'Dashboard', path: '/admin', description: 'Admin dashboard' },
@@ -199,12 +198,6 @@ export default function AdminHeader() {
             className={pathname === '/admin/customers' ? styles.activeLink : ''}
           >
             Orders
-          </Link>
-          <Link 
-            href="/admin/subscriptions"
-            className={pathname === '/admin/subscriptions' ? styles.activeLink : ''}
-          >
-            Plans
           </Link>
           <Link 
             href="/admin/deliveries"

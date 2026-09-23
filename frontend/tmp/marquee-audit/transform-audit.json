@@ -1,0 +1,90 @@
+{
+  "conclusion": "Nested fixed marquee is contained by first transform ancestor (.photobookEditorOverlay via photobookFadeIn). Body portal is direct child of BODY.",
+  "nested": {
+    "selector": "#nested",
+    "parentTag": "DIV",
+    "rect": {},
+    "chain": [
+      {
+        "tag": "DIV",
+        "id": "nested",
+        "className": "nestedFixed",
+        "transform": "none",
+        "position": "fixed",
+        "overflow": "visible"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "workspace",
+        "transform": "none",
+        "position": "relative",
+        "overflow": "auto"
+      },
+      {
+        "tag": "DIV",
+        "id": "overlay",
+        "className": "overlay",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "position": "fixed",
+        "overflow": "hidden"
+      },
+      {
+        "tag": "BODY",
+        "id": "",
+        "className": "",
+        "transform": "none",
+        "position": "static",
+        "overflow": "visible"
+      },
+      {
+        "tag": "HTML",
+        "id": "",
+        "className": "",
+        "transform": "none",
+        "position": "static",
+        "overflow": "visible"
+      }
+    ],
+    "firstTransformAncestor": {
+      "tag": "DIV",
+      "id": "overlay",
+      "className": "overlay",
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "position": "fixed",
+      "overflow": "hidden"
+    }
+  },
+  "portal": {
+    "selector": "#portal",
+    "parentTag": "BODY",
+    "rect": {},
+    "chain": [
+      {
+        "tag": "DIV",
+        "id": "portal",
+        "className": "bodyPortal",
+        "transform": "none",
+        "position": "fixed",
+        "overflow": "visible"
+      },
+      {
+        "tag": "BODY",
+        "id": "",
+        "className": "",
+        "transform": "none",
+        "position": "static",
+        "overflow": "visible"
+      },
+      {
+        "tag": "HTML",
+        "id": "",
+        "className": "",
+        "transform": "none",
+        "position": "static",
+        "overflow": "visible"
+      }
+    ],
+    "firstTransformAncestor": null
+  }
+}

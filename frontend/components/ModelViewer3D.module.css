@@ -1,0 +1,73 @@
+.modelContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.modelContainer:active {
+  cursor: grabbing;
+}
+
+.canvas {
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  display: block;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  transition: opacity 0.5s ease-out;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(83, 0, 0, 0.15);
+  border-top-color: #530000;
+  border-radius: 50%;
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.loadingText {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #333333;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .modelContainer {
+    height: 70vh;
+    min-height: 450px;
+  }
+}

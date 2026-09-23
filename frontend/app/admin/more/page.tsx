@@ -48,17 +48,7 @@ export default function AdminMorePage() {
         </>
       ),
     },
-    {
-      title: 'Subscriptions',
-      href: '/admin/subscriptions',
-      description: 'Manage subscriptions',
-      icon: (
-        <>
-          <path d="M5 16L3 5L8.5 10L12 8L15.5 10L21 5L19 16H5Z" />
-          <path d="M3 16H21" />
-        </>
-      ),
-    },
+
     {
       title: 'Feedback',
       href: '/admin/feedback',
@@ -138,41 +128,6 @@ export default function AdminMorePage() {
           <path d="M6 12h8" />
           <path d="M6 17h10" />
           <path d="M17.5 10.5c1.93 0 3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5S14 15.93 14 14h3.5" />
-        </>
-      ),
-    },
-    {
-      title: 'Delivery rates',
-      href: '/admin/content/delivery_rates',
-      description: 'Warehouse distance-based checkout charges',
-      icon: (
-        <>
-          <path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" />
-          <circle cx="12" cy="10" r="2.5" />
-          <path d="M16 17h5" />
-          <path d="M18.5 14.5v5" />
-        </>
-      ),
-    },
-    {
-      title: 'Delivery time off',
-      href: '/admin/content/delivery_time_off',
-      description: 'After a daily cutoff (IST), ask customers to confirm before paying',
-      icon: (
-        <>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 7v6l4 2" />
-        </>
-      ),
-    },
-    {
-      title: 'Photobooth settings',
-      href: '/admin/content/photobooth_links',
-      description: 'Configure links, cover images, and promo card placements for Polaroids and Photostrips',
-      icon: (
-        <>
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </>
       ),
     },

@@ -2,10 +2,9 @@
 
 export const runtime = 'edge';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { adminContentApi, adminProductsApi, SiteContent } from '@/lib/api';
-import { Product } from '@/types';
+import { adminContentApi, SiteContent } from '@/lib/api';
 import LoadingSpinner, { LoadingSpinnerWithText } from '@/components/ui/LoadingSpinner';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import adminStyles from '../../admin-styles.module.css';
@@ -30,7 +29,6 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
   delivery_time_off: 'Delivery time off',
   coming_soon: 'Coming Soon Settings',
   'coming-soon': 'Coming Soon Settings',
-  photobooth_links: 'Photobooth settings',
   gifting: 'Gifting',
   cod: 'COD Settings',
 };
@@ -45,13 +43,12 @@ export default function AdminContentEditPage() {
   const contentType = params.type as string;
 
   useEffect(() => {
-    if (contentType === 'pincodes') {
-      router.replace('/admin/content/subscription_delivery');
+    if (['subscription_delivery', 'delivery_rates', 'delivery_time_off', 'pincodes', 'photobooth_links'].includes(contentType)) {
+      router.replace('/admin/content');
     }
   }, [contentType, router]);
 
   const [content, setContent] = useState<SiteContent | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -89,26 +86,6 @@ export default function AdminContentEditPage() {
     fetchContent();
   }, [contentType]);
 
-  useEffect(() => {
-    if (contentType === 'photobooth_links') {
-      const fetchProducts = async () => {
-        try {
-          const prodList = await adminProductsApi.getAll();
-          setProducts(prodList || []);
-        } catch (err) {
-          console.error('Failed to fetch products:', err);
-        }
-      };
-      void fetchProducts();
-    }
-  }, [contentType]);
-
-  const sortedActiveProducts = useMemo(() => {
-    return [...products]
-      .filter(p => p.isActive)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
-
   const fetchContent = async () => {
     try {
       setLoading(true);
@@ -118,16 +95,6 @@ export default function AdminContentEditPage() {
       setContentText(data.content);
       setMetadata(data.metadata || {});
       setIsActive(data.isActive);
-      if (contentType === 'photobooth_links') {
-        setMetadata({
-          polaroidsUrl: data.metadata?.polaroidsUrl ?? '',
-          photostripsUrl: data.metadata?.photostripsUrl ?? '',
-          polaroidsCoverProductId: data.metadata?.polaroidsCoverProductId ?? '',
-          photostripsCoverProductId: data.metadata?.photostripsCoverProductId ?? '',
-          polaroidsPromoProductId: data.metadata?.polaroidsPromoProductId ?? '',
-          photostripsPromoProductId: data.metadata?.photostripsPromoProductId ?? '',
-        });
-      }
       if (contentType === 'gifting') {
         const meta = data.metadata || {};
         const price = Number(meta.price ?? (Number.isFinite(Number(data.title)) ? Number(data.title) : 25));
@@ -277,20 +244,6 @@ export default function AdminContentEditPage() {
         setTitle(DEFAULT_DELIVERY_TIME_OFF_TITLE);
         setContentText(DEFAULT_DELIVERY_TIME_OFF_BODY);
         setMetadata({ enabled: false, cutoffTime: '22:00' });
-        setIsActive(true);
-      } else if (contentType === 'photobooth_links') {
-        setError('');
-        setContent(null);
-        setTitle('Photobooth settings');
-        setContentText('Configure redirect links, cover images, and promo card placements for Polaroids and Photostrips');
-        setMetadata({
-          polaroidsUrl: '',
-          photostripsUrl: '',
-          polaroidsCoverProductId: '',
-          photostripsCoverProductId: '',
-          polaroidsPromoProductId: '',
-          photostripsPromoProductId: '',
-        });
         setIsActive(true);
       } else if (contentType === 'coming_soon' || contentType === 'coming-soon') {
         setError('');
@@ -507,17 +460,6 @@ export default function AdminContentEditPage() {
         };
       }
 
-      if (contentType === 'photobooth_links') {
-        finalMetadata = {
-          polaroidsUrl: (metadata.polaroidsUrl || '').toString().trim(),
-          photostripsUrl: (metadata.photostripsUrl || '').toString().trim(),
-          polaroidsCoverProductId: (metadata.polaroidsCoverProductId || '').toString().trim(),
-          photostripsCoverProductId: (metadata.photostripsCoverProductId || '').toString().trim(),
-          polaroidsPromoProductId: (metadata.polaroidsPromoProductId || '').toString().trim(),
-          photostripsPromoProductId: (metadata.photostripsPromoProductId || '').toString().trim(),
-        };
-      }
-
       if (contentType === 'gifting') {
         const rawPrice = Number(metadata.price !== undefined && metadata.price !== '' ? metadata.price : title);
         if (!Number.isFinite(rawPrice) || rawPrice < 0) {
@@ -553,13 +495,11 @@ export default function AdminContentEditPage() {
                     ? 'Delivery rates'
                     : contentType === 'delivery_time_off'
                       ? title.trim() || DEFAULT_DELIVERY_TIME_OFF_TITLE
-                      : contentType === 'photobooth_links'
-                        ? 'Photobooth settings'
-                        : contentType === 'gifting'
-                          ? String(finalMetadata.price ?? 25)
-                          : contentType === 'cod'
-                            ? (finalMetadata.enabled ? 'COD Enabled' : 'COD Disabled')
-                            : title,
+                      : contentType === 'gifting'
+                        ? String(finalMetadata.price ?? 25)
+                        : contentType === 'cod'
+                          ? (finalMetadata.enabled ? 'COD Enabled' : 'COD Disabled')
+                          : title,
         content:
           contentType === 'subscription_delivery'
             ? 'Subscription delivery settings'
@@ -573,13 +513,11 @@ export default function AdminContentEditPage() {
                     ? 'Distance-based delivery charges from warehouse to customer.'
                     : contentType === 'delivery_time_off'
                       ? contentText.trim() || DEFAULT_DELIVERY_TIME_OFF_BODY
-                      : contentType === 'photobooth_links'
-                        ? 'Configure links for Polaroids and Photostrips'
-                        : contentType === 'gifting'
-                          ? 'Gift wrapping settings'
-                          : contentType === 'cod'
-                            ? 'Cash on Delivery payment configuration.'
-                            : contentText,
+                      : contentType === 'gifting'
+                        ? 'Gift wrapping settings'
+                        : contentType === 'cod'
+                          ? 'Cash on Delivery payment configuration.'
+                          : contentText,
         metadata: finalMetadata,
       });
 
@@ -634,7 +572,7 @@ export default function AdminContentEditPage() {
       )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        {contentType !== 'subscription_delivery' && contentType !== 'help_support' && contentType !== 'app_download' && contentType !== 'delivery_rates' && contentType !== 'delivery_time_off' && contentType !== 'coming_soon' && contentType !== 'coming-soon' && contentType !== 'photobooth_links' && contentType !== 'gifting' && (
+        {contentType !== 'subscription_delivery' && contentType !== 'help_support' && contentType !== 'app_download' && contentType !== 'delivery_rates' && contentType !== 'delivery_time_off' && contentType !== 'coming_soon' && contentType !== 'coming-soon' && contentType !== 'gifting' && (
           <div className={styles.formGroup}>
             <label className={styles.label}>
               {contentType === 'platform_fee' ? 'Platform fee (INR) *' : 'Title *'}
@@ -1142,7 +1080,7 @@ export default function AdminContentEditPage() {
               </div>
             </div>
           </div>
-        ) : contentType === 'help_support' || contentType === 'app_download' || contentType === 'platform_fee' || contentType === 'delivery_time_off' || contentType === 'coming_soon' || contentType === 'coming-soon' || contentType === 'photobooth_links' || contentType === 'gifting' ? null : (
+        ) : contentType === 'help_support' || contentType === 'app_download' || contentType === 'platform_fee' || contentType === 'delivery_time_off' || contentType === 'coming_soon' || contentType === 'coming-soon' || contentType === 'gifting' ? null : (
           <div className={styles.formGroup}>
             <label className={styles.label}>
               Content {contentType === 'contact' ? '(Optional)' : '*'}
@@ -1163,116 +1101,6 @@ export default function AdminContentEditPage() {
               />
             )}
           </div>
-        )}
-
-        {contentType === 'photobooth_links' && (
-          <>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Polaroids Product Link *</label>
-              <input
-                type="text"
-                value={metadata.polaroidsUrl || ''}
-                onChange={(e) => setMetadata({ ...metadata, polaroidsUrl: e.target.value })}
-                className={styles.input}
-                placeholder="e.g. /product/2"
-                required
-              />
-              <div className={styles.helpText}>
-                The redirect URL used when a customer builds Polaroid memories in the Photobooth.
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Show Cover Image of Product (Polaroids)</label>
-              <select
-                value={metadata.polaroidsCoverProductId || ''}
-                onChange={(e) => setMetadata({ ...metadata, polaroidsCoverProductId: e.target.value })}
-                className={styles.input}
-              >
-                <option value="">-- No product selected --</option>
-                {sortedActiveProducts.map((p) => (
-                  <option key={p.id} value={String(p.id)}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <div className={styles.helpText}>
-                Select which catalog product cover image shows in the customer orders page when keepsake image is not generated.
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Show Promo Card on Product Detail Page (Polaroids)</label>
-              <select
-                value={metadata.polaroidsPromoProductId || ''}
-                onChange={(e) => setMetadata({ ...metadata, polaroidsPromoProductId: e.target.value })}
-                className={styles.input}
-              >
-                <option value="">-- No product selected --</option>
-                {sortedActiveProducts.map((p) => (
-                  <option key={p.id} value={String(p.id)}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <div className={styles.helpText}>
-                Select on which product details modal the Polaroids #Photobooth promo card should be shown.
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Photostrips Product Link *</label>
-              <input
-                type="text"
-                value={metadata.photostripsUrl || ''}
-                onChange={(e) => setMetadata({ ...metadata, photostripsUrl: e.target.value })}
-                className={styles.input}
-                placeholder="e.g. /product/4"
-                required
-              />
-              <div className={styles.helpText}>
-                The redirect URL used when a customer builds Photostrip memories in the Photobooth.
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Show Cover Image of Product (Photostrips)</label>
-              <select
-                value={metadata.photostripsCoverProductId || ''}
-                onChange={(e) => setMetadata({ ...metadata, photostripsCoverProductId: e.target.value })}
-                className={styles.input}
-              >
-                <option value="">-- No product selected --</option>
-                {sortedActiveProducts.map((p) => (
-                  <option key={p.id} value={String(p.id)}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <div className={styles.helpText}>
-                Select which catalog product cover image shows in the customer orders page when keepsake image is not generated.
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Show Promo Card on Product Detail Page (Photostrips)</label>
-              <select
-                value={metadata.photostripsPromoProductId || ''}
-                onChange={(e) => setMetadata({ ...metadata, photostripsPromoProductId: e.target.value })}
-                className={styles.input}
-              >
-                <option value="">-- No product selected --</option>
-                {sortedActiveProducts.map((p) => (
-                  <option key={p.id} value={String(p.id)}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <div className={styles.helpText}>
-                Select on which product details modal the Photostrips #Photobooth promo card should be shown.
-              </div>
-            </div>
-          </>
         )}
 
         {contentType === 'gifting' && (

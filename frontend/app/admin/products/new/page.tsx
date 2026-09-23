@@ -2432,47 +2432,6 @@ export default function AdminCreateProductPage() {
           <div className={styles.checkboxGroup}>
             <input
               type="checkbox"
-              id="isMembershipEligible"
-              checked={isMembershipEligible}
-              onChange={(e) => setIsMembershipEligible(e.target.checked)}
-              className={styles.checkbox}
-            />
-            <label htmlFor="isMembershipEligible" className={styles.checkboxLabel}>
-              Eligible for Membership (show in membership section)
-            </label>
-          </div>
-          <div className={styles.checkboxGroup}>
-            <input
-              type="checkbox"
-              id="isCustomizable"
-              checked={isCustomizable}
-              onChange={(e) => setIsCustomizable(e.target.checked)}
-              className={styles.checkbox}
-            />
-            <label htmlFor="isCustomizable" className={styles.checkboxLabel} style={{ cursor: 'pointer' }}>
-              Mark as Customizable (show customizable badge)
-            </label>
-          </div>
-          <div className={styles.checkboxGroup}>
-            <input
-              type="checkbox"
-              id="photobookEditorEnabled"
-              checked={photobookEditorEnabled}
-              onChange={(e) => setPhotobookEditorEnabled(e.target.checked)}
-              className={styles.checkbox}
-            />
-            <label htmlFor="photobookEditorEnabled" className={styles.checkboxLabel} style={{ cursor: 'pointer' }}>
-              Start customizing(enables the design editor)
-            </label>
-            {photobookEditorEnabled ? (
-              <p className={styles.helpText} style={{ marginTop: '0.35rem' }}>
-                After creating the product, map canvas width/height (cm) on Image Selector options in Variations.
-              </p>
-            ) : null}
-          </div>
-          <div className={styles.checkboxGroup}>
-            <input
-              type="checkbox"
               id="buyNowEnabled"
               checked={buyNowEnabled}
               onChange={(e) => setBuyNowEnabled(e.target.checked)}

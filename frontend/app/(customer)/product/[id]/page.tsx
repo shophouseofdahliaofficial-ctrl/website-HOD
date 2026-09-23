@@ -5,6 +5,7 @@ export const runtime = 'edge';
 import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
+import ProductBackgroundWatermark from '@/components/product/ProductBackgroundWatermark';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
 
@@ -22,6 +23,11 @@ function ProductDeepLinkContent() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
     if (!id) {
       setFailed(true);
       setProduct(null);
@@ -49,56 +55,13 @@ function ProductDeepLinkContent() {
 
   if (product === undefined) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '70vh',
-          fontFamily: 'var(--font-inter), sans-serif',
-          color: '#666',
-          fontSize: 'calc(1.05rem - 3px)',
-          fontWeight: 500,
-          letterSpacing: '-0.5px',
-          gap: '10px',
-        }}
-      >
-        <style>{`
-          @keyframes loaderSpin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-        <svg
-          style={{
-            animation: 'loaderSpin 0.8s linear infinite',
-            width: '22px',
-            height: '22px',
-            color: '#ff0040',
-            marginBottom: '0px',
-            flexShrink: 0
-          }}
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="2"
-            style={{ opacity: 0.15 }}
-          />
-          <path
-            d="M12 2a10 10 0 0 1 10 10"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span>Loading product…</span>
-      </div>
+      <ProductDetailsModal
+        product={null as any}
+        isOpen
+        onClose={() => router.back()}
+        isFlatPage
+        initialPhotobookProjectId={pbProjectId}
+      />
     );
   }
 
@@ -254,61 +217,20 @@ function ProductDeepLinkContent() {
 
 export default function ProductDeepLinkPage() {
   return (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '70vh',
-            fontFamily: 'var(--font-inter), sans-serif',
-            color: '#666',
-            fontSize: 'calc(1.05rem - 3px)',
-            fontWeight: 500,
-            letterSpacing: '-0.5px',
-            gap: '10px',
-          }}
-        >
-          <style>{`
-            @keyframes loaderSpin {
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
-          <svg
-            style={{
-              animation: 'loaderSpin 0.8s linear infinite',
-              width: '22px',
-              height: '22px',
-              color: '#ff0040',
-              marginBottom: '0px',
-              flexShrink: 0
-            }}
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="2"
-              style={{ opacity: 0.15 }}
-            />
-            <path
-              d="M12 2a10 10 0 0 1 10 10"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span>Loading product…</span>
-        </div>
-      }
-    >
-      <ProductDeepLinkContent />
-    </Suspense>
+    <>
+      <ProductBackgroundWatermark />
+      <Suspense
+        fallback={
+          <ProductDetailsModal
+            product={null as any}
+            isOpen
+            onClose={() => {}}
+            isFlatPage
+          />
+        }
+      >
+        <ProductDeepLinkContent />
+      </Suspense>
+    </>
   );
 }

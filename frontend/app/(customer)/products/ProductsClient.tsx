@@ -27,7 +27,7 @@ import cardStyles from '@/components/ProductsSection.module.css';
  */
 export default function ProductsClient({
   categoryFilter,
-  title = 'Our Products',
+  title = 'Explore our Collection',
   allowedProductIds,
 }: {
   categoryFilter?: string;
@@ -145,7 +145,7 @@ export default function ProductsClient({
             animation: 'loaderSpin 0.8s linear infinite',
             width: '22px',
             height: '22px',
-            color: '#ff0040',
+            color: '#AB6468',
             marginBottom: '0px',
             flexShrink: 0
           }}

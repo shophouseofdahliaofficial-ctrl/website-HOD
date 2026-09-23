@@ -971,8 +971,8 @@
   font-weight: 400 !important;
   color: #000;
   margin: 0;
-  font-family: var(--font-instrument-serif), "Instrument Serif", Georgia, serif !important;
-  font-style: italic !important;
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif !important;
+  font-style: normal !important;
   letter-spacing: -0.5px;
   display: flex;
   justify-content: space-between;
@@ -983,8 +983,8 @@
 }
 
 .productTitle>span {
-  font-family: var(--font-instrument-serif), "Instrument Serif", Georgia, serif !important;
-  font-style: italic !important;
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif !important;
+  font-style: normal !important;
   font-weight: 400 !important;
 }
 
@@ -1335,7 +1335,7 @@
   background: rgb(255 255 255 / 60%);
   backdrop-filter: blur(12px) saturate(4.5);
   -webkit-backdrop-filter: blur(12px);
-  padding: 6px 10px;
+  padding: 6px 7px;
   border-radius: 40px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
@@ -1578,7 +1578,7 @@
   padding: 0;
   border: 0px solid #d9d9d9;
   border-radius: 100px;
-  background: #fff;
+  background: #ffffff00;
   color: #666666;
   cursor: pointer;
   transition: background 0s ease, border-color 0s ease, color 0s ease;
@@ -2622,9 +2622,13 @@
 }
 
 .relatedSection {
+  position: relative;
+  z-index: 1;
   padding: 2rem;
-  margin-top: 2rem;
-  width: 100%;
+  margin-top: -1.7rem;
+  margin-left: 10px;
+  margin-right: 10px;
+  width: calc(100% - 20px);
   box-sizing: border-box;
   background: #ffffff;
   border-radius: 24px;
@@ -2650,7 +2654,7 @@
 
 .relatedGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 1fr) !important;
   gap: 1rem;
   width: 100%;
   box-sizing: border-box;
@@ -3574,6 +3578,8 @@
 }
 
 .flatPageExtras {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -3608,6 +3614,14 @@
   z-index: 35 !important;
   width: 44px !important;
   height: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
   border-radius: 50% !important;
   background: rgb(255 255 255 / 60%);
   backdrop-filter: blur(12px) saturate(4.5);
@@ -3619,14 +3633,26 @@
   justify-content: center !important;
   cursor: pointer !important;
   color: #1a1814 !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease !important;
   outline: none !important;
   pointer-events: auto !important;
 }
 
+.galleryNavBtn svg {
+  width: 30px !important;
+  height: 30px !important;
+  max-width: 30px !important;
+  max-height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
 .galleryNavBtn:hover {
   background: #ffffff81 !important;
-  transform: translateY(-50%) scale(1.2) !important;
+  transform: translateY(-50%) scale(1.08) !important;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25) !important;
   color: #000 !important;
 }
@@ -3650,7 +3676,7 @@
 }
 
 .flatPageBody {
-  background: white;
+  background: transparent;
   border-radius: 24px;
   border: 0px solid #e2e8f0;
   position: relative;
@@ -3694,6 +3720,8 @@
     background: transparent !important;
     border: none !important;
     box-sizing: border-box !important;
+    margin-top: -2px !important;
+
   }
 
   .flatPageBody .imageSection {
@@ -3789,7 +3817,7 @@
     border-radius: 0 !important;
     border: none !important;
     border: 1px solid rgba(255, 255, 255) !important;
-    padding: 24px 14px 24px 24px !important;
+    padding: 26px 26px !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     overflow-y: auto !important;
@@ -3797,13 +3825,19 @@
     overscroll-behavior: auto !important;
     overscroll-behavior-y: auto !important;
 
-    scrollbar-width: thin !important;
-    scrollbar-color: #d1d5db transparent !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 16px !important;
     pointer-events: auto !important;
     border-radius: 24px !important;
+  }
+
+  .flatPageBody .detailsSection::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .flatPageBody .detailsSection .productOverviewCard,
@@ -3832,25 +3866,6 @@
     right: 514px !important;
     left: auto !important;
     z-index: 60 !important;
-  }
-
-  .flatPageBody .detailsSection::-webkit-scrollbar {
-    display: block !important;
-    width: 5px !important;
-  }
-
-  .flatPageBody .detailsSection::-webkit-scrollbar-track {
-    background: transparent !important;
-    margin: 20px 0 !important;
-  }
-
-  .flatPageBody .detailsSection::-webkit-scrollbar-thumb {
-    background: #d1d5db !important;
-    border-radius: 999px !important;
-  }
-
-  .flatPageBody .detailsSection::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af !important;
   }
 
   .flatPageBody .imageSection>*:first-child,
@@ -9988,9 +10003,9 @@
 }
 
 .photobookWorkspaceLogoText {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
   font-size: 0.75rem;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.45);
   letter-spacing: -0.3px;
@@ -14023,3 +14038,211 @@
 }
 
 /* Desktop flat page full-width grid overrides cleaned up */
+
+/* ===== Product Details Skeleton / Shimmer ===== */
+@keyframes productDetailsShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeletonBase {
+  background: linear-gradient(90deg,
+      #f2eff2 0%,
+      #faf8fa 50%,
+      #f2eff2 100%);
+  background-size: 200% 100%;
+  animation: productDetailsShimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.imageSectionSkeleton {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.skeletonNavArrow {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  opacity: 0.7;
+  pointer-events: none;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: none !important;
+}
+
+.imageGridSkeleton {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+  height: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.skeletonImageCard {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  width: 31% !important;
+  max-width: 380px !important;
+  height: 82vh !important;
+  max-height: 720px !important;
+  min-height: 480px !important;
+  flex: 0 0 31% !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.skeletonImage {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+}
+
+.detailsSectionSkeleton {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(28px) saturate(5.6) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(7) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  padding: 24px 20px !important;
+  pointer-events: none;
+  box-sizing: border-box !important;
+}
+
+.skeletonTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.skeletonTitle {
+  width: 68%;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.skeletonShareBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonRating {
+  width: 64px;
+  height: 26px;
+  border-radius: 6px;
+}
+
+.skeletonPrice {
+  width: 95px;
+  height: 32px;
+  border-radius: 8px;
+  margin-top: 2px;
+}
+
+.skeletonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.skeletonGroupLabel {
+  width: 44px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.skeletonPillsRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.skeletonPill {
+  height: 32px;
+  border-radius: 80px;
+}
+
+.skeletonActionRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.skeletonFavoriteBtn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonAddToCartBtn {
+  height: 46px;
+  flex: 1;
+  border-radius: 80px;
+}
+
+.skeletonBuyNowBtn {
+  height: 46px;
+  flex: 1;
+  border-radius: 80px;
+}
+
+.skeletonDeliveryNote {
+  width: 230px;
+  height: 15px;
+  border-radius: 4px;
+  align-self: center;
+  margin-top: 2px;
+}
+
+@media (max-width: 968px) {
+  .detailsSectionSkeleton {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin-top: 1rem !important;
+  }
+
+  .imageGridSkeleton {
+    flex-direction: column !important;
+    overflow-x: auto !important;
+  }
+
+  .skeletonImageCard {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    height: 380px !important;
+    max-height: 420px !important;
+  }
+}

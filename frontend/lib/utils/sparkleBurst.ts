@@ -14,11 +14,11 @@ export function triggerSparkleBurst(target: HTMLElement | EventTarget | null) {
 
   const particleCount = 14;
   const colors = [
-    'rgb(255, 6, 88)',
-    'rgb(255, 0, 85)',
-    'rgb(235, 16, 85)',
-    'rgb(255, 50, 110)',
-    'rgb(220, 20, 60)',
+    '#AF5D6A',
+    '#AF5D6A',
+    '#b86875',
+    '#a45360',
+    '#c27582',
   ];
 
   for (let i = 0; i < particleCount; i++) {

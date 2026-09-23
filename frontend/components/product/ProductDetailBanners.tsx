@@ -9,9 +9,44 @@ interface ProductDetailBannersProps {
 }
 
 export default function ProductDetailBanners({ banners }: ProductDetailBannersProps) {
-  const images = banners?.images?.filter(Boolean) ?? [];
-  const displayMode = banners?.displayMode === 'carousel' ? 'carousel' : 'stacked';
-  const adaptToFullImageRatio = Boolean(banners?.adaptToFullImageRatio);
+  let parsed: ProductDetailBanners | null = null;
+  if (banners) {
+    if (typeof banners === 'string') {
+      try {
+        const obj = JSON.parse(banners);
+        if (Array.isArray(obj)) {
+          parsed = { images: obj, adaptToFullImageRatio: false, displayMode: 'stacked' };
+        } else if (obj && typeof obj === 'object') {
+          parsed = {
+            images: Array.isArray(obj.images) ? obj.images : (typeof obj.images === 'string' ? [obj.images] : []),
+            adaptToFullImageRatio: Boolean(obj.adaptToFullImageRatio),
+            displayMode: obj.displayMode === 'carousel' ? 'carousel' : 'stacked',
+          };
+        }
+      } catch {
+        parsed = null;
+      }
+    } else if (Array.isArray(banners)) {
+      parsed = { images: banners, adaptToFullImageRatio: false, displayMode: 'stacked' };
+    } else if (typeof banners === 'object') {
+      parsed = {
+        images: Array.isArray(banners.images)
+          ? banners.images
+          : typeof (banners as any).images === 'string'
+          ? [(banners as any).images]
+          : [],
+        adaptToFullImageRatio: Boolean(banners.adaptToFullImageRatio),
+        displayMode: banners.displayMode === 'carousel' ? 'carousel' : 'stacked',
+      };
+    }
+  }
+
+  const images = (parsed?.images || [])
+    .map((item) => (typeof item === 'string' ? item : (item as any)?.url || ''))
+    .filter((url) => typeof url === 'string' && url.trim().length > 0);
+
+  const displayMode = parsed?.displayMode === 'carousel' ? 'carousel' : 'stacked';
+  const adaptToFullImageRatio = Boolean(parsed?.adaptToFullImageRatio);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [containerHeight, setContainerHeight] = useState<number | null>(null);
@@ -31,7 +66,9 @@ export default function ProductDetailBanners({ banners }: ProductDetailBannersPr
     img.onload = () => {
       const containerWidth = firstImageRef.current?.parentElement?.clientWidth || window.innerWidth;
       const aspectRatio = img.height / img.width;
-      setContainerHeight(containerWidth * aspectRatio);
+      if (aspectRatio > 0 && Number.isFinite(aspectRatio)) {
+        setContainerHeight(containerWidth * aspectRatio);
+      }
     };
     img.src = images[0];
   }, [adaptToFullImageRatio, images]);

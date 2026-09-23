@@ -22,7 +22,7 @@ export default function ConditionalHeader() {
     }
   }, [isAdminRoute]);
 
-  if (pathname?.startsWith('/auth') || pathname === '/coming-soon') {
+  if (pathname === '/' || pathname?.startsWith('/auth') || pathname === '/coming-soon') {
     return null;
   }
 

@@ -19,6 +19,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -28,11 +29,11 @@
   position: relative;
   width: 100%;
   max-width: 410px;
-  background: rgba(255, 255, 255, 0.72) !important;
+  background: rgba(255, 255, 255) !important;
   backdrop-filter: blur(28px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
   border: 1px solid rgba(255, 255, 255, 0.85) !important;
-  border-radius: 20px;
+  border-radius: 24px;
   box-shadow:
     0 24px 54px -10px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.6);
@@ -49,6 +50,7 @@
     opacity: 0;
     transform: scale(0.94) translateY(8px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -58,28 +60,32 @@
 /* Header */
 .header {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
   position: relative;
 }
 
 .imageWrapper {
-  width: 52px;
-  height: 52px;
+  width: 72px;
+  height: 72px;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
-  background: #f1f5f9;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .productImg {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  display: block;
 }
 
 .headerInfo {
@@ -88,6 +94,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  justify-content: center;
 }
 
 .productName {
@@ -113,8 +120,8 @@
   position: absolute;
   top: -4px;
   right: -6px;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.05);
   border: none;
@@ -122,7 +129,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #686868;
   transition: all 0.15s ease;
   padding: 0;
 }
@@ -130,7 +137,7 @@
 .closeButton:hover {
   background: rgba(0, 0, 0, 0.1);
   color: #0f172a;
-  transform: scale(1.08);
+
 }
 
 /* Body / Variations Section */
@@ -138,17 +145,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 270px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.body::-webkit-scrollbar {
-  width: 4px;
-}
-.body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  background: #f2f2f2;
+  padding: 18px;
+  border-radius: 24px;
 }
 
 .variationPicker {
@@ -170,59 +169,56 @@
 .selectedValueText {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #0284c7;
+  color: #af5e6b;
 }
 
 .variationsGrid {
   display: flex;
+  gap: 0.6rem;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
 }
 
 /* Variation Button Design matching ProductDetailsModal */
 .variationButton {
-  padding: 0.45rem 0.9rem;
+  padding: 6px 13px;
   background: #ffffff;
-  border: 2px solid #d9d9d9;
-  border-radius: 6px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #333333;
+  border: 1px solid #af5d6a;
+  border-radius: 80px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #af5d6a;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0s ease;
+  box-shadow: none;
   font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.2);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  line-height: 1.2;
 }
 
 .variationButton:not(.variationActive):hover {
-  border-color: #1a73e8;
-  color: #1a73e8;
+  border: 1px solid #af5d6a;
+  color: #af5d6a;
 }
 
 .variationActive,
 .variationActive:hover {
-  border-color: #1a73e8;
-  color: #1a73e8;
-  background: #ffffff;
+  background: #af5d6a;
+  border-color: #af5d6a;
+  color: white;
+  box-shadow: inset 0px 0px 3px 0px #ffffff;
 }
 
 .variationDisabled {
-  opacity: 0.5;
   cursor: not-allowed;
-  background: transparent;
+  background: #fff;
   border-style: dashed;
   border-color: #cfcfcf;
-  color: #8a8a8a;
+  color: #9a9a9a;
+  opacity: 0.7;
   box-shadow: none;
-}
-
-.variationPriceTag {
-  font-size: 0.76rem;
-  font-weight: 500;
-  opacity: 0.85;
 }
 
 /* Color swatch group */
@@ -317,11 +313,11 @@
   display: inline-flex;
   align-items: center;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 0px solid #e2e8f0;
   border-radius: 999px;
   padding: 2px 4px;
   gap: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .qtyBtn {
@@ -329,7 +325,7 @@
   height: 24px;
   border-radius: 50%;
   border: none;
-  background: #f1f5f9;
+  background: #f1f5f900;
   color: #334155;
   font-size: 0.95rem;
   font-weight: 700;
@@ -365,7 +361,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+
   gap: 12px;
 }
 
@@ -381,6 +377,7 @@
   letter-spacing: 0.04em;
   color: #64748b;
   margin-bottom: 1px;
+  display: none;
 }
 
 .priceValues {
@@ -405,10 +402,10 @@
 }
 
 .addButton {
-  padding: 0.6rem 1.35rem;
-  background: #ff0155;
+  padding: 0.6rem 0.9rem 0.6rem 0.7rem;
+  background: #af5d6a;
   color: #ffffff;
-  border: 1px solid #ff0155;
+  border: 1px solid #af5d6a;
   border-radius: 999px;
   font-size: 0.88rem;
   font-weight: 700;
@@ -418,16 +415,15 @@
   justify-content: center;
   gap: 6px;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(255, 1, 85, 0.3);
   font-family: var(--font-inter), 'Inter', sans-serif;
   white-space: nowrap;
+  box-shadow: inset 0px 0px 3px 0px #ffffff;
 }
 
 .addButton:hover {
-  background: #e0004c;
-  border-color: #e0004c;
-  transform: translateY(-1px) scale(1.03);
-  box-shadow: 0 6px 16px rgba(255, 1, 85, 0.38);
+  background: #884550;
+  border-color: #884550;
+
 }
 
 .addButton:active {
@@ -441,4 +437,11 @@
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
+}
+
+.addBtnIcon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  display: block;
 }

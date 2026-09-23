@@ -24,7 +24,7 @@ export default function AdminLoading() {
           animation: 'loaderSpin 0.8s linear infinite',
           width: '26px',
           height: '26px',
-          color: '#ff0040',
+          color: '#AB6468',
           marginBottom: '12px'
         }}
         viewBox="0 0 24 24"

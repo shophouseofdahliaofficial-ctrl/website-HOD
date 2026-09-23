@@ -332,8 +332,8 @@ export default function QuickAddModal({
               <Image
                 src={activeImageUrl}
                 alt={displayProduct.name}
-                width={52}
-                height={52}
+                fill
+                sizes="72px"
                 className={styles.productImg}
               />
             ) : (
@@ -354,7 +354,7 @@ export default function QuickAddModal({
             onClick={onClose}
             aria-label="Close"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -438,12 +438,7 @@ export default function QuickAddModal({
                             setSelectedCustomizations((prev) => ({ ...prev, [g.id]: val.id }));
                           }}
                         >
-                          <span>{removePriceFromName(val.name)}</span>
-                          {typeof val.price === 'number' && Number.isFinite(val.price) && val.price > 0 && (
-                            <span className={styles.variationPriceTag}>
-                              +₹{val.price.toFixed(0)}
-                            </span>
-                          )}
+                          {removePriceFromName(val.name)}
                         </button>
                       );
                     })}
@@ -483,12 +478,7 @@ export default function QuickAddModal({
                       }`}
                       onClick={() => setSelectedVariationId(v.id)}
                     >
-                      <span>{removePriceFromName(v.size)}</span>
-                      {v.price != null && Number.isFinite(Number(v.price)) && (
-                        <span className={styles.variationPriceTag}>
-                          • ₹{Number(v.price).toFixed(0)}
-                        </span>
-                      )}
+                      {removePriceFromName(v.size)}
                     </button>
                   );
                 })}
@@ -546,7 +536,27 @@ export default function QuickAddModal({
             disabled={isOutOfStock}
             onClick={handleAddToCart}
           >
-            {isOutOfStock ? 'Out of Stock' : '+ Add'}
+            {isOutOfStock ? (
+              'Out of Stock'
+            ) : (
+              <>
+                <svg
+                  className={styles.addBtnIcon}
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>Add</span>
+              </>
+            )}
           </button>
         </div>
       </div>

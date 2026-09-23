@@ -13,22 +13,17 @@ const CONTENT_TYPES = [
   { type: 'about', label: 'About Us', path: '/about' },
   { type: 'contact', label: 'Contact Details', path: '/contact' },
   { type: 'reviews', label: 'Reviews Settings', path: '/reviews' },
-  { type: 'subscription_delivery', label: 'Recurring Delivery', path: '' },
 ];
 
 const OTHER_OPTIONS = [
   { type: 'logo', label: 'Logo', path: '/admin/logo', description: 'Upload logo, set width' },
   { type: 'favicon', label: 'Favicon', path: '/admin/favicon', description: 'Upload browser tab icon' },
   { type: 'platform_fee', label: 'Platform fees', path: '/admin/content/platform_fee', description: 'Set flat checkout fee charged once per order' },
-  { type: 'delivery_rates', label: 'Delivery rates', path: '/admin/content/delivery_rates', description: 'Set warehouse coordinates and distance-based delivery charges' },
   { type: 'categories', label: 'Product Categories', path: '/admin/categories', description: 'Manage product categories' },
   { type: 'coupons', label: 'Coupons', path: '/admin/coupons', description: 'Manage discounts' },
-  { type: 'delivery_slots', label: 'Delivery Time Slots', path: '/admin/content/subscription_delivery', description: 'Set subscription delivery-time dropdown options' },
   { type: 'help_support', label: 'Help support number', path: '/admin/content/help_support', description: 'Number or link for Need help (WhatsApp, Telegram)' },
   { type: 'app_download', label: 'Download our App', path: '/admin/content/app_download', description: 'Store or custom URL for the Account page app download row (mobile)' },
   { type: 'homepage_products', label: 'Homepage Products Rows', path: '/admin/content/homepage_products', description: 'Adjust how many product rows appear on homepage "Our Products"' },
-  { type: 'delivery_time_off', label: 'Delivery time off', path: '/admin/content/delivery_time_off', description: 'After cutoff (IST), show a confirm modal before cart / subscription / trial payment' },
-  { type: 'photobooth_links', label: 'Photobooth settings', path: '/admin/content/photobooth_links', description: 'Configure links, cover images, and promo card placements for Polaroids and Photostrips' },
   { type: 'gifting', label: 'Gifting', path: '/admin/content/gifting', description: 'Configure gift wrapping price per product and toggle customer availability' },
   { type: 'cod', label: 'Cash on Delivery (COD)', path: '/admin/content/cod', description: 'Enable or disable Cash on Delivery across cart and checkout' },
 ];
@@ -154,13 +149,6 @@ function Icon({ name }: { name: string }) {
         <svg viewBox="0 0 24 24" {...common}>
           <circle cx="12" cy="12" r="10" />
           <polyline points="12 6 12 12 16 14" />
-        </svg>
-      );
-    case 'photobooth_links':
-      return (
-        <svg viewBox="0 0 24 24" {...common}>
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
       );
     case 'gifting':

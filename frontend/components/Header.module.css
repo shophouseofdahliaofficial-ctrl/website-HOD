@@ -9,7 +9,7 @@
   position: fixed;
   top: 8px;
   left: 2px;
-  right: 14px;
+  right: 2px;
   width: auto;
   z-index: 1000;
   border-radius: 106px;
@@ -20,19 +20,23 @@
 }
 
 :global(body[data-desktop-cart-open="true"]) .header,
-:global(body[data-mobile-menu-open="true"]) .header {
+:global(body[data-mobile-menu-open="true"]) .header,
+:global(body[data-desktop-help-open="true"]) .header {
   z-index: 9999 !important;
 }
 
 :global(body[data-desktop-cart-open="true"]) .headerRow,
-:global(body[data-mobile-menu-open="true"]) .headerRow {
+:global(body[data-mobile-menu-open="true"]) .headerRow,
+:global(body[data-desktop-help-open="true"]) .headerRow {
   z-index: auto !important;
 }
 
 :global(body[data-desktop-cart-open="true"]) .logoContainer,
 :global(body[data-desktop-cart-open="true"]) .navMenuAnchor,
 :global(body[data-mobile-menu-open="true"]) .logoContainer,
-:global(body[data-mobile-menu-open="true"]) .navMenuAnchor {
+:global(body[data-mobile-menu-open="true"]) .navMenuAnchor,
+:global(body[data-desktop-help-open="true"]) .logoContainer,
+:global(body[data-desktop-help-open="true"]) .navMenuAnchor {
   z-index: 1 !important;
 }
 
@@ -43,7 +47,8 @@
   flex: 0 0 auto;
 }
 
-:global(body[data-desktop-cart-open="true"]) .rightButtonsSlot {
+:global(body[data-desktop-cart-open="true"]) .rightButtonsSlot,
+:global(body[data-desktop-help-open="true"]) .rightButtonsSlot {
   min-width: 170px;
   height: 48px;
 }
@@ -54,7 +59,8 @@
 }
 
 /* Desktop cart open: backdrop covers page, scrollbar & headerRow; cart pill (rightButtons) is above it via z-index: 9999 */
-:global(body[data-desktop-cart-open="true"]) .mobileMenuBackdrop {
+:global(body[data-desktop-cart-open="true"]) .mobileMenuBackdrop,
+:global(body[data-desktop-help-open="true"]) .mobileMenuBackdrop {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -87,7 +93,8 @@
 
 /* Cart pill/panel: stays above the blur overlay (z-index 10) */
 :global(body[data-desktop-cart-open="true"]) .rightButtons,
-:global(body[data-mobile-menu-open="true"]) .rightButtons {
+:global(body[data-mobile-menu-open="true"]) .rightButtons,
+:global(body[data-desktop-help-open="true"]) .rightButtons {
   z-index: 9999 !important;
   pointer-events: auto !important;
 }
@@ -838,13 +845,14 @@
   z-index: 1;
   display: flex;
   align-items: center;
+  color: #7d7d7d;
 }
 
 .searchIcon svg {
   width: 25px;
   height: 25px;
   margin-left: -3px;
-  color: #414141;
+  color: #7d7d7d;
 }
 
 .searchInput {
@@ -1860,7 +1868,7 @@
   right: -12px;
   background: rgba(255, 255, 255);
   border: 1px solid rgba(199, 199, 199, 0.78);
-  border-radius: 19px;
+  border-radius: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, .08);
   min-width: 185px;
   z-index: 1000;
@@ -2305,7 +2313,7 @@
   transition: background-color 0.0s;
   text-decoration: none;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  border-radius: 15px;
+  border-radius: 19px;
   letter-spacing: 0;
 }
 
@@ -3032,7 +3040,7 @@
   margin-left: -80px;
   display: flex;
   align-items: center;
-  color: #64748b;
+  color: #7d7d7d;
   pointer-events: none;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3057,21 +3065,25 @@
 .desktopSearchInput {
   width: 100%;
   padding: 1rem 1.25rem 1rem calc(50% - 55px);
-  border: 2px solid #F2F1F6;
+  border: 2px solid #d3d3d385;
   border-radius: 106px;
   font-size: 1.05rem;
   font-weight: 500;
-  color: #0f172a;
-  background: #F2F1F6;
+  color: #222222;
+  background: white;
   outline: none;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desktopSearchInput::placeholder {
+  letter-spacing: -0.5px;
 }
 
 .desktopSearchInput:focus,
 .desktopSearchInput:not(:placeholder-shown) {
   padding-left: 3.25rem;
-  border-color: #edebf7;
-  background: #edebf7;
+  border-color: #ededed;
+  background: #ededed;
   box-shadow: 0 0 0 0px rgba(15, 23, 42, 0.08);
 }
 
@@ -3129,44 +3141,6 @@
   font-weight: 500;
 }
 
-.desktopSearchSuggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 0.25rem;
-}
-
-.desktopSearchSuggestionsLabel {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.desktopSearchSuggestionsList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.desktopSearchSuggestionTag {
-  background: #f2f1f6;
-  border: 0px solid #e2e8f0;
-  border-radius: 99px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.desktopSearchSuggestionTag:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-  transform: translateY(0px);
-}
 
 .searchButtonIcon {
   width: 25px !important;
@@ -3600,9 +3574,17 @@
 }
 
 .mobileNavLinkHighlight {
-  color: #ff0040;
-  font-weight: 700;
+  background: linear-gradient(135deg, #ff007a 0%, #ff0040 50%, #ff5200 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 600;
+  display: inline-flex;
+  width: -moz-fit-content;
+  width: fit-content;
 }
+
 
 .mobileNavLinkActive,
 .mobileNavLinkHighlight.mobileNavLinkActive {
@@ -3613,6 +3595,7 @@
   border-radius: 80px;
   background: #ff005c;
   color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
 }
 
 .mobileSubNavLink {
@@ -3621,7 +3604,7 @@
   font-weight: 500 !important;
   text-decoration: none;
   display: block;
-  padding: 6px 0;
+  padding: 0px 0;
   transition: color 0.2s ease;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.2;
@@ -3854,4 +3837,275 @@
 
 .stickyScrollShadowVisible {
   opacity: 1;
+}
+
+/* Desktop Help Button */
+.helpButton {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: #000000 !important;
+  transition: background-color 0.06s, color 0.15s !important;
+  padding: 0 !important;
+}
+
+.helpButton:hover {
+  background: #f1f1f1 !important;
+  color: #25D366 !important;
+}
+
+.helpButtonIcon {
+  width: 21px !important;
+  height: 21px !important;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .helpButton {
+    display: none !important;
+  }
+}
+
+/* Desktop Help Drawer Expanded Inner */
+.desktopHelpExpandedInner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 14px 12px;
+}
+
+.desktopHelpHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 6px;
+}
+
+.desktopHelpTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111;
+  letter-spacing: -0.2px;
+}
+
+.desktopHelpCloseBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f5f5f5;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.desktopHelpCloseBtn:hover {
+  background: #ebebeb;
+  transform: scale(0.96);
+}
+
+.desktopHelpList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.desktopHelpLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #111;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  border-radius: 10px;
+  font-family: inherit;
+}
+
+.desktopHelpLink:hover,
+.desktopHelpLink:focus-visible {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.desktopHelpItemIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #444;
+}
+
+.desktopHelpLink:hover .desktopHelpItemIcon {
+  color: #000;
+}
+
+/* Feedback & Review Modal layout styles in Header */
+.modalPanel {
+  background: #ffffff;
+  border-radius: 24px;
+  max-width: 440px;
+  width: 100%;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.25s ease-out;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border: none;
+  background: none;
+  font-size: 1.75rem;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.modalCloseBtn:hover {
+  color: #111;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modalSubtitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.feedbackForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.formLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+}
+
+.formInput,
+.formTextarea {
+  padding: 0.85rem 1rem;
+  border-radius: 13px;
+  border: 1px solid #8f8f8f;
+  font-size: 0.95rem;
+  color: #111;
+  background: #fafafa;
+  transition: border-color 0.2s, background-color 0.2s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  outline: none;
+  border-color: #000;
+  background: #fff;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btnSubmit {
+  padding: 0.7rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  background: #111;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnSubmit:hover {
+  background: #333;
+}
+
+.btnSubmit:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.reviewPlatforms {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reviewBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-radius: 120px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.btnTrustpilot {
+  background: #00b67a;
+  color: #ffffff;
+}
+
+.btnGoogle {
+  background: #ffffff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+}
+
+.platformIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }

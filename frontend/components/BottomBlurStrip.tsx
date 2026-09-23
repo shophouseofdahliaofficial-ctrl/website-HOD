@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function BottomBlurStrip() {
+  const pathname = usePathname();
   const [isAtBottom, setIsAtBottom] = useState(false);
 
   useEffect(() => {
+    if (pathname === '/') return;
     const handleScroll = () => {
       const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
       const windowHeight = window.innerHeight;
@@ -33,7 +36,11 @@ export default function BottomBlurStrip() {
       window.removeEventListener('resize', handleScroll);
       clearInterval(interval);
     };
-  }, []);
+  }, [pathname]);
+
+  if (pathname === '/') {
+    return null;
+  }
 
   return (
     <div

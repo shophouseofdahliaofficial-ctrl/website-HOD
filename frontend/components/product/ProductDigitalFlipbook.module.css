@@ -185,9 +185,9 @@
   font-weight: 700;
   color: rgb(98 98 98);
   text-align: center;
-  font-family: '__Instrument_Serif_1f5468';
+  font-family: var(--font-instrument-serif), "ITC Fenice", serif;
   letter-spacing: -0.2px;
-  font-style: italic;
+  font-style: normal;
   box-sizing: border-box;
 }
 

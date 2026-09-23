@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { adminSubscriptionsApi, adminProductsApi } from '@/lib/api';
+import { adminProductsApi } from '@/lib/api';
 import { apiClient } from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
-import { Subscription, Product, User } from '@/types';
+import { Product, User } from '@/types';
 import { LoadingSpinnerWithText } from '@/components/ui/LoadingSpinner';
 import styles from './dashboard.module.css';
 import adminStyles from './admin-styles.module.css';

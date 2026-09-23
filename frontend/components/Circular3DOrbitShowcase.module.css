@@ -1,0 +1,307 @@
+.orbitWrapper {
+  position: relative;
+  width: 100vw;
+  min-height: 420vh;
+  background-color: transparent;
+}
+
+.stickyStage {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fixed Left Center Info Card */
+.cardInfo {
+  position: absolute;
+  top: 50%;
+  left: 5.5vw;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  width: clamp(210px, 18vw, 290px);
+  max-width: 90vw;
+  z-index: 25;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.textStack {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+}
+
+.textBlock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  will-change: transform, opacity, filter;
+  pointer-events: none;
+}
+
+/* Kinetic Letter Split: Slicing up cleanly from bottom to top with scroll */
+.kineticWord {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.charMask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  line-height: 1.12;
+}
+
+.spaceMask {
+  display: inline-block;
+  width: 0.32em;
+}
+
+.charCutScroll {
+  display: inline-block;
+  will-change: transform;
+}
+
+@keyframes letterCutUp {
+  0% {
+    transform: translateY(115%);
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.tagBadge {
+  font-family: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #777777;
+  margin-bottom: 0.6rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.itemTitle {
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-size: clamp(2rem, 3.4vw, 3.2rem);
+  font-weight: 300;
+  color: #111111;
+  margin: 0 0 0.6rem 0;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-align: left;
+  white-space: normal;
+  width: 100%;
+}
+
+.itemSubtitle {
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #555555;
+  margin: 0;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  font-weight: 300;
+  text-align: left;
+  max-width: 380px;
+  width: 100%;
+  white-space: normal;
+}
+
+.shopButton {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #000000;
+  border-radius: 0 !important;
+  padding: 0.38rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: 0.05rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  will-change: filter, opacity;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.shopButton:hover {
+  background-color: #000000;
+  opacity: 1;
+  color: white;
+}
+
+.itemsLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.orbitCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 640px;
+  max-width: 90vw;
+  height: 580px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity, filter;
+  transform-origin: center center;
+}
+
+.horizontalCard {
+  cursor: pointer;
+  pointer-events: auto !important;
+}
+
+.horizontalCard .modelContainerWrap {
+  pointer-events: none !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.horizontalCard .modelContainerWrap canvas {
+  pointer-events: none !important;
+}
+
+.horizontalCard:hover .modelContainerWrap {
+  transform: scale(1.08) translateY(-4px);
+}
+
+.modelContainerWrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardClickTrigger {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 320px;
+  z-index: 30;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  pointer-events: auto;
+}
+
+/* Right Center Orbit Progress Indicator */
+.orbitIndicator {
+  position: absolute;
+  top: 50%;
+  right: 3.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.2rem;
+  z-index: 20;
+  pointer-events: none;
+  will-change: opacity, transform, filter;
+}
+
+.counterText {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  flex-direction: row;
+  transform: rotate(-90deg);
+}
+
+.activeNumber {
+  color: #530000;
+  font-weight: 600;
+}
+
+.divider {
+  color: #cccccc;
+  font-weight: 300;
+}
+
+.totalNumber {
+  color: #999999;
+  font-weight: 300;
+}
+
+.indicatorTrack {
+  width: 4px;
+  height: 100px;
+  background-color: rgba(83, 0, 0, 0.12);
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+.indicatorThumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #530000;
+  border-radius: 2px;
+  transition: height 0.15s ease-out;
+}
+
+@media (max-width: 768px) {
+  .cardInfo {
+    left: 1.5rem;
+    max-width: 280px;
+  }
+
+  .itemTitle {
+    font-size: 1.8rem;
+  }
+
+  .orbitCard {
+    width: 340px;
+    height: 380px;
+  }
+
+  .orbitIndicator {
+    right: 1.2rem;
+  }
+}

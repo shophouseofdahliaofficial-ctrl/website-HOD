@@ -32,7 +32,6 @@ export default function AdminMobileHeader() {
     { name: 'Products', path: '/admin/products', description: 'Manage products' },
     { name: 'Banners', path: '/admin/banners', description: 'Manage banners' },
     { name: 'Customers', path: '/admin/customers', description: 'Customer list & analytics' },
-    { name: 'Plans', path: '/admin/subscriptions', description: 'Manage recurring plans' },
     { name: 'Feedback', path: '/admin/feedback', description: 'Customer feedback' },
     { name: 'Categories', path: '/admin/categories', description: 'Manage categories' },
     { name: 'Coupons', path: '/admin/coupons', description: 'Manage coupons' },

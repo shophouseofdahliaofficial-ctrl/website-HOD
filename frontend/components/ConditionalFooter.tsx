@@ -24,11 +24,7 @@ export default function ConditionalFooter() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  if (isAuthRoute || isAdminRoute || isComingSoon) {
-    return null;
-  }
-
-  if (isMobile) {
+  if (pathname === '/' || isAuthRoute || isAdminRoute || isComingSoon) {
     return null;
   }
 

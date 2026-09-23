@@ -37,10 +37,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Temporary files & archives
-tmp/
-*/tmp/
-milko-frontend-main/
-milko-backend-main/
-*/milko-frontend-main/
-*/milko-backend-main/
+# Large raw 3D assets (>100MB)
+*tripo_convert*.obj

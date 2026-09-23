@@ -1,0 +1,111 @@
+.preloaderContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #530000;
+  z-index: 9999;
+  user-select: none;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.pixelCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.contentWrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  will-change: transform, opacity;
+  width: 100%;
+  max-width: 90vw;
+}
+
+.counterWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  line-height: 1;
+  overflow: visible;
+}
+
+.shimmerText {
+  font-size: clamp(5.5rem, 14vw, 11.5rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  padding: 0.05em 0.25em;
+  background: linear-gradient(110deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.5) 35%,
+      #ffffff 50%,
+      rgba(255, 255, 255, 0.5) 65%,
+      rgba(255, 255, 255, 0.4) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: textShimmer 2.2s infinite linear;
+  white-space: nowrap;
+}
+
+.percentSymbol {
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  font-weight: 300;
+  margin-left: 0.35rem;
+  letter-spacing: 0;
+  display: inline-block;
+}
+
+.topLeftWrap {
+  position: absolute;
+  top: clamp(1.5rem, 3.5vw, 2.5rem);
+  left: clamp(1.5rem, 3.5vw, 2.5rem);
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.subText {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: clamp(0.75rem, 1.2vw, 0.88rem);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  font-weight: 400;
+  font-style: normal;
+  display: block;
+}
+
+@keyframes textShimmer {
+  0% {
+    background-position: 180% 0;
+  }
+
+  100% {
+    background-position: -180% 0;
+  }
+}

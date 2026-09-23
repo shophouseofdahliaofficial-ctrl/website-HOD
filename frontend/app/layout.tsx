@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 import './globals.css';
-import { Instrument_Serif, Inter, Epilogue } from 'next/font/google';
+import { Inter, Epilogue } from 'next/font/google';
 import localFont from 'next/font/local';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -19,7 +19,6 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import NativeGoogleBridge from '@/components/NativeGoogleBridge';
 import FaviconManager from '@/components/FaviconManager';
-import HelpFab from '@/components/HelpFab';
 import BottomBlurStrip from '@/components/BottomBlurStrip';
 import SmoothScroll from '@/components/SmoothScroll';
 import { DEFAULT_KEYWORDS, GA_MEASUREMENT_ID, SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from '@/lib/seo';
@@ -36,10 +35,8 @@ const epilogue = Epilogue({
   display: 'swap',
 });
 
-const instrumentSerif = Instrument_Serif({
-  weight: ['400'],
-  subsets: ['latin'],
-  style: ['italic', 'normal'],
+const itcFenice = localFont({
+  src: '../fonts/ITC Fenice Regular.otf',
   variable: '--font-instrument-serif',
   display: 'swap',
 });
@@ -104,7 +101,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${epilogue.variable} ${instrumentSerif.variable} ${chupsItalic.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${epilogue.variable} ${itcFenice.variable} ${chupsItalic.variable}`} suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
@@ -119,7 +116,6 @@ export default function RootLayout({
                 {children}
                 <ConditionalFooter />
 
-                <HelpFab />
                 <Toast />
                 <Analytics />
                 <SpeedInsights />

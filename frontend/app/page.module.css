@@ -1,0 +1,298 @@
+.pageWrapper {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  background-color: #530000;
+  overflow-x: clip;
+  overflow-y: visible;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+.pageWrapper::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+.heroSection {
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  position: relative;
+  background-color: #530000;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.heroVideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  scale: 1.08;
+  will-change: transform, opacity;
+}
+
+.videoOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(83, 0, 0, 0.5) 0%, rgba(83, 0, 0, 0.85) 45%, #530000 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.topHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1.5rem 2.3rem;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.headerLeft {
+  justify-self: start;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+}
+
+.headerCenter {
+  justify-self: center;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerRight {
+  justify-self: end;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 2.2rem;
+}
+
+.centerLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0px) scale(1);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.visibleLogo {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.centerLogo:hover {
+  opacity: 0.8;
+}
+
+.customLogoImg {
+  height: auto;
+  max-height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.navLink,
+.navLinkButton {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 200;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  transition: opacity 0.3s ease, color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navLink:hover,
+.navLinkButton:hover {
+  color: #ffffff;
+  opacity: 0.75;
+}
+
+/* Inverted State when scrolled over the white section */
+.invertedNav .navLink,
+.invertedNav .navLinkButton {
+  color: #0a0000;
+}
+
+.invertedNav .navLink:hover,
+.invertedNav .navLinkButton:hover {
+  color: #000000;
+  opacity: 0.75;
+}
+
+.canvasNotice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 900px;
+  width: 100%;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+  z-index: 10;
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+
+.scrollIndicator {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  opacity: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.scrollIndicator:hover {
+  opacity: 0.75 !important;
+}
+
+.scrollArrow {
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.scrollText {
+  font-family: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: capitalize;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 200;
+}
+
+.title {
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-size: clamp(2.5rem, 6.2vw, 5.2rem);
+  font-weight: 100;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  opacity: 1;
+  transform-origin: center center;
+  will-change: transform;
+  filter: sepia(5);
+}
+
+.whiteSection {
+  width: 100vw;
+  min-height: 100vh;
+  position: relative;
+  background-color: #ffffff;
+  color: #111111;
+  display: block;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  z-index: 6;
+}
+
+.pixelTransitionContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pixelTransitionCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.whiteContentContainer {
+  position: relative;
+  z-index: 10;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .topHeader {
+    padding: 1.5rem 1.5rem;
+  }
+
+  .customLogoImg {
+    max-height: 32px;
+  }
+
+  .headerRight {
+    gap: 1.4rem;
+  }
+
+  .navLink,
+  .navLinkButton {
+    font-size: 1.05rem;
+  }
+
+  .scrollIndicator {
+    bottom: 1.75rem;
+  }
+}

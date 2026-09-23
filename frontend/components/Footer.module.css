@@ -1,11 +1,13 @@
 /* Footer Styles */
 .footer {
-  background: linear-gradient(0deg, #ffffff, white, transparent);
+  position: relative;
+  z-index: 10;
+  background: #ffffff;
   color: #000000;
-  padding: 48px 0 1.5rem;
-  margin-top: 4rem;
-  border-top: 0px solid #e5e5e5;
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  padding: 21px 0 2rem 0;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   width: 100%;
 }
@@ -19,125 +21,63 @@
 }
 
 .footerContent {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  overflow: hidden;
+  padding: 1.5rem 0 1rem 0;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 3.5rem;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto -5rem auto;
-  padding-bottom: 0rem;
-  border-bottom: 0px solid #e5e5e5;
-  text-align: center;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
 
-@media (max-width: 768px) {
-  .footerContent {
-    flex-wrap: wrap;
-    gap: 2rem;
-    justify-content: center;
-    text-align: center;
-  }
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  will-change: transform;
 }
 
-.footerSection {
+.marqueeGroup {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  text-align: center;
+  flex-shrink: 0;
 }
 
-.logo {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #000000;
+.marqueeItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.footerLink {
+  color: #2b2b2b;
   text-decoration: none;
-  letter-spacing: -0.2px;
-  margin-bottom: 0.5rem;
-  transition: opacity 0.2s;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal;
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0.00em;
+  white-space: nowrap;
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-block;
+  cursor: pointer;
 }
 
-.logo:hover {
+.footerLink:hover {
+  font-weight: 500;
+  color: #000000;
+
+}
+
+.dot {
+  color: #888888;
+  font-size: 0.85rem;
+  margin: 0 1.5rem;
+  display: inline-block;
+  user-select: none;
   opacity: 0.7;
 }
 
-.logoText {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #000;
-  letter-spacing: -0.2px;
-}
-
-.logoImg {
-  max-height: 36px;
-  object-fit: contain;
-}
-
-.description {
-  color: #666666;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 300px;
-}
-
-.sectionTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #000000;
-  margin: 0 0 0.75rem 0;
-  letter-spacing: -0.1px;
-}
-
-.linksList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: center;
-}
-
-.linksList li {
-  margin: 0;
-}
-
-.linksList a {
-  color: #666666;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s;
-}
-
-.linksList a:hover {
-  color: #000000;
-}
-
-.copyright {
-  text-align: center;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e5e5;
-}
-
-.copyright p {
-  margin: 0;
-  color: #999999;
-  font-size: 0.875rem;
-}
-
-@media (max-width: 768px) {
-  .footer {
-    padding: 0rem 1rem 1.5rem;
-    margin-top: 3rem;
-  }
-
-  .description {
-    max-width: 100%;
-  }
-}
 
 .trustpilotTopCenter {
   display: flex;
@@ -153,17 +93,17 @@
 .googleBtn {
   display: inline-flex;
   align-items: center;
-  gap: .55rem;
-  padding: .9rem 1.2rem;
+  gap: 0.55rem;
+  padding: 0.85rem 1.25rem;
   border-radius: 80px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #1a1a1a;
-  font-size: .9rem;
+  font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
-  transition: all;
-  box-shadow: 0 1px 3px #00000005;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   width: fit-content;
 }
 
@@ -172,43 +112,86 @@
   background: #f8fafc;
   border-color: #cbd5e1;
   color: #0f172a;
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* Simple House of Dahlia Footer Text */
+.marqueeScrollHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  color: #8e8e93;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+  opacity: 0.8;
+  user-select: none;
+}
+
+.marqueeScrollMouseIcon {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+}
+
+.marqueeScrollHintText {
+  font-size: 0.68rem;
+  color: inherit;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* House of Dahlia Signature Watermark Section */
 .simpleLogoSection {
-  width: 100%;
-  padding: 2.25rem 0 1.25rem;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 3rem 0 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .simpleLogoText {
   margin: 0;
-  font-size: clamp(1.85rem, 5vw, 3.25rem);
-  font-weight: 800;
-  color: #1a1a1a;
+  padding: 0;
+  width: 100vw;
+  font-size: 4.8vw;
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-weight: 100;
+  color: #111111;
   letter-spacing: -0.02em;
   text-align: center;
+  white-space: nowrap;
+  line-height: 1;
+  user-select: none;
+  display: block;
 }
 
 @media (max-width: 768px) {
   .footer {
-    padding: 32px 0 max(1.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
-    margin-top: 3rem;
+    padding: 36px 0 max(1.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
+    margin-top: 3.5rem;
   }
 
   .container {
-    padding: 0 1rem;
+    padding: 0 1.25rem;
   }
 
   .simpleLogoSection {
-    padding: 1.5rem 0 0.85rem;
+    padding: 1.5rem 0 0.5rem;
   }
 
   .simpleLogoText {
-    font-size: 1.75rem;
+    font-size: clamp(2rem, 8vw, 5.8vw);
+    line-height: 1;
+  }
+
+  .footerLink {
+    font-size: 0.95rem;
   }
 }

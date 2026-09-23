@@ -150,11 +150,32 @@ export default function ProductDetailsModal({
   const [showRatingDetailsPopup, setShowRatingDetailsPopup] = useState(false);
   const [ratingMeterAnimateIn, setRatingMeterAnimateIn] = useState(false);
 
-  const displayProduct: Product = productDetails || product;
+  const displayProduct: Product = productDetails || product || ({} as any);
   const isTrialMode = mode === 'trial';
+  const showSkeleton = loadingDetails || !displayProduct?.id;
 
   // Fetch full details
   useEffect(() => {
+    // Scroll window and containers to top whenever product changes
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+    if (detailsSectionRef.current) {
+      detailsSectionRef.current.scrollTop = 0;
+    }
+    if (imageGridRef.current) {
+      imageGridRef.current.scrollTop = 0;
+    }
+    if (imageSectionRef.current) {
+      imageSectionRef.current.scrollTop = 0;
+    }
+    if (modalContentRef.current) {
+      modalContentRef.current.scrollTop = 0;
+    }
+    setSelectedImageIndex(0);
+
     let isMounted = true;
     if (product?.id) {
       setLoadingDetails(true);
@@ -190,7 +211,7 @@ export default function ProductDetailsModal({
             setRelatedProducts(list.filter((p: Product) => p.id !== displayProduct.id).slice(0, 4));
           }
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => {
           if (isMounted) setLoadingRelated(false);
         });
@@ -241,9 +262,9 @@ export default function ProductDetailsModal({
       setIsPincodeAvailable(null);
       return;
     }
-    if (displayProduct.isNationwideDelivery) {
+    if (displayProduct?.isNationwideDelivery) {
       setIsPincodeAvailable(true);
-    } else if (Array.isArray(displayProduct.deliveryPincodes) && displayProduct.deliveryPincodes.length > 0) {
+    } else if (Array.isArray(displayProduct?.deliveryPincodes) && displayProduct.deliveryPincodes.length > 0) {
       setIsPincodeAvailable(displayProduct.deliveryPincodes.includes(pincode));
     } else {
       setIsPincodeAvailable(true);
@@ -280,7 +301,7 @@ export default function ProductDetailsModal({
     };
   }, [shareMenuOpen]);
 
-  const variations = useMemo(() => displayProduct.variations || [], [displayProduct.variations]);
+  const variations = useMemo(() => displayProduct?.variations || [], [displayProduct?.variations]);
 
   useEffect(() => {
     if (variations.length > 0) {
@@ -296,10 +317,10 @@ export default function ProductDetailsModal({
     setTextPersonalizations({});
     setTextPersonalizationDone({});
     setUploadedPrintItems([]);
-  }, [displayProduct.id]);
+  }, [displayProduct?.id]);
 
   useEffect(() => {
-    if (displayProduct.isCustomizable && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0) {
+    if ((displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0) {
       if (displayProduct.customizationOptions.length === 1) {
         const g = displayProduct.customizationOptions[0];
         if (!selectedCustomizations[g.id] && g.values && g.values.length > 0) {
@@ -323,7 +344,7 @@ export default function ProductDetailsModal({
 
   // Customization combinations calculation
   const currentCombination = useMemo(() => {
-    if (!displayProduct.customizationCombinations || displayProduct.customizationCombinations.length === 0) {
+    if (!displayProduct?.customizationCombinations || displayProduct.customizationCombinations.length === 0) {
       return null;
     }
     const entries = Object.entries(selectedCustomizations);
@@ -336,19 +357,19 @@ export default function ProductDetailsModal({
         ([groupId, valueId]) => String(selectedCustomizations[groupId]) === String(valueId),
       );
     });
-  }, [displayProduct.customizationCombinations, selectedCustomizations]);
+  }, [displayProduct?.customizationCombinations, selectedCustomizations]);
 
   // Base pricing
-  const basePrice = (displayProduct.sellingPrice !== null && displayProduct.sellingPrice !== undefined && Number.isFinite(Number(displayProduct.sellingPrice)))
+  const basePrice = (displayProduct?.sellingPrice !== null && displayProduct?.sellingPrice !== undefined && Number.isFinite(Number(displayProduct?.sellingPrice)))
     ? Number(displayProduct.sellingPrice)
-    : Number(displayProduct.pricePerLitre || 0);
+    : Number(displayProduct?.pricePerLitre || 0);
 
-  const baseCompareAtPrice = (displayProduct.compareAtPrice !== null && displayProduct.compareAtPrice !== undefined && Number.isFinite(Number(displayProduct.compareAtPrice)))
+  const baseCompareAtPrice = (displayProduct?.compareAtPrice !== null && displayProduct?.compareAtPrice !== undefined && Number.isFinite(Number(displayProduct?.compareAtPrice)))
     ? Number(displayProduct.compareAtPrice)
     : null;
 
   const unitPrice = useMemo(() => {
-    if (displayProduct.isCustomizable) {
+    if (displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) {
       if (currentCombination?.price != null && Number.isFinite(Number(currentCombination.price))) {
         let comboPrice = Number(currentCombination.price);
         if (textPersonalizations) {
@@ -411,7 +432,7 @@ export default function ProductDetailsModal({
   ]);
 
   const originalUnitPrice = useMemo(() => {
-    if (displayProduct.isCustomizable) {
+    if (displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) {
       if (currentCombination?.compareAtPrice != null && Number.isFinite(Number(currentCombination.compareAtPrice))) {
         return Number(currentCombination.compareAtPrice);
       }
@@ -485,10 +506,10 @@ export default function ProductDetailsModal({
       if (!startTimestamp) startTimestamp = timestamp;
       const elapsed = timestamp - startTimestamp;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       const easedProgress = progress * (2 - progress);
       const currentValue = startValue + (endValue - startValue) * easedProgress;
-      
+
       setAnimatedPrice(currentValue);
 
       if (progress < 1) {
@@ -949,7 +970,7 @@ export default function ProductDetailsModal({
 
   const requiresCustomizationCompletion = useMemo(() => {
     const groups = displayProduct.customizationOptions || [];
-    if (!displayProduct.isCustomizable || groups.length === 0) return false;
+    if ((!displayProduct.isCustomizable && !(displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) || groups.length === 0) return false;
     return !isGroupEnabled(groups.length);
   }, [displayProduct.customizationOptions, displayProduct.isCustomizable, isGroupEnabled]);
 
@@ -1013,13 +1034,13 @@ export default function ProductDetailsModal({
 
     const printUploadCustomization = isUploadsVariationActive(displayProduct)
       ? {
-          uploadedPrintItems,
-          uploadedPrintMode,
-          printUploadCompleted,
-        }
+        uploadedPrintItems,
+        uploadedPrintMode,
+        printUploadCompleted,
+      }
       : {};
 
-    const variationIdToUse = displayProduct.isCustomizable
+    const variationIdToUse = (displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0))
       ? (currentCombination?.id ?? undefined)
       : (selectedVariation?.id ?? undefined);
 
@@ -1146,29 +1167,75 @@ export default function ProductDetailsModal({
         className={isFlatPage ? styles.flatPageBody : styles.modalContent}
         onClick={(e) => e.stopPropagation()}
       >
-        {loadingDetails ? (
-          <div className={styles.shimmerWrapper}>
-            <div className={styles.shimmerImage} />
-            <div className={styles.shimmerDetails}>
-              <div className={styles.shimmerTitle} />
-              <div className={styles.shimmerRating} />
-              <div className={styles.shimmerPrice} />
-              <div className={styles.shimmerButtons}>
-                <div className={styles.shimmerButton} />
-                <div className={styles.shimmerButton} />
+        {showSkeleton ? (
+          <div className={isFlatPage ? undefined : styles.modalBody} style={isFlatPage ? { display: 'contents' } : undefined}>
+            {/* Left Side - Image Gallery Skeleton */}
+            <div className={`${styles.imageSection} ${styles.imageSectionSkeleton}`}>
+              <div className={`${styles.galleryNavBtn} ${styles.galleryNavPrev} ${styles.skeletonNavArrow}`} />
+              <div className={`${styles.galleryNavBtn} ${styles.galleryNavNext} ${styles.skeletonNavArrow}`} />
+
+              <div className={styles.imageGridWrapper}>
+                <div className={styles.imageGridSkeleton}>
+                  <div className={styles.skeletonImageCard}>
+                    <div className={`${styles.skeletonBase} ${styles.skeletonImage}`} />
+                  </div>
+                  <div className={styles.skeletonImageCard}>
+                    <div className={`${styles.skeletonBase} ${styles.skeletonImage}`} />
+                  </div>
+                  <div className={styles.skeletonImageCard}>
+                    <div className={`${styles.skeletonBase} ${styles.skeletonImage}`} />
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Right Side - Details Card Skeleton */}
+            <div className={`${styles.detailsSection} ${styles.detailsSectionSkeleton}`}>
+              <div className={styles.skeletonTitleRow}>
+                <div className={`${styles.skeletonBase} ${styles.skeletonTitle}`} />
+                <div className={`${styles.skeletonBase} ${styles.skeletonShareBtn}`} />
+              </div>
+
+              <div className={`${styles.skeletonBase} ${styles.skeletonRating}`} />
+              <div className={`${styles.skeletonBase} ${styles.skeletonPrice}`} />
+
+              <div className={styles.skeletonGroup}>
+                <div className={`${styles.skeletonBase} ${styles.skeletonGroupLabel}`} />
+                <div className={styles.skeletonPillsRow}>
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '42px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '38px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '40px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '38px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '42px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '48px' }} />
+                </div>
+              </div>
+
+              <div className={styles.skeletonGroup}>
+                <div className={`${styles.skeletonBase} ${styles.skeletonGroupLabel}`} style={{ width: '52px' }} />
+                <div className={styles.skeletonPillsRow}>
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '54px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '58px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '68px' }} />
+                  <div className={`${styles.skeletonBase} ${styles.skeletonPill}`} style={{ width: '50px' }} />
+                </div>
+              </div>
+
+              <div style={{ flex: 1, minHeight: '30px' }} />
+
+              <div className={styles.skeletonActionRow}>
+                <div className={`${styles.skeletonBase} ${styles.skeletonFavoriteBtn}`} />
+                <div className={`${styles.skeletonBase} ${styles.skeletonAddToCartBtn}`} />
+                <div className={`${styles.skeletonBase} ${styles.skeletonBuyNowBtn}`} />
+              </div>
+
+              <div className={`${styles.skeletonBase} ${styles.skeletonDeliveryNote}`} />
             </div>
           </div>
         ) : (
           <div className={isFlatPage ? undefined : styles.modalBody} style={isFlatPage ? { display: 'contents' } : undefined}>
             {/* Left Side - Images */}
             <div className={styles.imageSection} ref={imageSectionRef}>
-              {displayProduct.isCustomizable && !isFlatPage ? (
-                <div className={`${cardStyles.assuredBadge} ${cardStyles.customizableBadge} ${styles.productCustomizableBadge}`}>
-                  <span>Customizable</span>
-                </div>
-              ) : null}
-
               {displayGalleryItems.length > 0 ? (
                 <>
                   {displayGalleryItems.length > 1 && (
@@ -1471,7 +1538,7 @@ export default function ProductDetailsModal({
                 {/* Quantity + Variations */}
                 <div className={styles.purchaseSection}>
                   {/* Variations / Customizable Options Selector */}
-                  {displayProduct.isCustomizable && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0 ? (
+                  {(displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0 ? (
                     <div className={styles.customizationContainer}>
                       {displayProduct.customizationOptions.map((g, idx) => {
                         const enabled = isGroupEnabled(idx);
@@ -1917,11 +1984,6 @@ export default function ProductDetailsModal({
                 </div>
               </div>
 
-              {/* Banners */}
-              {displayProduct.detailBanners && displayProduct.detailBanners.images?.length > 0 && (
-                <ProductDetailBanners banners={displayProduct.detailBanners} />
-              )}
-
               {/* Customer Reviews Container */}
               <div className={styles.reviewSummarySection} ref={reviewSummaryRef}>
                 <h3 className={styles.reviewSummaryTitle}>
@@ -1981,11 +2043,18 @@ export default function ProductDetailsModal({
         )}
       </div>
 
+      {/* Detail Banner Images - Full width above Related Products */}
+      {(displayProduct.detailBanners || (displayProduct as any).detail_banners) && (
+        <div className={isFlatPage ? styles.flatPageExtras : undefined} style={{ marginTop: '2rem' }}>
+          <ProductDetailBanners banners={displayProduct.detailBanners || (displayProduct as any).detail_banners} />
+        </div>
+      )}
+
       {/* Related Products - Rendered in its own container at the bottom of the page */}
       {!loadingDetails && relatedProducts.length > 0 && (
         <div className={isFlatPage ? styles.flatPageExtras : undefined} style={{ marginTop: '2.5rem' }}>
           <div className={styles.relatedSection}>
-            <h3 className={styles.relatedHeading}>You May Also Like</h3>
+            <h3 className={styles.relatedHeading}>More Good Stuff</h3>
             <div className={`${cardStyles.productsGrid} ${styles.relatedGrid}`}>
               {relatedProducts.map((rel) => {
                 const categoryLabel = (rel.categoryId ? categoryMap.get(String(rel.categoryId)) : undefined) || 'Collection';
@@ -2032,14 +2101,6 @@ export default function ProductDetailsModal({
                       ) : (
                         <div className={cardStyles.placeholderImage}>
                           <Logo />
-                        </div>
-                      )}
-                      {rel.isCustomizable && (
-                        <div className={`${cardStyles.assuredBadge} ${cardStyles.customizableBadge}`}>
-                          <svg className={cardStyles.verifiedIcon} viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
-                          </svg>
-                          <span>Customizable</span>
                         </div>
                       )}
                     </div>

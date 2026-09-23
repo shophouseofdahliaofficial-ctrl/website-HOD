@@ -12,7 +12,7 @@ import cardStyles from './ProductsSection.module.css';
 import { User, Product } from '@/types';
 import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import { readScopedPincode, writeScopedPincode, scopedPincodeStatusKey } from '@/lib/utils/userScopedStorage';
-import { contentApi, productsApi, walletApi } from '@/lib/api';
+import { apiClient, contentApi, productsApi, walletApi } from '@/lib/api';
 import ProductDetailsModal from './ProductDetailsModal';
 import Logo from './Logo';
 import NavigationProgressBar from './NavigationProgressBar';
@@ -24,6 +24,58 @@ import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { SITE_NAME } from '@/lib/seo';
 import DesktopCartDrawer from './DesktopCartDrawer';
+import DesktopSearchDrawer from './DesktopSearchDrawer';
+
+const REVIEW_US_URL =
+  'https://www.google.com/search?q=milko+gwalior&sca_esv=8fdea6dbd6add952&authuser=3&sxsrf=ANbL-n7qfx2M_iJY6Dk6JYLRfKEGrnK91w%3A1777917729569&source=hp&ei=Id_4afLiH-6q4-EPrrmjiQ0&iflsig=AFdpzrgAAAAAafjtMdqwAiRFfJiXKjlPPoicbxX6o5Sg&oq=milko&gs_lp=Egdnd3Mtd2l6IgVtaWxrbyoCCAAyBBAjGCcyCxAAGIAEGIoFGJECMgsQABiABBiKBRiRAjIKEC4YgAQYigUYQzIKEC4YgAQYigUYQzIFEAAYgAQyBRAAGIAEMgUQABiABDILEC4YgAQYxwEYrwEyBRAAGIAESP4NUABYqgRwAHgAkAEAmAGPAaABigWqAQMwLjW4AQHIAQD4AQGYAgWgArYFwgIREC4YgAQYigUYkQIYxwEY0QPCAg4QLhiABBixAxjHARjRA8ICDhAAGIAEGIoFGLEDGIMBwgIOEC4YgAQYigUYsQMYgwHCAgsQABiABBixAxiDAcICCBAuGIAEGLEDwgIOEAAYgAQYigUYkQIYsQPCAhMQLhiABBiKBRhDGMcBGK8BGI4FwgIKEAAYgAQYigUYQ8ICCBAAGIAEGLEDmAMA4gMFEgExIECSBwMwLjWgB8pIsgcDMC41uAe2BcIHBTItNC4xyAcigAgB&sclient=gws-wiz#lrd=0x3976c12bef6ae93f:0x8427baeae2ab4794,3,,,,';
+
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.04 14.69 2 12.04 2ZM12.04 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16C10.66 20.16 9.3 19.81 8.08 19.14L7.79 18.97L4.68 19.79L5.51 16.76L5.32 16.46C4.58 15.18 4.19 13.72 4.19 11.91C4.19 7.37 7.89 3.67 12.04 3.67ZM8.53 7.33C8.37 7.33 8.1 7.39 7.87 7.64C7.65 7.89 7.01 8.49 7.01 9.71C7.01 10.93 7.9 12.11 8.02 12.28C8.15 12.44 9.77 14.94 12.25 16.01C12.84 16.27 13.3 16.42 13.66 16.53C14.25 16.72 14.79 16.69 15.22 16.63C15.7 16.56 16.68 16.03 16.89 15.45C17.1 14.87 17.1 14.38 17.04 14.27C16.97 14.17 16.81 14.11 16.56 13.98C16.31 13.86 15.09 13.26 14.86 13.18C14.64 13.09 14.47 13.05 14.31 13.3C14.14 13.55 13.67 14.11 13.52 14.27C13.38 14.44 13.23 14.46 12.98 14.34C12.74 14.21 11.94 13.95 11 13.11C10.26 12.46 9.77 11.65 9.62 11.41C9.48 11.16 9.6 11.02 9.73 10.89C9.84 10.78 9.97 10.6 10.1 10.45C10.22 10.31 10.26 10.2 10.34 10.04C10.43 9.87 10.38 9.73 10.32 9.61C10.26 9.48 9.77 8.27 9.56 7.78C9.36 7.29 9.15 7.36 9 7.35L8.53 7.33Z" />
+    </svg>
+  );
+}
+
+function PhoneIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function FeedbackIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function formatWhatsAppLink(raw?: string): string {
+  if (!raw || !raw.trim()) return 'https://wa.me/';
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const cleanDigits = trimmed.replace(/[^\d]/g, '');
+  return cleanDigits ? `https://wa.me/${cleanDigits}` : 'https://wa.me/';
+}
 
 /**
  * User Dropdown Component
@@ -621,12 +673,17 @@ export default function Header() {
   // Mobile navigation menu state, refs and effects
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopCartOpen, setIsDesktopCartOpen] = useState(false);
+  const [isDesktopHelpOpen, setIsDesktopHelpOpen] = useState(false);
+  const [isDesktopSearchDrawerOpen, setIsDesktopSearchDrawerOpen] = useState(false);
   const [isMobileOthersOpen, setIsMobileOthersOpen] = useState(false);
   const [isMobileKeepsakesOpen, setIsMobileKeepsakesOpen] = useState(false);
+  const [isMobileHelpOpen, setIsMobileHelpOpen] = useState(false);
   const rightButtonsRef = useRef<HTMLDivElement>(null);
   const rightButtonsCollapsedRef = useRef<HTMLDivElement>(null);
   const rightButtonsExpandedRef = useRef<HTMLDivElement>(null);
   const desktopCartExpandedRef = useRef<HTMLDivElement>(null);
+  const desktopHelpExpandedRef = useRef<HTMLDivElement>(null);
+  const desktopSearchExpandedRef = useRef<HTMLDivElement>(null);
   const mobileMenuBackdropRef = useRef<HTMLDivElement>(null);
   const mobileMenuHeaderRef = useRef<HTMLDivElement>(null);
   const mobileNavMenuRef = useRef<HTMLElement>(null);
@@ -635,6 +692,98 @@ export default function Header() {
   const currentDesktopCartScrollYRef = useRef(0);
   const [canScrollTop, setCanScrollTop] = useState(false);
   const [canScrollBottom, setCanScrollBottom] = useState(false);
+
+  // Help & Feedback / Review State
+  const [whatsappNumber, setWhatsappNumber] = useState<string>('');
+  const [trustpilotUrl, setTrustpilotUrl] = useState<string>('');
+  const [googleReviewUrl, setGoogleReviewUrl] = useState<string>('');
+  const [contactEmail, setContactEmail] = useState<string>('contact@myscribble.in');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [feedbackEmail, setFeedbackEmail] = useState<string>('');
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+  // Load reviews URLs, WhatsApp support number and Contact details on mount
+  useEffect(() => {
+    contentApi.getByType('help_support')
+      .then((data) => {
+        if (data && data.isActive && data.metadata && data.metadata.helpSupportNumber) {
+          setWhatsappNumber(data.metadata.helpSupportNumber);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load help_support settings for Header:', err);
+      });
+
+    contentApi.getByType('reviews')
+      .then((data) => {
+        if (data && data.isActive && data.metadata) {
+          if (data.metadata.trustpilotUrl) {
+            setTrustpilotUrl(data.metadata.trustpilotUrl);
+          }
+          if (data.metadata.googleReviewUrl) {
+            setGoogleReviewUrl(data.metadata.googleReviewUrl);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load reviews settings for Header:', err);
+      });
+
+    contentApi.getByType('contact')
+      .then((data) => {
+        if (data && data.metadata) {
+          if (data.metadata.email) {
+            setContactEmail(data.metadata.email);
+          }
+          if (data.metadata.whatsapp) {
+            setWhatsappNumber((prev) => prev || data.metadata.whatsapp);
+          } else if (data.metadata.phone) {
+            setWhatsappNumber((prev) => prev || data.metadata.phone);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load contact info for Header:', err);
+      });
+  }, []);
+
+  // Prefill email if logged in
+  useEffect(() => {
+    if (isAuthenticated && user?.email) {
+      setFeedbackEmail(user.email);
+    } else {
+      setFeedbackEmail('');
+    }
+  }, [user, isAuthenticated, feedbackOpen]);
+
+  const closeFeedbackModal = () => {
+    setFeedbackOpen(false);
+    setFeedbackMessage('');
+  };
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackEmail.trim() || !feedbackMessage.trim()) {
+      showToast('Please fill out all fields.', 'error');
+      return;
+    }
+    setSubmittingFeedback(true);
+    try {
+      await apiClient.post('/api/feedback', {
+        email: feedbackEmail.trim(),
+        message: feedbackMessage.trim(),
+      });
+      showToast('Thank you for your feedback!', 'success');
+      closeFeedbackModal();
+    } catch (err: any) {
+      console.error('Failed to submit feedback:', err);
+      showToast(err?.message || 'Something went wrong. Please try again.', 'error');
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   const updateScrollFades = useCallback(() => {
     const el = mobileNavMenuRef.current;
@@ -684,6 +833,7 @@ export default function Header() {
 
   const openDesktopCart = useCallback(() => {
     if (isMenuAnimatingRef.current) return;
+    setIsDesktopHelpOpen(false);
     currentDesktopCartScrollYRef.current = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
     const nav = rightButtonsRef.current;
     if (nav) {
@@ -696,6 +846,189 @@ export default function Header() {
       };
     }
     setIsDesktopCartOpen(true);
+  }, []);
+
+  const openDesktopHelp = useCallback(() => {
+    if (isMenuAnimatingRef.current) return;
+    setIsDesktopCartOpen(false);
+    setIsDesktopSearchDrawerOpen(false);
+    const nav = rightButtonsRef.current;
+    if (nav) {
+      const rect = nav.getBoundingClientRect();
+      collapsedPillRectRef.current = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+    setIsDesktopHelpOpen(true);
+  }, []);
+
+  const openDesktopSearch = useCallback(() => {
+    if (isMenuAnimatingRef.current) return;
+    setIsDesktopCartOpen(false);
+    setIsDesktopHelpOpen(false);
+    ensureProducts();
+    const nav = rightButtonsRef.current;
+    if (nav) {
+      const rect = nav.getBoundingClientRect();
+      collapsedPillRectRef.current = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+    setIsDesktopSearchDrawerOpen(true);
+  }, []);
+
+  const closeDesktopSearch = useCallback(() => {
+    if (isMenuAnimatingRef.current) return;
+    const nav = rightButtonsRef.current;
+    const collapsedContent = rightButtonsCollapsedRef.current;
+    const searchContent = desktopSearchExpandedRef.current;
+
+    if (!nav) {
+      setIsDesktopSearchDrawerOpen(false);
+      return;
+    }
+
+    isMenuAnimatingRef.current = true;
+    const savedRect = collapsedPillRectRef.current || {
+      top: 14,
+      left: window.innerWidth - 100,
+      width: 86,
+      height: 44,
+    };
+
+    gsap.killTweensOf([nav, collapsedContent, searchContent].filter(Boolean));
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'power3.inOut' },
+      onComplete: () => {
+        setIsDesktopSearchDrawerOpen(false);
+        if (searchContent) gsap.set(searchContent, { display: 'none' });
+        if (collapsedContent) gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
+        gsap.set(nav, { clearProps: 'all' });
+        isMenuAnimatingRef.current = false;
+      },
+    });
+
+    if (searchContent) {
+      tl.to(searchContent, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
+    }
+
+    tl.to(
+      nav,
+      {
+        top: savedRect.top,
+        left: savedRect.left,
+        width: savedRect.width,
+        height: savedRect.height,
+        borderRadius: 555,
+        background: '#ffffffbf',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        padding: '3px 4px',
+        boxShadow: 'none',
+        duration: 0.42,
+        ease: 'power3.inOut',
+      },
+      0.04
+    );
+
+    if (collapsedContent) {
+      tl.to(
+        collapsedContent,
+        {
+          opacity: 1,
+          duration: 0.18,
+          ease: 'power2.out',
+          onStart: () => {
+            gsap.set(collapsedContent, { display: 'flex' });
+          },
+        },
+        0.24
+      );
+    }
+  }, []);
+
+  const closeDesktopHelp = useCallback(() => {
+    if (isMenuAnimatingRef.current) return;
+    const nav = rightButtonsRef.current;
+    const backdrop = mobileMenuBackdropRef.current;
+    const collapsedContent = rightButtonsCollapsedRef.current;
+    const helpContent = desktopHelpExpandedRef.current;
+
+    if (!nav) {
+      setIsDesktopHelpOpen(false);
+      return;
+    }
+
+    isMenuAnimatingRef.current = true;
+    const savedRect = collapsedPillRectRef.current || {
+      top: 14,
+      left: window.innerWidth - 100,
+      width: 86,
+      height: 44,
+    };
+
+    gsap.killTweensOf([backdrop, nav, collapsedContent, helpContent].filter(Boolean));
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'power3.inOut' },
+      onComplete: () => {
+        setIsDesktopHelpOpen(false);
+        document.documentElement.removeAttribute('data-desktop-help-open');
+        document.body.removeAttribute('data-desktop-help-open');
+        if (backdrop) gsap.set(backdrop, { display: 'none', pointerEvents: 'none' });
+        if (helpContent) gsap.set(helpContent, { display: 'none' });
+        if (collapsedContent) gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
+        gsap.set(nav, { clearProps: 'all' });
+        isMenuAnimatingRef.current = false;
+      },
+    });
+
+    if (backdrop) {
+      tl.to(backdrop, { opacity: 0, duration: 0.35, ease: 'power2.inOut' }, 0);
+    }
+
+    if (helpContent) {
+      tl.to(helpContent, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
+    }
+
+    tl.to(
+      nav,
+      {
+        top: savedRect.top,
+        left: savedRect.left,
+        width: savedRect.width,
+        height: savedRect.height,
+        borderRadius: 555,
+        background: '#ffffffbf',
+        padding: '3px 4px',
+        boxShadow: 'none',
+        duration: 0.42,
+        ease: 'power3.inOut',
+      },
+      0.04
+    );
+
+    if (collapsedContent) {
+      tl.to(
+        collapsedContent,
+        {
+          opacity: 1,
+          duration: 0.18,
+          ease: 'power2.out',
+          onStart: () => {
+            gsap.set(collapsedContent, { display: 'flex' });
+          },
+        },
+        0.24
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -949,15 +1282,17 @@ export default function Header() {
 
   // Close dropdown on route changes
   useEffect(() => {
-    if (isMobileMenuOpen || isDesktopCartOpen) {
+    if (isMobileMenuOpen || isDesktopCartOpen || isDesktopHelpOpen) {
       const nav = rightButtonsRef.current;
       const backdrop = mobileMenuBackdropRef.current;
       const collapsedContent = rightButtonsCollapsedRef.current;
       const expandedContent = rightButtonsExpandedRef.current;
       const cartContent = desktopCartExpandedRef.current;
+      const helpContent = desktopHelpExpandedRef.current;
       if (backdrop) gsap.set(backdrop, { display: 'none', pointerEvents: 'none', opacity: 0 });
       if (expandedContent) gsap.set(expandedContent, { display: 'none', opacity: 0 });
       if (cartContent) gsap.set(cartContent, { display: 'none', opacity: 0 });
+      if (helpContent) gsap.set(helpContent, { display: 'none', opacity: 0 });
       if (collapsedContent) gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
       if (nav) gsap.set(nav, { clearProps: 'all' });
       document.body.style.overflow = '';
@@ -967,8 +1302,10 @@ export default function Header() {
     }
     setIsMobileMenuOpen(false);
     setIsDesktopCartOpen(false);
+    setIsDesktopHelpOpen(false);
     setIsMobileOthersOpen(false);
     setIsMobileKeepsakesOpen(false);
+    setIsMobileHelpOpen(false);
     setExpandedDropdown(null);
   }, [pathname]);
 
@@ -1481,6 +1818,276 @@ export default function Header() {
   }, [isDesktopCartOpen]);
 
   useEffect(() => {
+    if (isDesktopHelpOpen) {
+      document.documentElement.setAttribute('data-desktop-help-open', 'true');
+      document.body.setAttribute('data-desktop-help-open', 'true');
+      const nav = rightButtonsRef.current;
+      const backdrop = mobileMenuBackdropRef.current;
+      const collapsedContent = rightButtonsCollapsedRef.current;
+      const helpContent = desktopHelpExpandedRef.current;
+
+      if (!nav) return;
+
+      isMenuAnimatingRef.current = true;
+      const savedRect = collapsedPillRectRef.current || {
+        top: 14,
+        left: window.innerWidth - 100,
+        width: 86,
+        height: 44,
+      };
+
+      gsap.killTweensOf([backdrop, nav, collapsedContent, helpContent].filter(Boolean));
+
+      gsap.set(nav, {
+        position: 'fixed',
+        top: savedRect.top,
+        left: savedRect.left,
+        right: 'auto',
+        bottom: 'auto',
+        width: savedRect.width,
+        height: savedRect.height,
+        borderRadius: '555px',
+        background: '#ffffffbf',
+        zIndex: 9999,
+        padding: '3px 4px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        justifyContent: 'flex-start',
+        overflow: 'hidden',
+        boxShadow: 'none',
+      });
+
+      if (collapsedContent) {
+        gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
+      }
+      if (helpContent) {
+        gsap.set(helpContent, { display: 'flex', opacity: 0 });
+      }
+      if (backdrop) {
+        gsap.set(backdrop, { opacity: 0, display: 'block', pointerEvents: 'auto' });
+      }
+
+      const tl = gsap.timeline({
+        defaults: { ease: 'power4.out' },
+        onComplete: () => {
+          isMenuAnimatingRef.current = false;
+        },
+      });
+
+      if (backdrop) {
+        tl.to(
+          backdrop,
+          {
+            opacity: 1,
+            duration: 0.45,
+            ease: 'power2.out',
+          },
+          0
+        );
+      }
+
+      if (collapsedContent) {
+        tl.to(
+          collapsedContent,
+          {
+            opacity: 0,
+            duration: 0.12,
+            ease: 'power2.out',
+            onComplete: () => {
+              gsap.set(collapsedContent, { display: 'none' });
+            },
+          },
+          0
+        );
+      }
+
+      const targetWidth = 300;
+      const targetHeight = 236;
+      const targetTop = 10;
+      const targetLeft = Math.max(10, window.innerWidth - targetWidth - 12);
+
+      tl.to(
+        nav,
+        {
+          top: targetTop,
+          left: targetLeft,
+          width: targetWidth,
+          height: targetHeight,
+          borderRadius: 24,
+          background: '#ffffff',
+          padding: 0,
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+          duration: 0.48,
+          ease: 'power4.out',
+        },
+        0
+      );
+
+      if (helpContent) {
+        tl.to(
+          helpContent,
+          {
+            opacity: 1,
+            duration: 0.25,
+            ease: 'power2.out',
+          },
+          0.12
+        );
+      }
+
+      const handleClickOutside = (e: MouseEvent) => {
+        if (nav && !nav.contains(e.target as Node)) {
+          closeDesktopHelp();
+        }
+      };
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeDesktopHelp();
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.documentElement.removeAttribute('data-desktop-help-open');
+        document.body.removeAttribute('data-desktop-help-open');
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isDesktopHelpOpen, closeDesktopHelp]);
+
+  useEffect(() => {
+    if (isDesktopSearchDrawerOpen) {
+      const nav = rightButtonsRef.current;
+      const collapsedContent = rightButtonsCollapsedRef.current;
+      const searchContent = desktopSearchExpandedRef.current;
+
+      if (!nav) return;
+
+      isMenuAnimatingRef.current = true;
+      const savedRect = collapsedPillRectRef.current || {
+        top: 14,
+        left: window.innerWidth - 100,
+        width: 86,
+        height: 44,
+      };
+
+      gsap.killTweensOf([nav, collapsedContent, searchContent].filter(Boolean));
+
+      gsap.set(nav, {
+        position: 'fixed',
+        top: savedRect.top,
+        left: savedRect.left,
+        right: 'auto',
+        bottom: 'auto',
+        width: savedRect.width,
+        height: savedRect.height,
+        borderRadius: '555px',
+        background: '#ffffffbf',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        zIndex: 9999,
+        padding: '3px 4px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        justifyContent: 'flex-start',
+        overflow: 'hidden',
+        boxShadow: 'none',
+      });
+
+      if (collapsedContent) {
+        gsap.set(collapsedContent, { display: 'flex', opacity: 1 });
+      }
+      if (searchContent) {
+        gsap.set(searchContent, { display: 'flex', opacity: 0 });
+      }
+
+      const tl = gsap.timeline({
+        defaults: { ease: 'power4.out' },
+        onComplete: () => {
+          isMenuAnimatingRef.current = false;
+        },
+      });
+
+      if (collapsedContent) {
+        tl.to(
+          collapsedContent,
+          {
+            opacity: 0,
+            duration: 0.12,
+            ease: 'power2.out',
+            onComplete: () => {
+              gsap.set(collapsedContent, { display: 'none' });
+            },
+          },
+          0
+        );
+      }
+
+      const targetWidth = Math.min(480, Math.max(380, window.innerWidth - 24));
+      const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const targetHeight = Math.max(0, viewportHeight - 20);
+      const targetTop = 10;
+      const targetLeft = Math.max(10, window.innerWidth - targetWidth - 12);
+
+      tl.to(
+        nav,
+        {
+          top: targetTop,
+          left: targetLeft,
+          width: targetWidth,
+          height: targetHeight,
+          borderRadius: 24,
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255, 255, 255, 0.4)',
+          padding: 0,
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+          duration: 0.52,
+          ease: 'power4.out',
+        },
+        0
+      );
+
+      if (searchContent) {
+        tl.to(
+          searchContent,
+          {
+            opacity: 1,
+            duration: 0.25,
+            ease: 'power2.out',
+          },
+          0.12
+        );
+      }
+
+      const handleClickOutside = (e: MouseEvent) => {
+        if (nav && !nav.contains(e.target as Node)) {
+          closeDesktopSearch();
+        }
+      };
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeDesktopSearch();
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isDesktopSearchDrawerOpen, closeDesktopSearch]);
+
+  useEffect(() => {
     if (isSearchOverlayOpen) {
       document.body.style.overflow = 'hidden';
       document.body.setAttribute('data-search-overlay-open', 'true');
@@ -1760,19 +2367,6 @@ export default function Header() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
-  const [trustpilotUrl, setTrustpilotUrl] = useState<string>('');
-
-  useEffect(() => {
-    contentApi.getByType('reviews')
-      .then((data) => {
-        if (data && data.isActive && data.metadata && data.metadata.trustpilotUrl) {
-          setTrustpilotUrl(data.metadata.trustpilotUrl);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load reviews settings for header:', err);
-      });
-  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -2053,12 +2647,13 @@ export default function Header() {
         ].filter(Boolean).join(' ')}
         style={{ '--header-height': `${headerHeight}px` } as React.CSSProperties}
       >
-        {/* Backdrop blur overlay — inside header so it blurs headerRow & page below it, while rightButtons (cart) expands above it */}
+        {/* Backdrop blur overlay — inside header so it blurs headerRow & page below it, while rightButtons (cart / help) expands above it */}
         <div
           ref={mobileMenuBackdropRef}
-          className={`${styles.mobileMenuBackdrop} ${isMobileMenuOpen || isDesktopCartOpen ? styles.mobileMenuBackdropOpen : ''}`}
+          className={`${styles.mobileMenuBackdrop} ${isMobileMenuOpen || isDesktopCartOpen || isDesktopHelpOpen ? styles.mobileMenuBackdropOpen : ''}`}
           onClick={() => {
             if (isDesktopCartOpen) closeDesktopCart();
+            else if (isDesktopHelpOpen) closeDesktopHelp();
             else if (isMobileMenuOpen) closeMobileMenu();
           }}
         />
@@ -2236,9 +2831,9 @@ export default function Header() {
                     <button
                       type="button"
                       className={styles.searchButton}
-                      onClick={() => {
-                        ensureProducts();
-                        setIsDesktopSearchOpen(true);
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openDesktopSearch();
                       }}
                       aria-label="Search"
                     >
@@ -2251,6 +2846,20 @@ export default function Header() {
                         </g>
                       </svg>
                       <span className={styles.buttonText}>Search</span>
+                    </button>
+
+                    {/* Desktop WhatsApp / Help Button (left of account) */}
+                    <button
+                      type="button"
+                      className={styles.helpButton}
+                      aria-label="Help"
+                      title="Need help?"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openDesktopHelp();
+                      }}
+                    >
+                      <WhatsAppIcon className={styles.helpButtonIcon} />
                     </button>
 
                     {/* Desktop Login/User Button */}
@@ -2337,6 +2946,80 @@ export default function Header() {
                     </button>
                   </div>
 
+                  {/* Expanded Desktop Help Content directly inside .rightButtons */}
+                  {isDesktopHelpOpen && (
+                    <div
+                      ref={desktopHelpExpandedRef}
+                      className={styles.desktopHelpExpandedInner}
+                      style={{ display: isDesktopHelpOpen ? 'flex' : 'none', width: '100%' }}
+                    >
+                      <div className={styles.desktopHelpHeader}>
+                        <span className={styles.desktopHelpTitle}>Need help?</span>
+                        <button
+                          type="button"
+                          className={styles.desktopHelpCloseBtn}
+                          onClick={closeDesktopHelp}
+                          aria-label="Close help"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <ul className={styles.desktopHelpList}>
+                        <li>
+                          <a
+                            href={formatWhatsAppLink(whatsappNumber)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.desktopHelpLink}
+                            onClick={closeDesktopHelp}
+                          >
+                            <WhatsAppIcon className={styles.desktopHelpItemIcon} />
+                            <span>WhatsApp</span>
+                          </a>
+                        </li>
+                        <li>
+                          <Link
+                            href="/contact"
+                            className={styles.desktopHelpLink}
+                            onClick={closeDesktopHelp}
+                          >
+                            <PhoneIcon className={styles.desktopHelpItemIcon} />
+                            <span>Contact</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className={styles.desktopHelpLink}
+                            onClick={() => {
+                              closeDesktopHelp();
+                              setReviewOpen(true);
+                            }}
+                          >
+                            <StarIcon className={styles.desktopHelpItemIcon} />
+                            <span>Review us</span>
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className={styles.desktopHelpLink}
+                            onClick={() => {
+                              closeDesktopHelp();
+                              setFeedbackOpen(true);
+                            }}
+                          >
+                            <FeedbackIcon className={styles.desktopHelpItemIcon} />
+                            <span>Feedback</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Expanded Desktop Cart & Checkout Content directly inside .rightButtons */}
                   {isDesktopCartOpen && (
                     <div
@@ -2345,6 +3028,22 @@ export default function Header() {
                       style={{ display: isDesktopCartOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
                     >
                       <DesktopCartDrawer onClose={closeDesktopCart} />
+                    </div>
+                  )}
+
+                  {/* Expanded Desktop Search Content directly inside .rightButtons */}
+                  {isDesktopSearchDrawerOpen && (
+                    <div
+                      ref={desktopSearchExpandedRef}
+                      className={styles.rightButtonsExpandedInner}
+                      style={{ display: isDesktopSearchDrawerOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
+                    >
+                      <DesktopSearchDrawer
+                        onClose={closeDesktopSearch}
+                        allProducts={allProducts}
+                        isSearchProductsLoading={isSearchProductsLoading}
+                        categoryMap={categoryMap}
+                      />
                     </div>
                   )}
 
@@ -2433,11 +3132,11 @@ export default function Header() {
                         </Link>
 
                         <Link
-                          href="/photobooth"
-                          className={`${styles.mobileNavLink} ${styles.mobileNavLinkHighlight} ${isHeaderNavActive(pathname, '/photobooth') ? styles.mobileNavLinkActive : ''}`}
+                          href="/size-guide"
+                          className={`${styles.mobileNavLink} ${styles.mobileNavLinkHighlight} ${isHeaderNavActive(pathname, '/size-guide') ? styles.mobileNavLinkActive : ''}`}
                           onClick={closeMobileMenu}
                         >
-                          Try PhotoBooth
+                          Size Guide
                         </Link>
                         <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
                           <button
@@ -2508,6 +3207,69 @@ export default function Header() {
                               >
                                 Card Stocks
                               </Link>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Help Submenu in Mobile Drawer */}
+                        <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
+                          <button
+                            type="button"
+                            className={styles.mobileNavLink}
+                            onClick={() => setIsMobileHelpOpen(!isMobileHelpOpen)}
+                            style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
+                          >
+                            <span>Help</span>
+                            <svg
+                              className={`${styles.dropdownArrow} ${isMobileHelpOpen ? styles.dropdownArrowOpen : ''}`}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                              style={{ width: '16px', height: '16px' }}
+                            >
+                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                          {isMobileHelpOpen && (
+                            <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                              <a
+                                href={formatWhatsAppLink(whatsappNumber)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.mobileSubNavLink}
+                                onClick={closeMobileMenu}
+                              >
+                                WhatsApp
+                              </a>
+                              <Link
+                                href="/contact"
+                                className={styles.mobileSubNavLink}
+                                onClick={closeMobileMenu}
+                              >
+                                Contact
+                              </Link>
+                              <button
+                                type="button"
+                                className={styles.mobileSubNavLink}
+                                style={{ background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' }}
+                                onClick={() => {
+                                  closeMobileMenu();
+                                  setReviewOpen(true);
+                                }}
+                              >
+                                Review us
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.mobileSubNavLink}
+                                style={{ background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' }}
+                                onClick={() => {
+                                  closeMobileMenu();
+                                  setFeedbackOpen(true);
+                                }}
+                              >
+                                Feedback
+                              </button>
                             </div>
                           )}
                         </div>
@@ -2678,193 +3440,6 @@ export default function Header() {
         ) : null}
       </header>
 
-      {/* Desktop: Centered search overlay */}
-      {!isMobile && isDesktopSearchOpen && (
-        createPortal(
-          <div
-            className={styles.desktopSearchOverlay}
-            onClick={() => setIsDesktopSearchOpen(false)}
-          >
-            <div
-              className={styles.desktopSearchContent}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={styles.desktopSearchHeader}>
-                <h3 className={styles.desktopSearchTitle}>Search Products</h3>
-                <button
-                  type="button"
-                  className={styles.desktopSearchClose}
-                  onClick={() => setIsDesktopSearchOpen(false)}
-                  aria-label="Close search"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 6L6 18M6 6L18 18" />
-                  </svg>
-                </button>
-              </div>
-
-              <form onSubmit={handleSearch} className={styles.desktopSearchForm}>
-                {!isSearching && (
-                  <div className={styles.desktopSearchIcon}>
-                    <svg className={styles.desktopSearchIconSvg} viewBox="0 -0.5 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                      <path d="M15.989 15.4905L19.5 19.0015" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    </svg>
-                  </div>
-                )}
-                <input
-                  ref={desktopSearchInputRef}
-                  type="text"
-                  placeholder="Search Anything"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={styles.desktopSearchInput}
-                  disabled={isSearching}
-                />
-                {isSearching && (
-                  <div className={styles.desktopSearchSpinner}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.spinnerIcon}>
-                      <circle cx="12" cy="12" r="10" stroke="#000000" strokeWidth="2" strokeOpacity="0.2" fill="none" />
-                      <path d="M12 2C6.477 2 2 6.477 2 12" stroke="#000000" strokeWidth="2" strokeLinecap="round" fill="none" strokeDasharray="20 40" />
-                    </svg>
-                  </div>
-                )}
-              </form>
-
-              {/* Search Results */}
-              <div
-                className={`${styles.desktopSearchResultsScroll} ${searchQuery.trim() ? styles.desktopSearchResultsScrollExpanded : ''}`}
-                data-lenis-prevent
-              >
-                {isSearchProductsLoading ? (
-                  <div className={styles.desktopSearchLoading}>Loading products...</div>
-                ) : searchQuery.trim() && searchResults.length > 0 ? (
-                  <div className={styles.desktopSearchResultsList}>
-                    <AnimatePresence mode="popLayout">
-                      {searchResults.slice(0, 6).map((p) => {
-                        const isOutOfStock = p.isActive === false || (typeof p.quantity === 'number' && p.quantity <= 0);
-                        const imageUrl = getPrimaryProductImageUrl(p);
-                        const categoryLabel = p.categoryId ? (categoryMap.get(p.categoryId) || 'Dairy') : 'Dairy';
-
-                        return (
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.96, y: -8 }}
-                            transition={{
-                              type: 'spring',
-                              stiffness: 450,
-                              damping: 35,
-                              mass: 0.8,
-                            }}
-                            key={p.id}
-                            className={`${cardStyles.productCard} ${isOutOfStock ? cardStyles.productCardOutOfStock : ''}`}
-                            onClick={() => {
-                              setIsDesktopSearchOpen(false);
-                              router.push(`/product/${p.id}`);
-                            }}
-                          >
-                            <div className={cardStyles.productImage} style={imageUrl ? { aspectRatio: 'auto' } : undefined}>
-                              {isOutOfStock ? (
-                                <div className={cardStyles.outOfStockBadge}>Out of stock</div>
-                              ) : null}
-                              {imageUrl ? (
-                                <div className="product-card-image-wrapper">
-                                  <Image
-                                    src={imageUrl}
-                                    alt={p.name}
-                                    width={500}
-                                    height={500}
-                                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                                  />
-                                  {p.hoverNextImage && getOrderedProductImageUrls(p)[1] && (
-                                    <div className="product-card-hover-image-container">
-                                      <Image
-                                        src={getOrderedProductImageUrls(p)[1]}
-                                        alt={p.name}
-                                        width={500}
-                                        height={500}
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className={cardStyles.placeholderImage}>
-                                  <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={cardStyles.placeholderLogo} />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className={cardStyles.productInfo}>
-                              <div className={cardStyles.productTitleRow}>
-                                <h3 className={cardStyles.productName}>{p.name}</h3>
-                                <span className={cardStyles.productPrice}>{getCardPriceDisplay(p, '₹')}</span>
-                              </div>
-
-                              <div className={cardStyles.productCategoryRow}>
-                                <div className={cardStyles.productCategory}>
-                                  {categoryLabel}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                      {searchResults.length > 6 && (
-                        <motion.button
-                          layout
-                          key="show-more-desktop"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          type="button"
-                          className={styles.searchShowMore}
-                          onClick={() => {
-                            setIsDesktopSearchOpen(false);
-                            router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                          }}
-                        >
-                          Show all {searchResults.length} results
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : searchQuery.trim() ? (
-                  <div className={styles.desktopSearchEmpty}>No products found for &quot;{searchQuery}&quot;</div>
-                ) : (
-                  <div className={styles.desktopSearchSuggestions}>
-                    <span className={styles.desktopSearchSuggestionsLabel}>Popular Searches</span>
-                    <div className={styles.desktopSearchSuggestionsList}>
-                      {['Polaroids', 'Photostrips', 'MemoryBooks', 'Journals', 'Photobooth'].map((term) => (
-                        <button
-                          key={term}
-                          type="button"
-                          className={styles.desktopSearchSuggestionTag}
-                          onClick={() => {
-                            if (term.toLowerCase().includes('photoboo')) {
-                              setIsDesktopSearchOpen(false);
-                              router.push('/photobooth');
-                            } else {
-                              setSearchQuery(term);
-                              ensureProducts();
-                            }
-                          }}
-                        >
-                          {term}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )
-      )}
-
       {/* Mobile: full-page white search overlay when search is focused */}
       {isMobile && isSearchOverlayOpen && (
         <div
@@ -2877,8 +3452,8 @@ export default function Header() {
                   <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
                   <g id="SVGRepo_iconCarrier">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M15.989 15.4905L19.5 19.0015" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="#7d7d7d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                    <path d="M15.989 15.4905L19.5 19.0015" stroke="#7d7d7d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
                   </g>
                 </svg>
               </div>
@@ -3011,6 +3586,119 @@ export default function Header() {
           aria-hidden="true"
         />
       ) : null}
+
+      {/* Feedback Modal */}
+      {feedbackOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className={styles.modalOverlay} onClick={closeFeedbackModal}>
+            <div className={styles.modalPanel} onClick={(e) => e.stopPropagation()}>
+              <button className={styles.modalCloseBtn} onClick={closeFeedbackModal} aria-label="Close">
+                ×
+              </button>
+              <h3 className={styles.modalTitle}>Share Feedback</h3>
+              <p className={styles.modalSubtitle}>Your feedback helps us improve our service.</p>
+
+              <form onSubmit={handleFeedbackSubmit} className={styles.feedbackForm}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="feedback-email" className={styles.formLabel}>
+                    Email Address
+                  </label>
+                  <input
+                    id="feedback-email"
+                    type="email"
+                    required
+                    placeholder="name@example.com"
+                    value={feedbackEmail}
+                    onChange={(e) => setFeedbackEmail(e.target.value)}
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="feedback-message" className={styles.formLabel}>
+                    Your Message
+                  </label>
+                  <textarea
+                    id="feedback-message"
+                    required
+                    rows={4}
+                    placeholder="How can we help you? Write your feedback here..."
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    className={styles.formTextarea}
+                  />
+                </div>
+
+                <div className={styles.modalActions}>
+                  <button type="submit" className={styles.btnSubmit} disabled={submittingFeedback}>
+                    {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Review Us Modal */}
+      {reviewOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className={styles.modalOverlay} onClick={() => setReviewOpen(false)}>
+            <div className={styles.modalPanel} onClick={(e) => e.stopPropagation()}>
+              <button className={styles.modalCloseBtn} onClick={() => setReviewOpen(false)} aria-label="Close">
+                ×
+              </button>
+              <h3 className={styles.modalTitle}>Review Us</h3>
+              <p className={styles.modalSubtitle}>We would love to know how we did. Choose a platform to write your review:</p>
+
+              <div className={styles.reviewPlatforms}>
+                <a
+                  href={trustpilotUrl || 'https://www.trustpilot.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.reviewBtn} ${styles.btnTrustpilot}`}
+                  onClick={() => setReviewOpen(false)}
+                >
+                  <svg className={styles.platformIcon} viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                  </svg>
+                  Review on Trustpilot
+                </a>
+
+                <a
+                  href={googleReviewUrl || REVIEW_US_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.reviewBtn} ${styles.btnGoogle}`}
+                  onClick={() => setReviewOpen(false)}
+                >
+                  <svg className={styles.platformIcon} viewBox="0 0 24 24">
+                    <path
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      fill="#4285F4"
+                    />
+                    <path
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      fill="#34A853"
+                    />
+                    <path
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                      fill="#FBBC05"
+                    />
+                    <path
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                      fill="#EA4335"
+                    />
+                  </svg>
+                  Review on Google
+                </a>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
