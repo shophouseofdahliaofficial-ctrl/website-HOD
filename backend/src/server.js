@@ -22,6 +22,7 @@ const connectorRoutes = require('./routes/connectors');
 const feedbackRoutes = require('./routes/feedback');
 const creatorRoutes = require('./routes/creators');
 const analyticsRoutes = require('./routes/analytics');
+const deliveryRoutes = require('./routes/delivery');
 const deliveryTrackingController = require('./controllers/deliveryTrackingController');
 
 // Import middleware
@@ -205,6 +206,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/connectors', connectorRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/creators', creatorRoutes);
+app.use('/api/delivery', deliveryRoutes);
+app.use('/delivery', deliveryRoutes);
 
 // Registered on app before order router so GET is never captured as GET /:id (uuid error).
 app.get('/api/orders/review-deliverables', authenticate, orderController.getDeliveredForReview);

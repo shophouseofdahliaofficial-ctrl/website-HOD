@@ -134,9 +134,17 @@ const ensureHoverNextImageColumn = async () => {
   hoverNextImageColumnEnsured = true;
 };
 
+let sizeGuideColumnEnsured = false;
+const ensureSizeGuideColumn = async () => {
+  if (sizeGuideColumnEnsured) return;
+  await query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS size_guide JSONB NOT NULL DEFAULT '{"enabled":false,"type":"table","imageUrl":"","tableRows":[]}'::jsonb;`);
+  sizeGuideColumnEnsured = true;
+};
+
 const ensureProductContentColumns = async () => {
   await ensureDetailBannersColumn();
   await ensureDigitalFlipbookColumn();
+  await ensureSizeGuideColumn();
 };
 
 let productSchemaEnsured = false;
@@ -226,6 +234,7 @@ const createProduct = async (productData) => {
     customizationCombinations = [],
     detailBanners = { images: [], adaptToFullImageRatio: false, displayMode: 'stacked' },
     digitalFlipbook = { enabled: false, sections: [] },
+    sizeGuide = { enabled: false, type: 'table', imageUrl: '', tableRows: [] },
     hoverNextImage = false,
   } = productData;
 
@@ -235,10 +244,10 @@ const createProduct = async (productData) => {
       is_membership_eligible, quantity, low_stock_threshold, category_id,
       selling_price, compare_at_price, tax_percent, max_quantity, is_nationwide_delivery, delivery_pincodes, delivery_time_text, is_customizable, accordion_items,
       photobook_editor_enabled, buy_now_enabled, buy_again_enabled, polaroid_upload_enabled, strip_upload_enabled,
-      customization_options, customization_combinations, detail_banners, digital_flipbook, hover_next_image,
+      customization_options, customization_combinations, detail_banners, digital_flipbook, size_guide, hover_next_image,
       created_at, updated_at
     )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16, $17, $18::jsonb, $19, $20, $21, $22, $23, $24::jsonb, $25::jsonb, $26::jsonb, $27::jsonb, $28, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16, $17, $18::jsonb, $19, $20, $21, $22, $23, $24::jsonb, $25::jsonb, $26::jsonb, $27::jsonb, $28::jsonb, $29, NOW(), NOW())
      RETURNING *`,
      [
       name,
@@ -268,6 +277,7 @@ const createProduct = async (productData) => {
       JSON.stringify(Array.isArray(customizationCombinations) ? customizationCombinations : []),
       JSON.stringify(detailBanners != null ? detailBanners : { images: [], adaptToFullImageRatio: false, displayMode: 'stacked' }),
       JSON.stringify(digitalFlipbook != null ? digitalFlipbook : { enabled: false, sections: [] }),
+      JSON.stringify(sizeGuide != null ? sizeGuide : { enabled: false, type: 'table', imageUrl: '', tableRows: [] }),
       hoverNextImage,
      ]
   );
@@ -361,10 +371,11 @@ const updateProduct = async (productId, updates) => {
                                       key === 'customizationCombinations' ? 'customization_combinations' :
                                         key === 'detailBanners' ? 'detail_banners' :
                                           key === 'digitalFlipbook' ? 'digital_flipbook' :
+                                            key === 'sizeGuide' ? 'size_guide' :
                                         key === 'deliveryTimeText' ? 'delivery_time_text' :
                                           key === 'hoverNextImage' ? 'hover_next_image' : key;
 
-    const isJsonb = key === 'deliveryPincodes' || key === 'accordionItems' || key === 'customizationOptions' || key === 'customizationCombinations' || key === 'detailBanners' || key === 'digitalFlipbook';
+    const isJsonb = key === 'deliveryPincodes' || key === 'accordionItems' || key === 'customizationOptions' || key === 'customizationCombinations' || key === 'detailBanners' || key === 'digitalFlipbook' || key === 'sizeGuide';
     fields.push(isJsonb ? `${dbKey} = $${paramCount}::jsonb` : `${dbKey} = $${paramCount}`);
     if (isJsonb) {
       let jsonVal = updates[key];
@@ -373,7 +384,7 @@ const updateProduct = async (productId, updates) => {
           jsonVal = JSON.parse(jsonVal);
         } catch (_) {}
       }
-      values.push(JSON.stringify(jsonVal != null ? jsonVal : (key === 'detailBanners' || key === 'digitalFlipbook' ? {} : [])));
+      values.push(JSON.stringify(jsonVal != null ? jsonVal : (key === 'detailBanners' || key === 'digitalFlipbook' || key === 'sizeGuide' ? {} : [])));
     } else {
       values.push(updates[key]);
     }

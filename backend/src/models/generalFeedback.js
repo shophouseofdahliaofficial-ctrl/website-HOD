@@ -15,6 +15,15 @@ async function ensureSchema() {
     );
   `);
   await query(`
+    CREATE TABLE IF NOT EXISTS photobook_editor_feedback (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      email TEXT,
+      message TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await query(`
     CREATE INDEX IF NOT EXISTS idx_general_feedback_created
     ON general_feedback(created_at DESC);
   `);

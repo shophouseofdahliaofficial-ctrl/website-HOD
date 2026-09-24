@@ -12,7 +12,7 @@ import cardStyles from './ProductsSection.module.css';
 import { User, Product } from '@/types';
 import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import { readScopedPincode, writeScopedPincode, scopedPincodeStatusKey } from '@/lib/utils/userScopedStorage';
-import { apiClient, contentApi, productsApi, walletApi } from '@/lib/api';
+import { apiClient, contentApi, productsApi, walletApi, deliveryApi, DeliveryPincodeCheckResponse } from '@/lib/api';
 import ProductDetailsModal from './ProductDetailsModal';
 import Logo from './Logo';
 import NavigationProgressBar from './NavigationProgressBar';
@@ -665,6 +665,7 @@ export default function Header() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [pincode, setPincode] = useState(['', '', '', '', '', '']);
   const [deliveryStatus, setDeliveryStatus] = useState<'checking' | 'available' | 'unavailable' | null>(null);
+  const [pincodeDetails, setPincodeDetails] = useState<DeliveryPincodeCheckResponse | null>(null);
   const [savedPincode, setSavedPincode] = useState<string | null>(null);
   const [savedDeliveryStatus, setSavedDeliveryStatus] = useState<'available' | 'unavailable' | null>(null);
   const [serviceablePincodes, setServiceablePincodes] = useState<Array<{ pincode: string; deliveryTime?: string }> | null>(null);
@@ -2179,6 +2180,8 @@ export default function Header() {
   const isDeliverable = (pin: string, productsList: Product[] | null = allProducts) => {
     const cleaned = (pin || '').trim();
     if (!/^\d{6}$/.test(cleaned)) return false;
+    const pinNum = parseInt(cleaned, 10);
+    if (!pinNum || pinNum < 110000 || pinNum > 855999) return false;
 
     // 1. Check admin-configured subscription delivery pincodes (serviceablePincodes)
     if (serviceablePincodes && serviceablePincodes.length > 0) {
@@ -2192,7 +2195,7 @@ export default function Header() {
     if (productsToCheck && productsToCheck.length > 0) {
       const activeProducts = productsToCheck.filter((p) => p.isActive !== false);
       if (activeProducts.length > 0) {
-        // If ANY active product is nationwide, delivery is available
+        // If ANY active product is nationwide, delivery is available for valid Indian pins
         const hasNationwide = activeProducts.some((p) => Boolean(p.isNationwideDelivery));
         if (hasNationwide) return true;
 
@@ -2210,7 +2213,7 @@ export default function Header() {
       }
     }
 
-    return true;
+    return false;
   };
 
   const parseEtaMinutes = (value: string): number => {
@@ -2274,21 +2277,44 @@ export default function Header() {
   const whatsappHref = hasContactPhone ? `https://wa.me/${contactPhoneDigits}` : '#';
   const contactPhoneLabel = contactPhone || 'Not available';
 
-  // If we have a saved pincode, compute saved status based on current config
+  // If we have a saved pincode, compute saved status based on live Delhivery serviceability
   useEffect(() => {
-    if (!savedPincode || savedPincode.length !== 6) return;
-    const ok = isDeliverable(savedPincode);
-    setSavedDeliveryStatus(ok ? 'available' : 'unavailable');
-    localStorage.setItem(scopedPincodeStatusKey(pinUserId), ok ? 'available' : 'unavailable');
+    if (!savedPincode || savedPincode.length !== 6) {
+      setSavedDeliveryStatus(null);
+      return;
+    }
+    const pinNum = parseInt(savedPincode, 10);
+    if (!pinNum || pinNum < 110000 || pinNum > 855999) {
+      setSavedDeliveryStatus('unavailable');
+      localStorage.setItem(scopedPincodeStatusKey(pinUserId), 'unavailable');
+      return;
+    }
+    deliveryApi
+      .checkPincode(savedPincode)
+      .then((res) => {
+        const status = res.deliverable ? 'available' : 'unavailable';
+        setSavedDeliveryStatus(status);
+        localStorage.setItem(scopedPincodeStatusKey(pinUserId), status);
+      })
+      .catch(() => {
+        const ok = isDeliverable(savedPincode);
+        setSavedDeliveryStatus(ok ? 'available' : 'unavailable');
+        localStorage.setItem(scopedPincodeStatusKey(pinUserId), ok ? 'available' : 'unavailable');
+      });
   }, [savedPincode, serviceablePincodes, allProducts, pinUserId]);
 
-  // Focus first pincode input when modal opens
+  // Focus first pincode input when modal opens & initialize with saved pincode if present
   useEffect(() => {
     if (isAddressModalOpen) {
-      // Reset pincode and delivery status when modal opens
-      setPincode(['', '', '', '', '', '']);
-      setDeliveryStatus(null);
-      // Focus first input after a short delay to ensure DOM is ready
+      if (savedPincode && savedPincode.length === 6) {
+        const digits = savedPincode.split('').slice(0, 6);
+        setPincode(digits);
+        checkPincodeDelivery(savedPincode);
+      } else {
+        setPincode(['', '', '', '', '', '']);
+        setDeliveryStatus(null);
+        setPincodeDetails(null);
+      }
       setTimeout(() => {
         pincodeInputRefs.current[0]?.focus();
       }, 100);
@@ -2302,27 +2328,41 @@ export default function Header() {
     return () => window.removeEventListener('milko:open-pincode-modal', onOpen as EventListener);
   }, []);
 
-  // Check pincode delivery availability
-  const checkPincodeDelivery = async () => {
-    const fullPincode = pincode.join('');
+  // Check pincode delivery availability (via Delhivery)
+  const checkPincodeDelivery = async (pinToCheck?: string) => {
+    const fullPincode = pinToCheck || pincode.join('');
     if (fullPincode.length !== 6) return;
+
+    const pinNum = parseInt(fullPincode, 10);
+    if (!pinNum || pinNum < 110000 || pinNum > 855999) {
+      setPincodeDetails({
+        success: true,
+        deliverable: false,
+        pincode: fullPincode,
+        locationLabel: fullPincode,
+        message: `Pincode ${fullPincode} is not serviceable for delivery`
+      });
+      setDeliveryStatus('unavailable');
+      return;
+    }
 
     setDeliveryStatus('checking');
 
-    let productsList = allProducts;
-    if (productsList === null) {
-      try {
-        productsList = await productsApi.getAll();
-        setAllProducts(productsList);
-      } catch (err) {
-        console.error('Failed to load products for pincode check:', err);
-      }
+    try {
+      const res = await deliveryApi.checkPincode(fullPincode);
+      setPincodeDetails(res);
+      setDeliveryStatus(res.deliverable ? 'available' : 'unavailable');
+    } catch (err) {
+      console.warn('Delhivery check fallback in header:', err);
+      setPincodeDetails({
+        success: true,
+        deliverable: false,
+        pincode: fullPincode,
+        locationLabel: fullPincode,
+        message: `Pincode ${fullPincode} is not serviceable for delivery`
+      });
+      setDeliveryStatus('unavailable');
     }
-
-    setTimeout(() => {
-      const isAvailable = isDeliverable(fullPincode, productsList);
-      setDeliveryStatus(isAvailable ? 'available' : 'unavailable');
-    }, 400);
   };
 
   // Handle final done action
@@ -3318,20 +3358,25 @@ export default function Header() {
                 </button>
               </div>
 
-              {/* Delivery Location Text */}
+              {/* Delivery Location Text & Estimated Transit Details */}
               {(() => {
                 const fullPincode = pincode.join('');
                 if (deliveryStatus === 'available') {
                   return (
-                    <p key="available" className={`${styles.deliveryLocationText} ${styles.deliveryLocationTextSuccess}`}>
-                      ✓ We are deliverable to {fullPincode}
-                    </p>
+                    <div key="available" className={styles.deliveryStatusBlock}>
+                      <p className={`${styles.deliveryLocationText} ${styles.deliveryLocationTextSuccess}`}>
+                        ✓ Delivery available to {pincodeDetails?.locationLabel || fullPincode}
+                      </p>
+                      <div className={styles.deliveryMetaRow}>
+                        <span>Estimated delivery: <strong>{pincodeDetails?.deliveryTimeText || '3-5 Days'}</strong></span>
+                      </div>
+                    </div>
                   );
                 }
                 if (deliveryStatus === 'unavailable') {
                   return (
                     <p key="unavailable" className={`${styles.deliveryLocationText} ${styles.deliveryLocationTextError}`}>
-                      ✕ Currently not deliverable to {fullPincode}
+                      ✕ Currently not deliverable to {pincodeDetails?.locationLabel || fullPincode}
                     </p>
                   );
                 }
@@ -3369,10 +3414,16 @@ export default function Header() {
                           newPincode[index] = value;
                           setPincode(newPincode);
                           setDeliveryStatus(null);
+                          setPincodeDetails(null);
 
                           // Auto-focus next box if value entered
                           if (value && index < 5) {
                             pincodeInputRefs.current[index + 1]?.focus();
+                          }
+
+                          const fullPin = newPincode.join('');
+                          if (fullPin.length === 6) {
+                            checkPincodeDelivery(fullPin);
                           }
                         }
                       }}
@@ -3391,9 +3442,12 @@ export default function Header() {
                         }
                         setPincode(newPincode);
                         setDeliveryStatus(null);
-                        // Focus the last filled box or next empty box
+                        setPincodeDetails(null);
                         const nextIndex = Math.min(pastedData.length, 5);
                         pincodeInputRefs.current[nextIndex]?.focus();
+                        if (pastedData.length === 6) {
+                          checkPincodeDelivery(pastedData);
+                        }
                       }}
                       className={`${styles.pincodeBox} ${deliveryStatus === 'available'
                         ? styles.pincodeBoxSuccess

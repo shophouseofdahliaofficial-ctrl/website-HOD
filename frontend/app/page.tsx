@@ -301,6 +301,14 @@ export default function HomePage() {
         titleRef.current.style.transform = `perspective(380px) rotateX(${tiltX.toFixed(2)}deg) scaleX(${scaleX.toFixed(4)}) scaleY(${scaleY.toFixed(4)})`;
       }
 
+      // Promptly disappear the "Scroll down" indicator as Phase 1 begins scrolling down
+      if (scrollIndicatorRef.current) {
+        const indicatorOpacity = Math.max(0, 1 - scrollY / 80);
+        scrollIndicatorRef.current.style.opacity = indicatorOpacity.toFixed(3);
+        scrollIndicatorRef.current.style.transform = `translate3d(0, ${(scrollY * 0.3).toFixed(1)}px, 0)`;
+        scrollIndicatorRef.current.style.pointerEvents = indicatorOpacity < 0.05 ? 'none' : 'auto';
+      }
+
       if (nextSectionRef.current && phase3SectionRef.current) {
         const nextRect = nextSectionRef.current.getBoundingClientRect();
         const phase3Rect = phase3SectionRef.current.getBoundingClientRect();
@@ -398,7 +406,7 @@ export default function HomePage() {
       />
 
       {/* 1. Hero Fullscreen Section (#530000) */}
-      <section className={styles.heroSection}>
+      <section id="phase-1-section" className={styles.heroSection}>
         {/* Dull Background Video */}
         <video
           ref={videoRef}
@@ -455,7 +463,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. White Section (Phase 2) Revealed on Scroll Down */}
-      <section ref={nextSectionRef} className={styles.whiteSection}>
+      <section id="phase-2-section" ref={nextSectionRef} className={styles.whiteSection}>
         {/* Leading Procedural Pixel Square Crest */}
         <div className={styles.pixelTransitionContainer}>
           <canvas ref={pixelCanvasRef} className={styles.pixelTransitionCanvas} />
@@ -473,7 +481,7 @@ export default function HomePage() {
       </div>
 
       {/* 3. Phase 3 Fullscreen Footer Section (#530000) */}
-      <section ref={phase3SectionRef} className={styles.phase3Section}>
+      <section id="phase-3-section" ref={phase3SectionRef} className={styles.phase3Section}>
         <div className={styles.phase3Content}>
           {/* Centered Large Brand Heading */}
           <div className={styles.phase3TopHero}>

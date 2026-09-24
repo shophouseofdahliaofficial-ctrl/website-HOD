@@ -37,7 +37,40 @@ export default function PixelCubeModelTransition({
     if (!triggerEntry) {
       setIsResolved(false);
       if (modelWrapperRef.current) {
-        modelWrapperRef.current.style.opacity = '1';
+        modelWrapperRef.current.style.opacity = '0';
+      }
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const width = (canvas.width = canvas.offsetWidth || 320);
+          const height = (canvas.height = canvas.offsetHeight || 520);
+          const CUBE_SIZE = 14;
+          const cols = Math.ceil(width / CUBE_SIZE);
+          const rows = Math.ceil(height / CUBE_SIZE);
+          const centerX = cols / 2;
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = '#ffffff';
+          for (let r = 0; r < rows; r++) {
+            const normY = r / rows;
+            let halfSpan = 0;
+            if (normY < 0.12) halfSpan = 1.8;
+            else if (normY < 0.18) halfSpan = 1.2;
+            else if (normY < 0.38) halfSpan = 3.6;
+            else if (normY < 0.50) halfSpan = 2.4;
+            else if (normY < 0.65) halfSpan = 4.0;
+            else if (normY < 0.88) halfSpan = 2.2;
+            else halfSpan = 2.6;
+
+            for (let c = Math.floor(centerX - halfSpan); c <= Math.ceil(centerX + halfSpan); c++) {
+              if (c >= 0 && c < cols) {
+                const distFromCenter = Math.abs(c - centerX);
+                if (distFromCenter > halfSpan * 0.75 && (Math.sin(c * 17 + r * 31) * 0.5 + 0.5) > 0.65) continue;
+                ctx.fillRect(c * CUBE_SIZE, r * CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+              }
+            }
+          }
+        }
       }
       return;
     }
@@ -46,6 +79,11 @@ export default function PixelCubeModelTransition({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Immediately hide raw 3D model wrapper when entry triggers
+    if (modelWrapperRef.current) {
+      modelWrapperRef.current.style.opacity = '0';
+    }
 
     let animId: number;
     let startTime: number | null = null;
@@ -225,6 +263,7 @@ export default function PixelCubeModelTransition({
         style={{
           width: '100%',
           height: '100%',
+          opacity: isResolved ? 1 : 0,
           transition: 'opacity 0.04s ease-out',
         }}
       >

@@ -363,12 +363,14 @@ const createProduct = async (productData, imageFile = null) => {
     parsedCustomizationCombinations = await sanitizeCustomizationCombinations(parsedCustomizationCombinations, null);
   }
 
-  assertCustomizationPayloadSafe(parsedCustomizationOptions, parsedCustomizationCombinations);
-
-  const normalizedDeliveryTimeText =
-    typeof deliveryTimeText === 'string' && deliveryTimeText.trim() !== ''
-      ? deliveryTimeText.trim().slice(0, 60)
-      : null;
+  let parsedSizeGuide = { enabled: false, type: 'table', imageUrl: '', tableRows: [] };
+  if (productData.sizeGuide) {
+    try {
+      parsedSizeGuide = typeof productData.sizeGuide === 'string' ? JSON.parse(productData.sizeGuide) : productData.sizeGuide;
+    } catch (e) {
+      console.error('Failed to parse sizeGuide in create:', e);
+    }
+  }
 
   return await productModel.createProduct({
     name,
@@ -395,6 +397,7 @@ const createProduct = async (productData, imageFile = null) => {
     accordionItems: Array.isArray(parsedAccordionItems) ? parsedAccordionItems : [],
     customizationOptions: Array.isArray(parsedCustomizationOptions) ? parsedCustomizationOptions : [],
     customizationCombinations: Array.isArray(parsedCustomizationCombinations) ? parsedCustomizationCombinations : [],
+    sizeGuide: parsedSizeGuide,
     hoverNextImage: normalizeBoolean(hoverNextImage, false),
   });
 };
@@ -521,6 +524,15 @@ const updateProduct = async (productId, updates, imageFile = null) => {
     } catch (e) {
       console.error('Failed to parse digitalFlipbook in update:', e);
       updates.digitalFlipbook = { enabled: false, sections: [] };
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, 'sizeGuide')) {
+    try {
+      updates.sizeGuide = typeof updates.sizeGuide === 'string' ? JSON.parse(updates.sizeGuide) : updates.sizeGuide;
+    } catch (e) {
+      console.error('Failed to parse sizeGuide in update:', e);
+      updates.sizeGuide = { enabled: false, type: 'table', imageUrl: '', tableRows: [] };
     }
   }
 

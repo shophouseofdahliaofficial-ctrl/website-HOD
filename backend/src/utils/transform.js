@@ -233,6 +233,7 @@ const transformProduct = (row) => {
 
   const parsedDetailBanners = parseJsonObject(row.detail_banners, { images: [], adaptToFullImageRatio: false, displayMode: 'stacked' });
   const parsedDigitalFlipbook = parseJsonObject(row.digital_flipbook, { enabled: false, sections: [] });
+  const parsedSizeGuide = parseJsonObject(row.size_guide, { enabled: false, type: 'table', imageUrl: '', tableRows: [] });
 
   return {
     id: String(row.id),
@@ -291,6 +292,19 @@ const transformProduct = (row) => {
             ? section.imageUrls.map((url) => String(url || '').trim()).filter(Boolean)
             : [],
         })).filter((section) => section.title)
+        : [],
+    },
+    sizeGuide: {
+      enabled: Boolean(parsedSizeGuide.enabled),
+      type: parsedSizeGuide.type === 'image' ? 'image' : 'table',
+      imageUrl: typeof parsedSizeGuide.imageUrl === 'string' ? parsedSizeGuide.imageUrl.trim() : '',
+      tableRows: Array.isArray(parsedSizeGuide.tableRows)
+        ? parsedSizeGuide.tableRows.map((r) => ({
+          size: String(r?.size || '').trim(),
+          bust: String(r?.bust || '').trim(),
+          waist: String(r?.waist || '').trim(),
+          hip: String(r?.hip || '').trim(),
+        })).filter((r) => r.size || r.bust || r.waist || r.hip)
         : [],
     },
     createdAt: row.created_at?.toISOString(),

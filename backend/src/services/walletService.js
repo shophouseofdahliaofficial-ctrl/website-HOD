@@ -15,11 +15,13 @@ async function ensureWalletSchema() {
       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       type TEXT NOT NULL CHECK (type IN ('credit', 'debit')),
       amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
-      source TEXT NOT NULL CHECK (source IN ('razorpay', 'refund', 'purchase', 'subscription')),
+      source TEXT NOT NULL DEFAULT 'razorpay',
       reference_id TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  await query(`ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'razorpay';`);
+  await query(`ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS reference_id TEXT;`);
 
   await query(`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id_created_at ON wallet_transactions(user_id, created_at DESC);`);
   await query(

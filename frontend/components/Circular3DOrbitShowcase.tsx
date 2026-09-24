@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
 import ModelViewer3D from './ModelViewer3D';
 import ScrambleText from './ScrambleText';
 import PixelCubeModelTransition from './PixelCubeModelTransition';
 import HorizontalProductGalleryModal, { TriggerRect } from './HorizontalProductGalleryModal';
+import BackgroundCircularImageReveal from './BackgroundCircularImageReveal';
 import styles from './Circular3DOrbitShowcase.module.css';
 
 interface ShowcaseItem {
@@ -112,6 +113,12 @@ const ITEMS: ShowcaseItem[] = [
   },
 ];
 
+// Smoothstep Hermite curve for silky continuous scroll transitions
+function smoothstep(min: number, max: number, value: number): number {
+  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  return x * x * (3 - 2 * x);
+}
+
 // Kinetic Text Component: Each letter cuts and tracks directly with scroll position
 function ScrollDrivenKineticText({
   text,
@@ -182,7 +189,36 @@ export default function Circular3DOrbitShowcase() {
   const [uiVisible, setUiVisible] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400);
   const [isProduct2GalleryOpen, setIsProduct2GalleryOpen] = useState(false);
+  const [activeBackground, setActiveBackground] = useState<'nature' | 'bloom' | 'white' | null>(null);
+  const isVisualActive = isVerticalMode && activeBackground !== null;
+  const isInvertedVisualTheme = isVerticalMode && (activeBackground === 'nature' || activeBackground === 'bloom');
+  const lastActiveBgSrcRef = useRef('/nature_3dmodel.png');
+  if (activeBackground === 'bloom') {
+    lastActiveBgSrcRef.current = '/back2.png';
+  } else if (activeBackground === 'nature') {
+    lastActiveBgSrcRef.current = '/nature_3dmodel.png';
+  } else if (activeBackground === 'white') {
+    lastActiveBgSrcRef.current = '/whiteback.png';
+  }
+  const currentBgSrc = lastActiveBgSrcRef.current;
   const [galleryTriggerRect, setGalleryTriggerRect] = useState<TriggerRect | null>(null);
+
+  // First-time prompt cycle state: cycles between "Our Collection" and "Click on any model to view" every 4s
+  const [hasClickedModel, setHasClickedModel] = useState(false);
+  const [hintToggle, setHintToggle] = useState(false);
+
+  // 360 Drag Prompt: permanently dismissed for session once user tries to drag a 3D model
+  const [hasDismissed360Forever, setHasDismissed360Forever] = useState(false);
+
+  useEffect(() => {
+    if (hasClickedModel) return;
+
+    const interval = setInterval(() => {
+      setHintToggle((prev) => !prev);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [hasClickedModel]);
 
   // Distinct orbital starting points for each model rotating in the same direction
   const ROTATION_OFFSETS = [
@@ -212,31 +248,69 @@ export default function Circular3DOrbitShowcase() {
     'Product No. 543',
   ];
 
-  // Track scroll entry from Phase 1 to Phase 2 to trigger pixelated cubic model transition
-  const [hasEnteredPhase2, setHasEnteredPhase2] = useState(false);
-
-  useEffect(() => {
-    const handleScrollEntry = () => {
-      const scrollY = window.scrollY || window.pageYOffset;
-      if (scrollY > 60) {
-        setHasEnteredPhase2(true);
-      } else {
-        setHasEnteredPhase2(false);
-      }
-    };
-    window.addEventListener('scroll', handleScrollEntry, { passive: true });
-    handleScrollEntry();
-    return () => window.removeEventListener('scroll', handleScrollEntry);
-  }, []);
+  // Track scroll entry from Phase 1 into Phase 2 for statement & 3D model scale entrance
+  const [introProgress, setIntroProgress] = useState(0);
 
   // Animation values tracked by GSAP
-  const animRef = useRef({ layout: 0, virtualIndex: 0 });
+  const animRef = useRef({ layout: 0, virtualIndex: 0, introProgress: 0 });
   const isTransitioningRef = useRef(false);
   const isVerticalModeRef = useRef(false);
   isVerticalModeRef.current = isVerticalMode;
   const isGalleryOpenRef = useRef(false);
   isGalleryOpenRef.current = isProduct2GalleryOpen;
   const progressRef = useRef({ current: 0, target: 0 });
+
+  // GSAP quickTo setters for buttery 60fps/120fps fluid scroll tracking
+  const quickVirtualIndexRef = useRef<((value: number) => void) | null>(null);
+  const quickIntroRef = useRef<((value: number) => void) | null>(null);
+
+  useEffect(() => {
+    quickVirtualIndexRef.current = gsap.quickTo(animRef.current, 'virtualIndex', {
+      duration: 0.65,
+      ease: 'power3.out',
+      onUpdate: () => {
+        setVirtualIndex(animRef.current.virtualIndex);
+      },
+    });
+
+    quickIntroRef.current = gsap.quickTo(animRef.current, 'introProgress', {
+      duration: 0.45,
+      ease: 'power2.out',
+      onUpdate: () => {
+        setIntroProgress(animRef.current.introProgress);
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleScrollIntro = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      const vh = window.innerHeight || 800;
+
+      const phase2 = document.getElementById('phase-2-section');
+      const p2Top = phase2 ? phase2.offsetTop : vh;
+
+      // Start statement entrance easily as user starts scrolling and pixel squares emerge
+      const startScroll = Math.max(0, p2Top - vh * 0.85);
+      const scrollRange = vh * 1.95;
+
+      const progress = Math.max(0, Math.min(1, (scrollY - startScroll) / scrollRange));
+      if (quickIntroRef.current) {
+        quickIntroRef.current(progress);
+      } else {
+        setIntroProgress(progress);
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollIntro, { passive: true });
+    window.addEventListener('resize', handleScrollIntro);
+    handleScrollIntro();
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollIntro);
+      window.removeEventListener('resize', handleScrollIntro);
+    };
+  }, []);
 
   const totalItems = ITEMS.length;
   const SCROLL_SCALE = 0.88;
@@ -249,47 +323,70 @@ export default function Circular3DOrbitShowcase() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isNavigatingRef = useRef(false);
+  // Dwell plateau curve: models linger in center before smoothly transitioning to the next model
+  const applyDwellCurve = (rawIndex: number, total: number, dwellRatio = 0.36): number => {
+    if (rawIndex <= 0) return 0;
+    if (rawIndex >= total - 1) return total - 1;
 
-  // Wheel navigation inside vertical mode: smoothly steps through models
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!isVerticalMode || isTransitioningRef.current || isNavigatingRef.current) return;
-    if (isProduct2GalleryOpen) return;
+    const base = Math.floor(rawIndex);
+    const frac = rawIndex - base;
 
-    if (Math.abs(e.deltaY) > 20) {
-      if (e.deltaY > 0 && activeIndex < totalItems - 1) {
-        isNavigatingRef.current = true;
-        const nextIdx = activeIndex + 1;
-        setActiveIndex(nextIdx);
-        gsap.to(animRef.current, {
-          virtualIndex: nextIdx,
-          duration: 0.65,
-          ease: 'power2.out',
-          onUpdate: () => {
-            setVirtualIndex(animRef.current.virtualIndex);
-          },
-          onComplete: () => {
-            isNavigatingRef.current = false;
-          },
-        });
-      } else if (e.deltaY < 0 && activeIndex > 0) {
-        isNavigatingRef.current = true;
-        const prevIdx = activeIndex - 1;
-        setActiveIndex(prevIdx);
-        gsap.to(animRef.current, {
-          virtualIndex: prevIdx,
-          duration: 0.65,
-          ease: 'power2.out',
-          onUpdate: () => {
-            setVirtualIndex(animRef.current.virtualIndex);
-          },
-          onComplete: () => {
-            isNavigatingRef.current = false;
-          },
-        });
-      }
+    if (frac <= dwellRatio) {
+      const t = frac / dwellRatio;
+      return base + 0.5 * Math.pow(t, 2) * 0.06;
+    } else if (frac >= 1 - dwellRatio) {
+      const t = (1 - frac) / dwellRatio;
+      return base + 1 - 0.5 * Math.pow(t, 2) * 0.06;
+    } else {
+      const p = (frac - dwellRatio) / (1 - 2 * dwellRatio);
+      const smooth = p * p * (3 - 2 * p);
+      return base + 0.03 + smooth * 0.94;
     }
   };
+
+  // Continuous scroll-driven vertical model navigation with stopping dwell time
+  useEffect(() => {
+    if (!isVerticalMode) return;
+
+    const handleVerticalScroll = () => {
+      if (!containerRef.current || isTransitioningRef.current) return;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const vh = window.innerHeight || 800;
+      const phase2El = document.getElementById('phase-2-section');
+      const p2Top = phase2El ? phase2El.offsetTop : vh;
+      const p2Height = containerRef.current.offsetHeight || vh * 7.2;
+      const scrollableDistance = p2Height - vh;
+
+      if (scrollableDistance <= 0) return;
+
+      const rawProgress = (scrollY - p2Top) / scrollableDistance;
+      const progress = Math.max(0, Math.min(1, rawProgress));
+
+      const rawVirtual = progress * (totalItems - 1);
+      const targetVirtualIndex = applyDwellCurve(rawVirtual, totalItems, 0.36);
+      const newActiveIndex = Math.min(totalItems - 1, Math.max(0, Math.round(targetVirtualIndex)));
+
+      setActiveIndex(newActiveIndex);
+
+      gsap.to(animRef.current, {
+        virtualIndex: targetVirtualIndex,
+        duration: 0.32,
+        ease: 'power1.out',
+        overwrite: 'auto',
+        onUpdate: () => {
+          setVirtualIndex(animRef.current.virtualIndex);
+        },
+      });
+    };
+
+    window.addEventListener('scroll', handleVerticalScroll, { passive: true });
+    window.addEventListener('resize', handleVerticalScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleVerticalScroll);
+      window.removeEventListener('resize', handleVerticalScroll);
+    };
+  }, [isVerticalMode, totalItems]);
 
   // Toggle handler: switches between horizontal lineup and vertical carousel with smooth reverse animation
   const toggleLayoutMode = () => {
@@ -310,6 +407,18 @@ export default function Circular3DOrbitShowcase() {
         onComplete: () => {
           setHoveredIndex(null);
           setUiVisible(true);
+
+          const vh = window.innerHeight || 800;
+          const phase2 = document.getElementById('phase-2-section');
+          const p2Top = phase2 ? phase2.offsetTop : vh;
+          const scrollableDistance = vh * 6.2;
+          const targetTop = p2Top + (activeIndex / (totalItems - 1)) * scrollableDistance;
+
+          window.scrollTo({ top: targetTop, behavior: 'instant' as any });
+          if ((window as any).lenis) {
+            (window as any).lenis.scrollTo(targetTop, { immediate: true });
+          }
+
           isTransitioningRef.current = false;
         },
       });
@@ -347,12 +456,39 @@ export default function Circular3DOrbitShowcase() {
       }
     } else {
       // VERTICAL -> HORIZONTAL
+      // Automatically dismiss active nature or blossom background if open
+      setActiveBackground(null);
+
+      // Ensure introProgress is locked to 1.0 so statement text is completely invisible
+      animRef.current.introProgress = 1.0;
+      setIntroProgress(1.0);
+      if (quickIntroRef.current) {
+        quickIntroRef.current(1.0);
+      }
+
       const tl = gsap.timeline({
         onComplete: () => {
           setIsVerticalMode(false);
           setHoveredIndex(null);
           setUiVisible(false);
           isTransitioningRef.current = false;
+
+          const vh = window.innerHeight || 800;
+          const phase2 = document.getElementById('phase-2-section');
+          const p2Top = phase2 ? phase2.offsetTop : vh;
+          // Target position where horizontal models are 100% visible and statement text is fully dissolved
+          const targetTop = p2Top + vh * 1.45;
+
+          animRef.current.introProgress = 1.0;
+          setIntroProgress(1.0);
+          if (quickIntroRef.current) {
+            quickIntroRef.current(1.0);
+          }
+
+          window.scrollTo({ top: targetTop, behavior: 'instant' as any });
+          if ((window as any).lenis) {
+            (window as any).lenis.scrollTo(targetTop, { immediate: true });
+          }
         },
       });
 
@@ -397,6 +533,7 @@ export default function Circular3DOrbitShowcase() {
   // Click handler: smoothly turns horizontal line into vertical stack centered on clicked model
   const handleModelClick = (clickedIndex: number) => {
     setHoveredIndex(null);
+    setHasClickedModel(true);
 
     if (!isVerticalMode) {
       // HORIZONTAL -> VERTICAL on click
@@ -414,6 +551,18 @@ export default function Circular3DOrbitShowcase() {
       const tl = gsap.timeline({
         onComplete: () => {
           setUiVisible(true);
+
+          const vh = window.innerHeight || 800;
+          const phase2 = document.getElementById('phase-2-section');
+          const p2Top = phase2 ? phase2.offsetTop : vh;
+          const scrollableDistance = vh * 6.2;
+          const targetTop = p2Top + (clickedIndex / (totalItems - 1)) * scrollableDistance;
+
+          window.scrollTo({ top: targetTop, behavior: 'instant' as any });
+          if ((window as any).lenis) {
+            (window as any).lenis.scrollTo(targetTop, { immediate: true });
+          }
+
           isTransitioningRef.current = false;
         },
       });
@@ -454,6 +603,18 @@ export default function Circular3DOrbitShowcase() {
       if (clickedIndex !== activeIndex) {
         setActiveIndex(clickedIndex);
         isTransitioningRef.current = true;
+
+        const vh = window.innerHeight || 800;
+        const phase2 = document.getElementById('phase-2-section');
+        const p2Top = phase2 ? phase2.offsetTop : vh;
+        const scrollableDistance = vh * 6.2;
+        const targetTop = p2Top + (clickedIndex / (totalItems - 1)) * scrollableDistance;
+
+        window.scrollTo({ top: targetTop, behavior: 'instant' as any });
+        if ((window as any).lenis) {
+          (window as any).lenis.scrollTo(targetTop, { immediate: true });
+        }
+
         gsap.to(animRef.current, {
           virtualIndex: clickedIndex,
           duration: 0.75,
@@ -473,18 +634,60 @@ export default function Circular3DOrbitShowcase() {
   const centerIndexOffset = (totalItems - 1) / 2;
   const horizontalSpacing = Math.min(180, Math.max(120, (windowWidth * 0.86) / totalItems));
 
+  // Statement text animation values ("Wear what feels like yours")
+  // 1. Easy & early fade in as user begins scrolling from Phase 1 (0.00 -> 0.07)
+  const fadeIn = smoothstep(0.00, 0.07, introProgress);
+  // 2. Dissolve phase (0.68 -> 0.84): After dwelling cleanly in center together, softly fades out
+  const dissolveProgress = smoothstep(0.68, 0.84, introProgress);
+
+  // Opacity remains 1.0 through entrance and center dwell, then gently fades out
+  const textOpacity = fadeIn * (1.0 - dissolveProgress);
+  const statementOpacity = isVerticalMode ? 0 : Number(textOpacity.toFixed(3));
+  const statementBlur = dissolveProgress * 4.5;
+
+  // 3D Models emergence: Arrives ONLY AFTER text has completely dissolved (0.84 -> 1.00)
+  const modelsIn = smoothstep(0.84, 1.00, introProgress);
+  const horizontalScale = 0.38; // Constant scale: no scale up/down distortion during scroll
+  const horizontalOpacity = Math.pow(modelsIn, 1.25);
+  const horizontalBlur = (1 - modelsIn) * 8;
+
+  const hasEnteredPhase2 = modelsIn > 0.005 || isVerticalMode;
+
   return (
     <div
       ref={containerRef}
       className={`${styles.orbitWrapper} ${isVerticalMode ? styles.orbitWrapperVertical : ''}`}
-      onWheel={handleWheel}
     >
       {/* Sticky viewport stage */}
       <div className={styles.stickyStage}>
+        {/* 0. Background Circular Pixel Mark Image Reveal (Behind 3D models, text & controls) */}
+        <BackgroundCircularImageReveal
+          isActive={isVisualActive}
+          imageSrc={currentBgSrc}
+          onToggle={() => setActiveBackground(null)}
+        />
+
+        {/* 0. Statement Entrance Text: "Wear what feels like yours" (unified phrase in center) */}
+        {!isVerticalMode && statementOpacity > 0.005 && (
+          <div
+            className={styles.introStatementWrap}
+            style={{
+              opacity: statementOpacity,
+              transform: 'translate3d(-50%, -50%, 0)',
+              filter: statementBlur > 0.05 ? `blur(${statementBlur.toFixed(1)}px)` : 'none',
+            }}
+            aria-hidden={statementOpacity < 0.1}
+          >
+            <h2 className={styles.introStatementHeading}>
+              Wear what feels like yours
+            </h2>
+          </div>
+        )}
+
         {/* 1. Left Center Static Info Card (hidden initially in horizontal mode, reveals on click) */}
         <div
           ref={cardInfoRef}
-          className={styles.cardInfo}
+          className={`${styles.cardInfo} ${isInvertedVisualTheme ? styles.cardInfoVisualActive : ''}`}
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
@@ -521,23 +724,58 @@ export default function Circular3DOrbitShowcase() {
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setGalleryTriggerRect({
-                top: rect.top,
-                left: rect.left,
-                width: rect.width,
-                height: rect.height,
-              });
-              setIsProduct2GalleryOpen(true);
-            }}
-            className={styles.shopButton}
-            aria-label="View product 2 images"
-          >
-            <ScrambleText text="View" />
-          </button>
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setGalleryTriggerRect({
+                  top: rect.top,
+                  left: rect.left,
+                  width: rect.width,
+                  height: rect.height,
+                });
+                setIsProduct2GalleryOpen(true);
+              }}
+              className={styles.shopButton}
+              aria-label="View product 2 images"
+            >
+              <ScrambleText text="View" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveBackground((prev) => (prev === 'nature' ? null : 'nature'));
+              }}
+              className={`${styles.shopButton} ${activeBackground === 'nature' ? styles.shopButtonActive : ''}`}
+              aria-label={activeBackground === 'nature' ? "Hide nature background" : "View nature background"}
+            >
+              <ScrambleText text={activeBackground === 'nature' ? "Hide" : "Nature"} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveBackground((prev) => (prev === 'bloom' ? null : 'bloom'));
+              }}
+              className={`${styles.shopButton} ${activeBackground === 'bloom' ? styles.shopButtonActive : ''}`}
+              aria-label={activeBackground === 'bloom' ? "Hide blossom background" : "View blossom background"}
+            >
+              <ScrambleText text={activeBackground === 'bloom' ? "Hide" : "Blossom"} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveBackground((prev) => (prev === 'white' ? null : 'white'));
+              }}
+              className={`${styles.shopButton} ${activeBackground === 'white' ? styles.shopButtonActive : ''}`}
+              aria-label={activeBackground === 'white' ? "Hide white background" : "View white background"}
+            >
+              <ScrambleText text={activeBackground === 'white' ? "Hide" : "White"} />
+            </button>
+          </div>
         </div>
 
         {/* 2. 3D Model Items: Horizontal line initially, GSAP morphs to Vertical Center on click */}
@@ -549,14 +787,14 @@ export default function Circular3DOrbitShowcase() {
 
             // --- Horizontal Layout Coordinates (layoutProgress = 0) ---
             const hOffsetPx = (index - centerIndexOffset) * horizontalSpacing;
-            const hScale = 0.38;
-            const hOpacity = 1.0;
-            const hBlur = 0;
+            const hScale = isVerticalMode ? 0.38 : horizontalScale;
+            const hOpacity = isVerticalMode ? 1.0 : horizontalOpacity;
+            const hBlur = isVerticalMode ? 0 : horizontalBlur;
 
             // --- Vertical Layout Coordinates (layoutProgress = 1) ---
             const vOffsetPx = 0;
             const vOffsetYVh = d * 60;
-            const vScale = Math.max(0.36, 0.89 - Math.abs(d) * 0.25); // 10% smaller centered model in vertical mode
+            const vScale = Math.max(0.40, 0.98 - Math.abs(d) * 0.28); // 10% bigger centered model in vertical mode
             const vOpacity = Math.max(0, 1.0 - Math.pow(Math.abs(d) / 0.95, 1.35));
             const vBlur = Math.min(16, Math.pow(Math.abs(d), 1.2) * 14);
 
@@ -567,7 +805,7 @@ export default function Circular3DOrbitShowcase() {
             const currentOpacity = gsap.utils.interpolate(hOpacity, vOpacity, layoutProgress);
             const currentBlur = gsap.utils.interpolate(hBlur, vBlur, layoutProgress);
 
-            const isVisible = layoutProgress < 0.15 ? true : currentOpacity > 0.02;
+            const isVisible = layoutProgress < 0.15 ? (isVerticalMode ? true : hOpacity > 0.01) : currentOpacity > 0.02;
             const zIndex = isFocused ? 50 : Math.max(1, Math.round((2.0 - Math.abs(d)) * 20));
 
             return (
@@ -580,11 +818,11 @@ export default function Circular3DOrbitShowcase() {
                   filter: currentBlur > 0.05 ? `blur(${currentBlur.toFixed(1)}px)` : 'none',
                   zIndex: zIndex,
                   visibility: isVisible ? 'visible' : 'hidden',
-                  pointerEvents: !isVerticalMode ? 'auto' : isFocused ? 'auto' : 'auto',
+                  pointerEvents: !isVerticalMode ? (modelsIn > 0.75 ? 'auto' : 'none') : isFocused ? 'auto' : 'auto',
                 }}
               >
                 {/* Click & Hover trigger overlay for seamless hover scramble & click response */}
-                {(!isVerticalMode || !isFocused) && (
+                {(!isVerticalMode || !isFocused) && (isVerticalMode || modelsIn > 0.75) && (
                   <button
                     type="button"
                     className={styles.cardClickTrigger}
@@ -597,8 +835,23 @@ export default function Circular3DOrbitShowcase() {
                   />
                 )}
 
+                {/* Foot Contact Shadow onto the nature podium */}
+                <div
+                  className={`${styles.footContactShadow} ${isVisualActive && (isFocused || !isVerticalMode) ? styles.footContactShadowActive : ''}`}
+                  aria-hidden="true"
+                >
+                  <div className={styles.footShadowAmbient} />
+                  <div className={styles.footShadowLeft} />
+                  <div className={styles.footShadowRight} />
+                </div>
+
                 {/* 3D Model Instance with Pixelated Cubic Transition and Individual Starting Angle */}
-                <div className={styles.modelContainerWrap}>
+                <div
+                  className={styles.modelContainerWrap}
+                  onPointerDown={() => setHasDismissed360Forever(true)}
+                  onTouchStart={() => setHasDismissed360Forever(true)}
+                  onMouseDown={() => setHasDismissed360Forever(true)}
+                >
                   <PixelCubeModelTransition
                     modelIndex={index}
                     triggerEntry={hasEnteredPhase2}
@@ -608,6 +861,8 @@ export default function Circular3DOrbitShowcase() {
                       texturePath={item.texturePath}
                       autoRotateSpeed={10.0}
                       initialRotation={ROTATION_OFFSETS[index] || 0}
+                      sunToLeft={isVisualActive}
+                      onInteractionStart={() => setHasDismissed360Forever(true)}
                     />
                   </PixelCubeModelTransition>
                 </div>
@@ -619,7 +874,7 @@ export default function Circular3DOrbitShowcase() {
         {/* 3. Orbit Progress & Quick Pagination Indicator (hidden in horizontal mode, reveals on click) */}
         <div
           ref={indicatorRef}
-          className={styles.orbitIndicator}
+          className={`${styles.orbitIndicator} ${isInvertedVisualTheme ? styles.orbitIndicatorVisualActive : ''}`}
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
@@ -644,7 +899,7 @@ export default function Circular3DOrbitShowcase() {
           ref={toggleBtnRef}
           type="button"
           onClick={toggleLayoutMode}
-          className={styles.toggleModeBtn}
+          className={`${styles.toggleModeBtn} ${isInvertedVisualTheme ? styles.toggleModeBtnVisualActive : ''}`}
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
@@ -668,19 +923,66 @@ export default function Circular3DOrbitShowcase() {
           <ScrambleText text="Horizontal" />
         </button>
 
-        {/* 5. Bottom Center "Our Collection" / Product Scramble Indicator in Phase 2 */}
+        {/* 5. 360° Drag Explore Curved Indicator below Model in Vertical Mode */}
+        {(() => {
+          const scrollSettled = Math.abs(virtualIndex - Math.round(virtualIndex)) < 0.08;
+          const show360Prompt = isVerticalMode && uiVisible && scrollSettled && !hasDismissed360Forever;
+
+          return (
+            <div
+              className={`${styles.orbit360Prompt} ${show360Prompt ? styles.orbit360PromptVisible : styles.orbit360PromptHidden} ${isInvertedVisualTheme ? styles.orbit360PromptVisualActive : ''}`}
+              aria-hidden={!show360Prompt}
+            >
+              <svg
+                viewBox="0 0 440 92"
+                className={styles.orbitArcSvg}
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                {/* Authentic 3D perspective half-circle elliptical orbital ring */}
+                <path
+                  d="M 22 18 A 198 64 0 0 0 418 18"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+                {/* Center dot indicator on the orbital ring */}
+                <circle cx="220" cy="82" r="3.6" fill="currentColor" />
+              </svg>
+              <div className={styles.orbit360Labels}>
+                <span className={styles.orbit360Explore}>DRAG TO EXPLORE</span>
+                <span className={styles.orbit360Degree}>360° VIEW</span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* 6. Bottom Center "Our Collection" / Prompt / Product Scramble Indicator in Horizontal Mode */}
         <div
-          className={`${styles.bottomCenterIndicator} ${!isVerticalMode ? styles.bottomCenterIndicatorVisible : ''}`}
+          className={`${styles.bottomCenterIndicator} ${!isVerticalMode && modelsIn > 0.82 ? styles.bottomCenterIndicatorVisible : ''}`}
         >
           <ScrambleText
-            text={!isVerticalMode && hoveredIndex !== null ? (PRODUCT_CODES[hoveredIndex] || 'Product No. 324') : 'Our Collection'}
+            text={
+              !isVerticalMode && hoveredIndex !== null
+                ? (PRODUCT_CODES[hoveredIndex] || 'Product No. 324')
+                : !hasClickedModel && hintToggle
+                ? 'Click on any model to view'
+                : 'Our Collection'
+            }
             triggerOnChange={true}
-            triggerKey={isVerticalMode ? 'vertical' : hoveredIndex}
+            triggerKey={
+              isVerticalMode
+                ? 'vertical'
+                : hoveredIndex !== null
+                ? `hover_${hoveredIndex}`
+                : `idle_${hasClickedModel}_${hintToggle}`
+            }
             speed="fast"
           />
         </div>
 
-        {/* 6. GSAP Horizontal Full Ratio Product 2 Image Gallery Viewer */}
+        {/* 7. GSAP Horizontal Full Ratio Product 2 Image Gallery Viewer */}
         <HorizontalProductGalleryModal
           isOpen={isProduct2GalleryOpen}
           onClose={() => setIsProduct2GalleryOpen(false)}

@@ -11,20 +11,21 @@ interface ScrambleTextProps {
   className?: string;
   triggerOnChange?: boolean;
   triggerKey?: string | number | null;
-  speed?: 'normal' | 'fast' | 'ultra-fast';
+  speed?: 'slow' | 'normal' | 'fast' | 'ultra-fast';
 }
 
 /**
  * High-fashion typographic scramble / decode hover effect:
- * Rapidly scrambles through random characters with zero layout shift / jitter.
- * Each character slot width is strictly locked to the original character width.
+ * Scrambles through random characters with zero layout shift / jitter.
+ * Each character slot width is strictly locked to the original character width using an invisible
+ * normal-flow anchor and an absolute overlay, ensuring parent button width NEVER expands on hover.
  */
 export default function ScrambleText({
   text,
   className,
   triggerOnChange = false,
   triggerKey,
-  speed = 'fast',
+  speed = 'normal',
 }: ScrambleTextProps) {
   const [displayText, setDisplayText] = useState(text);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -33,8 +34,24 @@ export default function ScrambleText({
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     let frame = 0;
-    const maxFrames = speed === 'ultra-fast' ? 3 : speed === 'fast' ? 4 : 6;
-    const intervalTime = speed === 'ultra-fast' ? 15 : speed === 'fast' ? 18 : 25;
+    // Slower, elegant, luxury editorial pacing
+    const maxFrames =
+      speed === 'ultra-fast'
+        ? 6
+        : speed === 'fast'
+        ? 9
+        : speed === 'slow'
+        ? 15
+        : 11; // 'normal' default
+
+    const intervalTime =
+      speed === 'ultra-fast'
+        ? 28
+        : speed === 'fast'
+        ? 36
+        : speed === 'slow'
+        ? 52
+        : 42; // 'normal' default
 
     intervalRef.current = setInterval(() => {
       frame++;
@@ -45,12 +62,20 @@ export default function ScrambleText({
         return;
       }
 
+      const chars = text.split('');
+      const resolvedCount = Math.floor(((frame - 2) / (maxFrames - 2)) * chars.length);
+
       setDisplayText(
-        text
-          .split('')
-          .map((char) => {
+        chars
+          .map((char, index) => {
             if (char === ' ') return ' ';
-            if (char === '.' || char === ',' || char === '-' || char === '/') return char;
+            if (char === '.' || char === ',' || char === '-' || char === '/' || char === '!' || char === '?') return char;
+
+            // Progressive decode: earlier letters settle smoothly towards the end
+            if (frame > 2 && index < resolvedCount) {
+              return char;
+            }
+
             if (/[A-Z]/.test(char)) {
               return CHARS_UPPER[Math.floor(Math.random() * CHARS_UPPER.length)];
             }
@@ -110,18 +135,21 @@ export default function ScrambleText({
           <span
             key={i}
             style={{
-              display: 'inline-grid',
-              placeItems: 'center',
+              position: 'relative',
+              display: 'inline-block',
               verticalAlign: 'baseline',
+              lineHeight: 'inherit',
+              flexShrink: 0,
             }}
           >
-            {/* Invisible original anchor char to strictly hold exact width and height without layout shift */}
+            {/* Invisible original anchor char in normal document flow strictly holding exact width and height */}
             <span
               style={{
-                gridArea: '1 / 1',
                 opacity: 0,
+                visibility: 'hidden',
                 pointerEvents: 'none',
                 userSelect: 'none',
+                display: 'inline-block',
                 lineHeight: 'inherit',
               }}
               aria-hidden="true"
@@ -129,13 +157,21 @@ export default function ScrambleText({
               {origChar}
             </span>
 
-            {/* Scrambling visible char fitted cleanly inside the locked character slot */}
+            {/* Scrambling visible char centered as absolute overlay. Zero width contribution, zero layout shift. */}
             <span
               style={{
-                gridArea: '1 / 1',
-                textAlign: 'center',
-                width: '100%',
+                position: 'absolute',
+                left: '50%',
+                top: 0,
+                bottom: 0,
+                transform: 'translateX(-50%)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                userSelect: 'none',
                 lineHeight: 'inherit',
+                whiteSpace: 'nowrap',
               }}
             >
               {dispChar}

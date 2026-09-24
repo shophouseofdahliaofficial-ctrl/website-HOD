@@ -2696,6 +2696,36 @@
   will-change: filter, opacity, transform;
 }
 
+.deliveryStatusBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  margin-top: 4px;
+}
+
+.deliveryStatusBlock .deliveryLocationText {
+  margin-bottom: 0.35rem;
+  margin-top: 0;
+}
+
+.deliveryMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+  animation: textBlurIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.deliveryMetaRow strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
 .deliveryLocationTextSuccess {
   color: #16a34a !important;
   font-weight: 600;

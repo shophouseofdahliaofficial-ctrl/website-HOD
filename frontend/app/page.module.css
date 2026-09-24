@@ -192,7 +192,7 @@
   pointer-events: auto;
   user-select: none;
   z-index: 10;
-  transition: opacity 0.3s ease;
+  will-change: transform, opacity;
 }
 
 .scrollIndicator:hover {
@@ -234,9 +234,8 @@
 .whiteSection {
   width: 100vw;
   min-height: 100vh;
-  position: sticky;
-  top: 0;
-  background-color: #ffffff;
+  position: relative;
+  background-color: transparent;
   color: #111111;
   display: block;
   padding: 0;

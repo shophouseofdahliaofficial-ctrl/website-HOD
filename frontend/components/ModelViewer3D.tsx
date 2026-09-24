@@ -6,6 +6,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import gsap from 'gsap';
 import styles from './ModelViewer3D.module.css';
 
 // In-memory module cache for high-performance zero-reloading across models
@@ -19,6 +20,8 @@ interface ModelViewer3DProps {
   autoRotateSpeed?: number;
   playAnimation?: boolean;
   initialRotation?: number; // radians offset for distinct starting angle
+  sunToLeft?: boolean;
+  onInteractionStart?: () => void;
 }
 
 export default function ModelViewer3D({
@@ -27,14 +30,114 @@ export default function ModelViewer3D({
   autoRotateSpeed = 12.0,
   playAnimation = false,
   initialRotation = 0,
+  sunToLeft = false,
+  onInteractionStart,
 }: ModelViewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const lightsRef = useRef<{
+    ambient: THREE.AmbientLight;
+    hemi: THREE.HemisphereLight;
+    cameraSun: THREE.DirectionalLight;
+    cameraFill: THREE.DirectionalLight;
+    rim: THREE.DirectionalLight;
+    ground: THREE.DirectionalLight;
+  } | null>(null);
   const autoRotateSpeedRef = useRef(autoRotateSpeed);
   autoRotateSpeedRef.current = autoRotateSpeed;
+  const onInteractionStartRef = useRef(onInteractionStart);
+  onInteractionStartRef.current = onInteractionStart;
   const [loading, setLoading] = useState(() => !geometryCache.has(modelPath) && !glbCache.has(modelPath));
   const [progress, setProgress] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Dynamic sunlight transition when visual mode activates / deactivates
+  useEffect(() => {
+    const lights = lightsRef.current;
+    if (!lights) return;
+
+    if (sunToLeft) {
+      gsap.to(lights.cameraSun.position, {
+        x: -3.5,
+        y: 3.5,
+        z: 3.5,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.cameraSun, {
+        intensity: 1.63,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.cameraFill.position, {
+        x: 3.5,
+        y: 2.0,
+        z: 3.0,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.cameraFill, {
+        intensity: 0.85,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.rim, {
+        intensity: 0.72,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.ambient, {
+        intensity: 1.17,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.hemi, {
+        intensity: 0.78,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+    } else {
+      gsap.to(lights.cameraSun.position, {
+        x: -1.8,
+        y: 3.0,
+        z: 3.8,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.cameraSun, {
+        intensity: 1.37,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.cameraFill.position, {
+        x: 2.2,
+        y: 2.2,
+        z: 3.2,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.cameraFill, {
+        intensity: 0.72,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.rim, {
+        intensity: 0.59,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.ambient, {
+        intensity: 1.04,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+      gsap.to(lights.hemi, {
+        intensity: 0.65,
+        duration: 1.2,
+        ease: 'power2.out',
+      });
+    }
+  }, [sunToLeft]);
 
   // Dynamic autoRotateSpeed update without scene teardown
   useEffect(() => {
@@ -66,6 +169,7 @@ export default function ModelViewer3D({
       0,
       cameraDistance * Math.cos(startAngle)
     );
+    scene.add(camera);
 
     // 3. Renderer setup
     const renderer = new THREE.WebGLRenderer({
@@ -77,7 +181,7 @@ export default function ModelViewer3D({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.20;
+    renderer.toneMappingExposure = 1.0;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -103,9 +207,27 @@ export default function ModelViewer3D({
     controls.maxPolarAngle = fixedPolar;
 
     // Pause auto-rotation while user touches/drags, and resume rotation when released
+    const triggerInteraction = () => {
+      if (onInteractionStartRef.current) {
+        onInteractionStartRef.current();
+      }
+    };
+
     controls.addEventListener('start', () => {
       controls.autoRotate = false;
+      triggerInteraction();
     });
+
+    controls.addEventListener('change', () => {
+      if (!controls.autoRotate) {
+        triggerInteraction();
+      }
+    });
+
+    renderer.domElement.addEventListener('pointerdown', triggerInteraction, { passive: true });
+    renderer.domElement.addEventListener('touchstart', triggerInteraction, { passive: true });
+    renderer.domElement.addEventListener('mousedown', triggerInteraction, { passive: true });
+    container.addEventListener('pointerdown', triggerInteraction, { passive: true });
 
     controls.addEventListener('end', () => {
       if (autoRotateSpeedRef.current > 0) {
@@ -114,43 +236,52 @@ export default function ModelViewer3D({
       }
     });
 
-    // 5. 360-Degree Studio Fashion Lighting Setup (Balanced Front & Back Illumination)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+    // 5. Normal Balanced Studio Fashion Lighting Setup (+30% Intensity)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.04);
     scene.add(ambientLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdfd9d5, 0.82);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.65);
     hemiLight.position.set(0, 20, 0);
     scene.add(hemiLight);
 
-    // Front-Right Key Light
-    const frontKeyLight = new THREE.DirectionalLight(0xfff8f4, 1.45);
-    frontKeyLight.position.set(4, 7, 5);
-    scene.add(frontKeyLight);
+    // Front Sunlight attached to camera for balanced front illumination
+    const cameraSunLight = new THREE.DirectionalLight(0xffffff, 1.37);
+    cameraSunLight.position.set(-1.8, 3.0, 3.8);
+    camera.add(cameraSunLight);
 
-    // Front-Left Fill Light
-    const frontFillLight = new THREE.DirectionalLight(0xf2f6fa, 0.95);
-    frontFillLight.position.set(-4, 5, 4);
-    scene.add(frontFillLight);
-
-    // Back-Left Key Light (vibrant rear illumination when model rotates)
-    const backKeyLight = new THREE.DirectionalLight(0xfff8f4, 1.40);
-    backKeyLight.position.set(-4, 7, -5);
-    scene.add(backKeyLight);
-
-    // Back-Right Fill Light (eliminates dull shadows across rear angles)
-    const backFillLight = new THREE.DirectionalLight(0xf2f6fa, 0.95);
-    backFillLight.position.set(4, 5, -4);
-    scene.add(backFillLight);
+    // Soft Fill Light attached to camera
+    const cameraFillLight = new THREE.DirectionalLight(0xffffff, 0.72);
+    cameraFillLight.position.set(2.2, 2.2, 3.2);
+    camera.add(cameraFillLight);
 
     // Top Silhouette Rim Light
-    const rimLight = new THREE.DirectionalLight(0xffffff, 1.10);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.59);
     rimLight.position.set(0, 8, -2);
     scene.add(rimLight);
 
     // Subtle ground bounce
-    const groundLight = new THREE.DirectionalLight(0xfcf8f5, 0.35);
+    const groundLight = new THREE.DirectionalLight(0xffffff, 0.33);
     groundLight.position.set(0, -5, 2);
     scene.add(groundLight);
+
+    lightsRef.current = {
+      ambient: ambientLight,
+      hemi: hemiLight,
+      cameraSun: cameraSunLight,
+      cameraFill: cameraFillLight,
+      rim: rimLight,
+      ground: groundLight,
+    };
+
+    if (sunToLeft) {
+      cameraSunLight.position.set(-3.5, 3.5, 3.5);
+      cameraSunLight.intensity = 1.63;
+      cameraFillLight.position.set(3.5, 2.0, 3.0);
+      cameraFillLight.intensity = 0.85;
+      rimLight.intensity = 0.72;
+      ambientLight.intensity = 1.17;
+      hemiLight.intensity = 0.78;
+    }
 
     // 6. Model Root Group
     const modelGroup = new THREE.Group();
@@ -158,7 +289,7 @@ export default function ModelViewer3D({
 
     // 7. Load or Reuse Texture Map
     const texLoader = new THREE.TextureLoader();
-    let modelTexture: THREE.Texture | null = texturePath ? (textureCache.get(texturePath) || null) : null;
+    let modelTexture: THREE.Texture | null = texturePath ? (texturePath ? textureCache.get(texturePath) || null : null) : null;
     if (!modelTexture && texturePath) {
       modelTexture = texLoader.load(
         texturePath,
@@ -183,9 +314,9 @@ export default function ModelViewer3D({
               } else {
                 mesh.material = new THREE.MeshStandardMaterial({
                   map: tex,
-                  color: 0xffffff,
-                  roughness: 0.52,
+                  roughness: 0.65,
                   metalness: 0.05,
+                  color: 0xffffff,
                   side: THREE.DoubleSide,
                 });
               }
@@ -199,14 +330,36 @@ export default function ModelViewer3D({
       );
     }
 
-    // Material with texture support
+    // Standard material
     const baseMaterial = new THREE.MeshStandardMaterial({
       map: modelTexture,
-      color: 0xffffff,
-      roughness: 0.52,
+      roughness: 0.65,
       metalness: 0.05,
+      color: 0xffffff,
       side: THREE.DoubleSide,
     });
+
+    const convertToWarmLitMaterial = (mat: any) => {
+      if (!mat) return new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.65, metalness: 0.05 });
+      const standard = new THREE.MeshStandardMaterial({
+        map: mat.map || null,
+        normalMap: mat.normalMap || null,
+        roughnessMap: mat.roughnessMap || null,
+        metalnessMap: mat.metalnessMap || null,
+        roughness: mat.roughness !== undefined ? mat.roughness : 0.65,
+        metalness: mat.metalness !== undefined ? mat.metalness : 0.05,
+        color: mat.color ? mat.color.clone() : new THREE.Color(0xffffff),
+        side: THREE.DoubleSide,
+        transparent: mat.transparent || false,
+        opacity: mat.opacity !== undefined ? mat.opacity : 1,
+        alphaTest: mat.alphaTest || 0,
+      });
+      if (standard.map) {
+        standard.map.colorSpace = THREE.SRGBColorSpace;
+        standard.map.needsUpdate = true;
+      }
+      return standard;
+    };
 
     let meshRef: THREE.Mesh | null = null;
     const isGlb = modelPath.toLowerCase().endsWith('.glb') || modelPath.toLowerCase().endsWith('.gltf');
@@ -223,11 +376,11 @@ export default function ModelViewer3D({
           mesh.receiveShadow = true;
           mesh.frustumCulled = false;
           if (mesh.material) {
-            const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-            mats.forEach((m) => {
-              m.side = THREE.DoubleSide;
-              m.needsUpdate = true;
-            });
+            if (Array.isArray(mesh.material)) {
+              mesh.material = mesh.material.map(convertToWarmLitMaterial);
+            } else {
+              mesh.material = convertToWarmLitMaterial(mesh.material);
+            }
           }
         }
       });

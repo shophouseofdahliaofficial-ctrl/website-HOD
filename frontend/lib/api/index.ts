@@ -25,3 +25,5 @@ export { creatorsApi, adminCreatorsApi } from './creators';
 export type { Creator } from './creators';
 export { adminMediaApi } from './media';
 export type { MediaResource, MediaLibraryResponse } from './media';
+export { deliveryApi } from './delivery';
+export type { DeliveryPincodeCheckResponse } from './delivery';

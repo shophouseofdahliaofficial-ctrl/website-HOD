@@ -178,6 +178,21 @@ export interface Product {
   customizationCombinations?: ProductCustomizationCombination[];
   detailBanners?: ProductDetailBanners;
   digitalFlipbook?: ProductDigitalFlipbook;
+  sizeGuide?: ProductSizeGuide;
+}
+
+export interface SizeGuideTableRow {
+  size: string;
+  bust: string;
+  waist: string;
+  hip: string;
+}
+
+export interface ProductSizeGuide {
+  enabled: boolean;
+  type: 'table' | 'image';
+  imageUrl?: string;
+  tableRows?: SizeGuideTableRow[];
 }
 
 // Subscription Types

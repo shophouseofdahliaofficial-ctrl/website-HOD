@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
 import { Product, ProductVariation, ProductReview, VariationGroup, VariantValue } from '@/types';
-import { productsApi, apiClient } from '@/lib/api';
+import { productsApi, apiClient, deliveryApi, DeliveryPincodeCheckResponse } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -128,6 +128,7 @@ export default function ProductDetailsModal({
   const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
   const [pincode, setPincode] = useState('');
   const [isPincodeAvailable, setIsPincodeAvailable] = useState<boolean | null>(null);
+  const [deliveryDetails, setDeliveryDetails] = useState<DeliveryPincodeCheckResponse | null>(null);
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string>>({});
@@ -146,8 +147,8 @@ export default function ProductDetailsModal({
   const hasZoomMovedRef = useRef<boolean>(false);
   const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(0);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
-  const shareMenuRef = useRef<HTMLDivElement>(null);
   const [showRatingDetailsPopup, setShowRatingDetailsPopup] = useState(false);
+  const [showSizeGuideModal, setShowSizeGuideModal] = useState(false);
   const [ratingMeterAnimateIn, setRatingMeterAnimateIn] = useState(false);
 
   const displayProduct: Product = productDetails || product || ({} as any);
@@ -256,20 +257,47 @@ export default function ProductDetailsModal({
     };
   }, [user, displayProduct?.id]);
 
-  // Compute deliverability whenever pincode or product changes
+  // Compute deliverability whenever pincode or product changes (via Delhivery)
   useEffect(() => {
     if (!pincode || pincode.length !== 6) {
       setIsPincodeAvailable(null);
+      setDeliveryDetails(null);
       return;
     }
-    if (displayProduct?.isNationwideDelivery) {
-      setIsPincodeAvailable(true);
-    } else if (Array.isArray(displayProduct?.deliveryPincodes) && displayProduct.deliveryPincodes.length > 0) {
-      setIsPincodeAvailable(displayProduct.deliveryPincodes.includes(pincode));
-    } else {
-      setIsPincodeAvailable(true);
+    const pinNum = parseInt(pincode, 10);
+    if (!pinNum || pinNum < 110000 || pinNum > 855999) {
+      setIsPincodeAvailable(false);
+      setDeliveryDetails(null);
+      return;
     }
-  }, [pincode, displayProduct]);
+
+    let isMounted = true;
+    setIsCheckingPincode(true);
+
+    deliveryApi
+      .checkPincode(pincode, displayProduct?.id)
+      .then((res) => {
+        if (!isMounted) return;
+        setIsPincodeAvailable(res.deliverable);
+        setDeliveryDetails(res);
+        if (res.deliverable) {
+          writeScopedPincode(pinUserId, pincode, 'available');
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        console.warn('Delhivery check fallback:', err);
+        setIsPincodeAvailable(false);
+        setDeliveryDetails(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsCheckingPincode(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pincode, displayProduct?.id, displayProduct?.isNationwideDelivery, displayProduct?.deliveryPincodes, pinUserId]);
 
   // Listen for pincode-updated event from Header modal
   useEffect(() => {
@@ -1332,171 +1360,60 @@ export default function ProductDetailsModal({
             <div className={styles.detailsSection} ref={setDetailsSectionRef}>
               <div className={styles.productOverviewCard}>
                 {/* Product Title & Share */}
+                {/* Product Title */}
                 <div className={styles.productHeader}>
                   <h1 className={styles.productTitle}>
                     <span>{displayProduct.name}</span>
-                    <div className={styles.shareRow}>
-                      <div className={styles.shareWrap} ref={shareMenuRef}>
-                        <button
-                          type="button"
-                          className={styles.shareTrigger}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShareMenuOpen((open) => !open);
-                          }}
-                          aria-label="Share product"
-                        >
-                          <svg className={styles.shareTriggerIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="1.8" />
-                            <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
-                            <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="1.8" />
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                          </svg>
-                        </button>
-
-                        <div className={`${styles.shareMenu} ${shareMenuOpen ? styles.shareMenuOpen : ''}`}>
-                          {/* Copy Link */}
-                          <button
-                            type="button"
-                            className={styles.shareMenuItem}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '';
-                              if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                                navigator.clipboard.writeText(shareUrl || window.location.href);
-                                showToast('Link copied to clipboard', 'success');
-                              }
-                              setShareMenuOpen(false);
-                            }}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                              </svg>
-                            </span>
-                            <span>Copy Link</span>
-                          </button>
-
-                          {/* WhatsApp */}
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${displayProduct.name}: ${typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : ''}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.shareMenuItem}
-                            onClick={() => setShareMenuOpen(false)}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z" />
-                                <path fill="#fff" d="M17.47 14.38c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.21 3.07.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" />
-                              </svg>
-                            </span>
-                            <span>WhatsApp</span>
-                          </a>
-
-                          {/* Facebook */}
-                          <a
-                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.shareMenuItem}
-                            onClick={() => setShareMenuOpen(false)}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                              </svg>
-                            </span>
-                            <span>Facebook</span>
-                          </a>
-
-                          {/* X (Twitter) */}
-                          <a
-                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${displayProduct.name}`)}&url=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.shareMenuItem}
-                            onClick={() => setShareMenuOpen(false)}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                              </svg>
-                            </span>
-                            <span>X (Twitter)</span>
-                          </a>
-
-                          {/* Pinterest */}
-                          <a
-                            href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}&media=${encodeURIComponent(getPrimaryProductImageUrl(displayProduct) || '')}&description=${encodeURIComponent(displayProduct.name)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.shareMenuItem}
-                            onClick={() => setShareMenuOpen(false)}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.291 1.199-.33 1.366-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-                              </svg>
-                            </span>
-                            <span>Pinterest</span>
-                          </a>
-
-                          {/* Telegram */}
-                          <a
-                            href={`https://t.me/share/url?url=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : '')}&text=${encodeURIComponent(`Check out ${displayProduct.name}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.shareMenuItem}
-                            onClick={() => setShareMenuOpen(false)}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
-                              </svg>
-                            </span>
-                            <span>Telegram</span>
-                          </a>
-
-                          {/* Email */}
-                          <a
-                            href={`mailto:?subject=${encodeURIComponent(displayProduct.name)}&body=${encodeURIComponent(`Check out ${displayProduct.name} on House of Dahlia: ${typeof window !== 'undefined' ? `${window.location.origin}/product/${displayProduct.id}` : ''}`)}`}
-                            className={styles.shareMenuItem}
-                            onClick={() => setShareMenuOpen(false)}
-                          >
-                            <span className={styles.shareMenuItemIcon}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="4" width="20" height="16" rx="2" />
-                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                              </svg>
-                            </span>
-                            <span>Email</span>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
                   </h1>
                 </div>
 
-                {/* Rating */}
-                {reviews.length > 0 && (
-                  <div
-                    className={styles.productRating}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setShowRatingDetailsPopup(true)}
-                    aria-label="View customer reviews"
+                {/* Rating & Size Guide Row (Extreme Right) */}
+                <div className={styles.ratingSizeGuideRow}>
+                  {reviews.length > 0 ? (
+                    <div
+                      className={styles.productRating}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setShowRatingDetailsPopup(true)}
+                      aria-label="View customer reviews"
+                    >
+                      <span className={styles.ratingScore}>{averageRating.toFixed(1)}</span>
+                      <svg className={styles.ratingStarIcon} viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                      <span className={styles.ratingDivider} />
+                      <span className={styles.ratingCount}>{reviews.length}</span>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+
+                  {/* Size Guide Trigger on Extreme Right */}
+                  <button
+                    type="button"
+                    className={styles.sizeGuideTrigger}
+                    onClick={() => setShowSizeGuideModal(true)}
+                    aria-label="Open size guide"
                   >
-                    <span className={styles.ratingScore}>{averageRating.toFixed(1)}</span>
-                    <svg className={styles.ratingStarIcon} viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    <svg
+                      className={styles.sizeGuideIcon}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z" />
+                      <path d="m14.5 12.5 2-2" />
+                      <path d="m11.5 9.5 2-2" />
+                      <path d="m8.5 6.5 2-2" />
+                      <path d="m17.5 15.5 2-2" />
                     </svg>
-                    <span className={styles.ratingDivider} />
-                    <span className={styles.ratingCount}>{reviews.length}</span>
-                  </div>
-                )}
+                    <span>Size Guide</span>
+                  </button>
+                </div>
 
                 {/* Stock status */}
                 <div className={styles.stockStatusMobileOnly}>{renderStockStatus()}</div>
@@ -1913,7 +1830,13 @@ export default function ProductDetailsModal({
                     <>
                       <button
                         type="button"
-                        className={`${styles.deliveryCheckLink} ${pincode.length === 6 && isPincodeAvailable === true ? styles.deliveryCheckLinkSuccess : ''}`}
+                        className={`${styles.deliveryCheckLink} ${
+                          pincode.length === 6 && isPincodeAvailable === true
+                            ? styles.deliveryCheckLinkSuccess
+                            : pincode.length === 6 && isPincodeAvailable === false
+                              ? styles.deliveryCheckLinkError
+                              : ''
+                        }`}
                         onClick={() => {
                           window.dispatchEvent(new CustomEvent('milko:open-pincode-modal'));
                         }}
@@ -1921,20 +1844,20 @@ export default function ProductDetailsModal({
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" />
                         </svg>
-                        {isPincodeAvailable === true && pincode.length === 6
-                          ? `Delivery available to your location ${pincode}`
-                          : isPincodeAvailable === false && pincode.length === 6
-                            ? `Delivery unavailable to your location ${pincode}`
-                            : 'Check delivery availability & estimated arrival'}
+                        {isCheckingPincode
+                          ? `Checking delivery for ${pincode}...`
+                          : isPincodeAvailable === true && pincode.length === 6
+                            ? `Delivery available to ${deliveryDetails?.locationLabel || 'your location'} (${pincode})`
+                            : isPincodeAvailable === false && pincode.length === 6
+                              ? `Delivery unavailable to ${deliveryDetails?.locationLabel || 'your location'} (${pincode})`
+                              : 'Check delivery availability & estimated arrival'}
                       </button>
 
-                      {pincode.length === 6 &&
-                        isPincodeAvailable === true &&
-                        displayProduct.deliveryTimeText ? (
+                      {pincode.length === 6 && isPincodeAvailable === true && (
                         <div className={styles.deliveryEstimatedText}>
-                          Estimated delivery time is {displayProduct.deliveryTimeText}
+                          <span>Estimated delivery: <strong>{deliveryDetails?.deliveryTimeText || displayProduct.deliveryTimeText || '3-5 Days'}</strong></span>
                         </div>
-                      ) : null}
+                      )}
                     </>
                   )}
                 </div>
@@ -2382,7 +2305,9 @@ export default function ProductDetailsModal({
                 onClick={() => setShowRatingDetailsPopup(false)}
                 aria-label="Close reviews"
               >
-                ×
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
@@ -2440,6 +2365,100 @@ export default function ProductDetailsModal({
                   <p className={styles.reviewsPopupEmpty}>No customer reviews yet. Be the first to share your experience after delivery.</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Size Guide Modal Popup */}
+      {showSizeGuideModal && typeof document !== 'undefined' && createPortal(
+        <div
+          className={styles.reviewsPopupOverlay}
+          onClick={() => setShowSizeGuideModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Size guide"
+        >
+          <div
+            className={styles.sizeGuideModalPanel}
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div className={styles.reviewsPopupHeader}>
+              <div className={styles.sizeGuideHeaderLeft}>
+                <h3 className={styles.sizeGuideModalTitle}>Size Guide</h3>
+                <p className={styles.sizeGuideModalSubtitle}>All measurements are in inches</p>
+              </div>
+              <button
+                type="button"
+                className={styles.reviewsPopupClose}
+                onClick={() => setShowSizeGuideModal(false)}
+                aria-label="Close size guide"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {displayProduct?.sizeGuide?.type === 'image' && displayProduct?.sizeGuide?.imageUrl ? (
+              <div className={styles.sizeGuideImageWrap}>
+                <img
+                  src={displayProduct.sizeGuide.imageUrl}
+                  alt={`${displayProduct.name} Size Guide`}
+                  className={styles.sizeGuideImg}
+                />
+              </div>
+            ) : (
+              <div className={styles.sizeGuideTableWrap}>
+                <table className={styles.sizeGuideTable}>
+                  <thead>
+                    <tr>
+                      <th>Size</th>
+                      <th>Bust</th>
+                      <th>Waist</th>
+                      <th>Hip</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(displayProduct?.sizeGuide?.tableRows && displayProduct.sizeGuide.tableRows.length > 0
+                      ? displayProduct.sizeGuide.tableRows
+                      : [
+                          { size: 'XS', bust: '32"', waist: '25"', hip: '35"' },
+                          { size: 'S', bust: '34"', waist: '27"', hip: '37"' },
+                          { size: 'M', bust: '36"', waist: '29"', hip: '39"' },
+                          { size: 'L', bust: '38"', waist: '31"', hip: '41"' },
+                          { size: 'XL', bust: '40"', waist: '33"', hip: '43"' },
+                          { size: 'XXL', bust: '42"', waist: '35"', hip: '45"' },
+                        ]
+                    ).map((row, idx) => (
+                      <tr key={idx}>
+                        <td className={styles.sizeBadge}>{row.size}</td>
+                        <td>{row.bust}</td>
+                        <td>{row.waist}</td>
+                        <td>{row.hip}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className={styles.sizeGuideMeasureGuide}>
+              <h4 className={styles.measureGuideTitle}>How to Measure</h4>
+              <div className={styles.measureGuideItems}>
+                <div className={styles.measureGuideItem}>
+                  <strong>Bust:</strong> Measure around the fullest part of your bust, keeping the tape level.
+                </div>
+                <div className={styles.measureGuideItem}>
+                  <strong>Waist:</strong> Measure around the narrowest point of your natural waistline.
+                </div>
+                <div className={styles.measureGuideItem}>
+                  <strong>Hip:</strong> Stand with feet together and measure around the fullest part of your hips.
+                </div>
+              </div>
             </div>
           </div>
         </div>,

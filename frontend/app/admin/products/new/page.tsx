@@ -10,7 +10,7 @@ import styles from './page.module.css';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 import { uploadCustomizationImage } from '@/lib/admin/uploadCustomizationImage';
-import { VariationGroup, VariantValue, ProductCustomizationCombination } from '@/types';
+import { VariationGroup, VariantValue, ProductCustomizationCombination, ProductSizeGuide, SizeGuideTableRow } from '@/types';
 import MediaLibraryModal from '@/components/admin/MediaLibraryModal';
 import { MediaResource } from '@/lib/api/media';
 
@@ -26,6 +26,15 @@ interface DeliveryPincodeConfig {
   deliveryTimeText?: string;
 }
 
+const DEFAULT_SIZE_GUIDE_ROWS: SizeGuideTableRow[] = [
+  { size: 'XS', bust: '32"', waist: '25"', hip: '35"' },
+  { size: 'S', bust: '34"', waist: '27"', hip: '37"' },
+  { size: 'M', bust: '36"', waist: '29"', hip: '39"' },
+  { size: 'L', bust: '38"', waist: '31"', hip: '41"' },
+  { size: 'XL', bust: '40"', waist: '33"', hip: '43"' },
+  { size: 'XXL', bust: '42"', waist: '35"', hip: '45"' },
+];
+
 /**
  * Admin Create New Product Page
  * Create a new product
@@ -39,6 +48,7 @@ export default function AdminCreateProductPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<'gallery' | 'size-guide'>('gallery');
 
   // Form states
   const [name, setName] = useState('');
@@ -66,6 +76,16 @@ export default function AdminCreateProductPage() {
   const [newDeliveryPincode, setNewDeliveryPincode] = useState('');
   const [variations, setVariations] = useState<ProductVariation[]>([]);
   const [newVariation, setNewVariation] = useState<ProductVariation>({ size: '', price: '', compareAtPrice: '', weight: '0.1' });
+
+  // Size Guide States
+  const [sizeGuide, setSizeGuide] = useState<ProductSizeGuide>({
+    enabled: false,
+    type: 'table',
+    imageUrl: '',
+    tableRows: DEFAULT_SIZE_GUIDE_ROWS,
+  });
+  const [sizeGuideImageFile, setSizeGuideImageFile] = useState<File | null>(null);
+  const [sizeGuideImagePreview, setSizeGuideImagePreview] = useState<string>('');
 
   // Advanced Customizer Variations States
   const [customizationOptions, setCustomizationOptions] = useState<VariationGroup[]>([]);
@@ -235,10 +255,50 @@ export default function AdminCreateProductPage() {
   };
 
   const handleMediaLibrarySelect = (selected: MediaResource[]) => {
+    if (!selected || selected.length === 0) return;
+    if (mediaPickerTarget === 'size-guide') {
+      const firstUrl = selected[0]?.url || selected[0]?.secure_url || '';
+      setSizeGuideImagePreview(firstUrl);
+      setSizeGuide((prev) => ({ ...prev, imageUrl: firstUrl }));
+      return;
+    }
     const newItems = selected.map((item) => ({
       preview: item.url || item.secure_url || '',
     }));
     setImagePreviews((prev) => [...prev, ...newItems]);
+  };
+
+  const handleAddSizeGuideRow = () => {
+    setSizeGuide((prev) => ({
+      ...prev,
+      tableRows: [
+        ...(prev.tableRows || []),
+        { size: '', bust: '', waist: '', hip: '' },
+      ],
+    }));
+  };
+
+  const handleUpdateSizeGuideRow = (index: number, field: keyof SizeGuideTableRow, val: string) => {
+    setSizeGuide((prev) => ({
+      ...prev,
+      tableRows: (prev.tableRows || []).map((row, i) =>
+        i === index ? { ...row, [field]: val } : row
+      ),
+    }));
+  };
+
+  const handleRemoveSizeGuideRow = (index: number) => {
+    setSizeGuide((prev) => ({
+      ...prev,
+      tableRows: (prev.tableRows || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleResetSizeGuideRows = () => {
+    setSizeGuide((prev) => ({
+      ...prev,
+      tableRows: DEFAULT_SIZE_GUIDE_ROWS,
+    }));
   };
 
   // Customization Handlers
@@ -678,6 +738,12 @@ export default function AdminCreateProductPage() {
       formData.append('accordionItems', JSON.stringify(accordionItems));
       formData.append('customizationOptions', JSON.stringify(customizationOptions));
       formData.append('customizationCombinations', JSON.stringify(customizationCombinations));
+      formData.append('sizeGuide', JSON.stringify({
+        enabled: sizeGuide.enabled,
+        type: sizeGuide.type,
+        imageUrl: sizeGuideImagePreview || sizeGuide.imageUrl || '',
+        tableRows: sizeGuide.tableRows || [],
+      }));
 
       // Use first image as main product image
       if (imagePreviews.length > 0) {
@@ -943,17 +1009,6 @@ export default function AdminCreateProductPage() {
                 No categories found. Create categories in Admin &gt; More &gt; Categories
               </p>
             )}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Estimated delivery</label>
-            <input
-              type="text"
-              value={deliveryTimeText}
-              onChange={(e) => setDeliveryTimeText(e.target.value.slice(0, 60))}
-              className={styles.formInput}
-              placeholder="e.g. 3-5 days"
-            />
           </div>
 
           <div className={styles.formGroup}>
@@ -2317,6 +2372,262 @@ export default function AdminCreateProductPage() {
                 )}
               </div>
 
+            </div>
+          )}
+        </div>
+
+        {/* Size Guide Section */}
+        <div className={styles.formSection}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div>
+              <h2 className={styles.formSectionTitle} style={{ margin: 0 }}>Size Guide</h2>
+              <p className={styles.formHelpText} style={{ marginTop: '0.25rem' }}>
+                Enable a size guide button for this product in the store modal.
+              </p>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+              <input
+                type="checkbox"
+                checked={sizeGuide.enabled}
+                onChange={(e) => setSizeGuide((prev) => ({ ...prev, enabled: e.target.checked }))}
+                style={{ width: '18px', height: '18px', accentColor: '#800020' }}
+              />
+              Enable Size Guide?
+            </label>
+          </div>
+
+          {sizeGuide.enabled && (
+            <div style={{ marginTop: '1.25rem', padding: '1.25rem', background: '#fdfbfb', border: '1px solid #f0e6e8', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Type Switcher */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} style={{ fontWeight: 600 }}>Size Guide Format</label>
+                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem', fontWeight: sizeGuide.type === 'table' ? 600 : 400 }}>
+                    <input
+                      type="radio"
+                      name="sizeGuideType"
+                      value="table"
+                      checked={sizeGuide.type === 'table'}
+                      onChange={() => setSizeGuide((prev) => ({ ...prev, type: 'table' }))}
+                      style={{ accentColor: '#800020' }}
+                    />
+                    Table Format (Size, Bust, Waist, Hip)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem', fontWeight: sizeGuide.type === 'image' ? 600 : 400 }}>
+                    <input
+                      type="radio"
+                      name="sizeGuideType"
+                      value="image"
+                      checked={sizeGuide.type === 'image'}
+                      onChange={() => setSizeGuide((prev) => ({ ...prev, type: 'image' }))}
+                      style={{ accentColor: '#800020' }}
+                    />
+                    Upload Image
+                  </label>
+                </div>
+              </div>
+
+              {/* Table Option */}
+              {sizeGuide.type === 'table' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', background: '#ffffff' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                          <th style={{ padding: '10px 14px', fontWeight: 600, color: '#334155' }}>Size</th>
+                          <th style={{ padding: '10px 14px', fontWeight: 600, color: '#334155' }}>Bust</th>
+                          <th style={{ padding: '10px 14px', fontWeight: 600, color: '#334155' }}>Waist</th>
+                          <th style={{ padding: '10px 14px', fontWeight: 600, color: '#334155' }}>Hip</th>
+                          <th style={{ padding: '10px 14px', width: '80px', textAlign: 'center' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(sizeGuide.tableRows || []).map((row, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '8px 12px' }}>
+                              <input
+                                type="text"
+                                value={row.size}
+                                onChange={(e) => handleUpdateSizeGuideRow(index, 'size', e.target.value)}
+                                placeholder="e.g. S / M / 32"
+                                className={styles.formInput}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem', fontWeight: 600 }}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <input
+                                type="text"
+                                value={row.bust}
+                                onChange={(e) => handleUpdateSizeGuideRow(index, 'bust', e.target.value)}
+                                placeholder='e.g. 34"'
+                                className={styles.formInput}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <input
+                                type="text"
+                                value={row.waist}
+                                onChange={(e) => handleUpdateSizeGuideRow(index, 'waist', e.target.value)}
+                                placeholder='e.g. 27"'
+                                className={styles.formInput}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <input
+                                type="text"
+                                value={row.hip}
+                                onChange={(e) => handleUpdateSizeGuideRow(index, 'hip', e.target.value)}
+                                placeholder='e.g. 37"'
+                                className={styles.formInput}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSizeGuideRow(index)}
+                                style={{
+                                  background: '#fee2e2',
+                                  color: '#ef4444',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '5px 8px',
+                                  fontSize: '0.8rem',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handleAddSizeGuideRow}
+                      className={styles.addVariationButton}
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                    >
+                      + Add Size Row
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetSizeGuideRows}
+                      style={{
+                        background: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.85rem',
+                        color: '#475569',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Reset to Standard (XS–XXL)
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Option */}
+              {sizeGuide.type === 'image' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {(sizeGuideImagePreview || sizeGuide.imageUrl) ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '360px' }}>
+                      <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', background: '#fafafa', padding: '8px' }}>
+                        <img
+                          src={sizeGuideImagePreview || sizeGuide.imageUrl}
+                          alt="Size guide preview"
+                          style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '8px' }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSizeGuideImageFile(null);
+                          setSizeGuideImagePreview('');
+                          setSizeGuide((prev) => ({ ...prev, imageUrl: '' }));
+                        }}
+                        style={{
+                          alignSelf: 'flex-start',
+                          background: '#fee2e2',
+                          color: '#dc2626',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '0.4rem 0.8rem',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <label
+                        className={styles.addButton}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          padding: '0.65rem 1.25rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSizeGuideImageFile(file);
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setSizeGuideImagePreview(reader.result as string);
+                                setSizeGuide((prev) => ({ ...prev, imageUrl: reader.result as string }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                        <span>📤</span> Upload Size Chart Image
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMediaPickerTarget('size-guide');
+                          setMediaPickerOpen(true);
+                        }}
+                        className={styles.addButton}
+                        style={{
+                          background: '#0ea5e9',
+                          borderColor: '#0ea5e9',
+                          color: '#ffffff',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.65rem 1.25rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span>🖼️</span> Select from Media Library
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280', fontStyle: 'italic' }}>
+                💡 Note: The &quot;How to Measure&quot; reference section will automatically appear beneath this size chart on the customer product view.
+              </p>
             </div>
           )}
         </div>
