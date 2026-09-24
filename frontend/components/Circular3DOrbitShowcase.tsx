@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import ModelViewer3D from './ModelViewer3D';
 import ScrambleText from './ScrambleText';
 import PixelCubeModelTransition from './PixelCubeModelTransition';
+import HorizontalProductGalleryModal, { TriggerRect } from './HorizontalProductGalleryModal';
 import styles from './Circular3DOrbitShowcase.module.css';
 
 interface ShowcaseItem {
@@ -180,6 +181,8 @@ export default function Circular3DOrbitShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [uiVisible, setUiVisible] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400);
+  const [isProduct2GalleryOpen, setIsProduct2GalleryOpen] = useState(false);
+  const [galleryTriggerRect, setGalleryTriggerRect] = useState<TriggerRect | null>(null);
 
   // Distinct orbital starting points for each model rotating in the same direction
   const ROTATION_OFFSETS = [
@@ -231,8 +234,12 @@ export default function Circular3DOrbitShowcase() {
   const isTransitioningRef = useRef(false);
   const isVerticalModeRef = useRef(false);
   isVerticalModeRef.current = isVerticalMode;
+  const isGalleryOpenRef = useRef(false);
+  isGalleryOpenRef.current = isProduct2GalleryOpen;
+  const progressRef = useRef({ current: 0, target: 0 });
 
   const totalItems = ITEMS.length;
+  const SCROLL_SCALE = 0.88;
 
   useEffect(() => {
     const handleResize = () => {
@@ -242,101 +249,66 @@ export default function Circular3DOrbitShowcase() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Stepped plateau virtual progress for vertical scrolling once in vertical mode
-  const computeSteppedVirtualIndex = (progress: number): number => {
-    if (progress <= 0) return 0;
-    if (progress >= 1) return totalItems - 1;
+  const isNavigatingRef = useRef(false);
 
-    const totalSegments = totalItems - 1;
-    const rawVirtual = progress * totalSegments;
-    const segIndex = Math.floor(rawVirtual);
-    const localFraction = rawVirtual - segIndex;
+  // Wheel navigation inside vertical mode: smoothly steps through models
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!isVerticalMode || isTransitioningRef.current || isNavigatingRef.current) return;
+    if (isProduct2GalleryOpen) return;
 
-    if (segIndex >= totalSegments) return totalSegments;
-
-    const PAUSE_RATIO = 0.45;
-    let transition = 0;
-    if (localFraction > PAUSE_RATIO) {
-      const t = (localFraction - PAUSE_RATIO) / (1 - PAUSE_RATIO);
-      transition = t * t * (3 - 2 * t);
+    if (Math.abs(e.deltaY) > 20) {
+      if (e.deltaY > 0 && activeIndex < totalItems - 1) {
+        isNavigatingRef.current = true;
+        const nextIdx = activeIndex + 1;
+        setActiveIndex(nextIdx);
+        gsap.to(animRef.current, {
+          virtualIndex: nextIdx,
+          duration: 0.65,
+          ease: 'power2.out',
+          onUpdate: () => {
+            setVirtualIndex(animRef.current.virtualIndex);
+          },
+          onComplete: () => {
+            isNavigatingRef.current = false;
+          },
+        });
+      } else if (e.deltaY < 0 && activeIndex > 0) {
+        isNavigatingRef.current = true;
+        const prevIdx = activeIndex - 1;
+        setActiveIndex(prevIdx);
+        gsap.to(animRef.current, {
+          virtualIndex: prevIdx,
+          duration: 0.65,
+          ease: 'power2.out',
+          onUpdate: () => {
+            setVirtualIndex(animRef.current.virtualIndex);
+          },
+          onComplete: () => {
+            isNavigatingRef.current = false;
+          },
+        });
+      }
     }
-
-    return segIndex + transition;
   };
-
-  // Scroll listener: handles vertical scrolling when in vertical mode
-  useEffect(() => {
-    let animId: number;
-    let targetProgress = 0;
-    let currentProgress = 0;
-
-    const handleScroll = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      const windowHeight = window.innerHeight || 800;
-
-      if (rect.top > 0) {
-        targetProgress = 0;
-        return;
-      }
-
-      const totalScrollable = rect.height - windowHeight;
-      if (totalScrollable <= 0) {
-        targetProgress = 0;
-        return;
-      }
-
-      const scrolled = Math.max(0, -rect.top);
-      const rawRatio = Math.min(1, scrolled / totalScrollable);
-      targetProgress = Math.max(0, Math.min(1, rawRatio));
-    };
-
-    const updateLoop = () => {
-      currentProgress += (targetProgress - currentProgress) * 0.15;
-
-      // Only update virtualIndex from scroll if already in vertical mode and not currently animating click
-      if (isVerticalModeRef.current && !isTransitioningRef.current) {
-        const vIdx = computeSteppedVirtualIndex(currentProgress);
-        setVirtualIndex(vIdx);
-        animRef.current.virtualIndex = vIdx;
-
-        const targetIndex = Math.max(0, Math.min(totalItems - 1, Math.round(vIdx)));
-        setActiveIndex((prev) => (prev !== targetIndex ? targetIndex : prev));
-      }
-
-      animId = requestAnimationFrame(updateLoop);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll);
-    handleScroll();
-    animId = requestAnimationFrame(updateLoop);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-      cancelAnimationFrame(animId);
-    };
-  }, [totalItems]);
 
   // Toggle handler: switches between horizontal lineup and vertical carousel with smooth reverse animation
   const toggleLayoutMode = () => {
     if (isTransitioningRef.current) return;
+    setHoveredIndex(null);
     isTransitioningRef.current = true;
     gsap.killTweensOf(animRef.current);
 
     if (!isVerticalMode) {
       // HORIZONTAL -> VERTICAL
+      setIsVerticalMode(true);
+
       if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
       if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
       if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
 
-      setIsVerticalMode(true);
-
       const tl = gsap.timeline({
         onComplete: () => {
+          setHoveredIndex(null);
           setUiVisible(true);
           isTransitioningRef.current = false;
         },
@@ -375,10 +347,10 @@ export default function Circular3DOrbitShowcase() {
       }
     } else {
       // VERTICAL -> HORIZONTAL
-      // Immediately fade out left text and UI so it dissolves before models move
       const tl = gsap.timeline({
         onComplete: () => {
           setIsVerticalMode(false);
+          setHoveredIndex(null);
           setUiVisible(false);
           isTransitioningRef.current = false;
         },
@@ -415,30 +387,26 @@ export default function Circular3DOrbitShowcase() {
     }
   };
 
+  // Hover handler in horizontal mode
+  const handleModelHover = (index: number) => {
+    if (!isVerticalMode && !isTransitioningRef.current) {
+      setHoveredIndex(index);
+    }
+  };
+
   // Click handler: smoothly turns horizontal line into vertical stack centered on clicked model
   const handleModelClick = (clickedIndex: number) => {
-    // Synchronize page scroll position so scroll loop remains at selected item
-    const container = containerRef.current;
-    if (container) {
-      const rect = container.getBoundingClientRect();
-      const totalScrollable = container.offsetHeight - window.innerHeight;
-      if (totalScrollable > 0) {
-        const containerTopInDoc = window.scrollY + rect.top;
-        const targetScrollFraction = clickedIndex / Math.max(1, totalItems - 1);
-        const targetScrollY = containerTopInDoc + targetScrollFraction * totalScrollable;
-        window.scrollTo({ top: targetScrollY, behavior: 'instant' as any });
-      }
-    }
+    setHoveredIndex(null);
 
     if (!isVerticalMode) {
       // HORIZONTAL -> VERTICAL on click
-      if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
-      if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
-      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
-
       setIsVerticalMode(true);
       setActiveIndex(clickedIndex);
       isTransitioningRef.current = true;
+
+      if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
+      if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
+      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
 
       // Kill any running tweens
       gsap.killTweensOf(animRef.current);
@@ -450,7 +418,7 @@ export default function Circular3DOrbitShowcase() {
         },
       });
 
-      // 1. Smoothly morph layout from horizontal (0) to vertical (1)
+      // 1. Smoothly morph layout from horizontal (0) to vertical (1) centered directly on clickedIndex
       tl.to(
         animRef.current,
         {
@@ -488,7 +456,7 @@ export default function Circular3DOrbitShowcase() {
         isTransitioningRef.current = true;
         gsap.to(animRef.current, {
           virtualIndex: clickedIndex,
-          duration: 0.9,
+          duration: 0.75,
           ease: 'power2.out',
           onUpdate: () => {
             setVirtualIndex(animRef.current.virtualIndex);
@@ -506,7 +474,11 @@ export default function Circular3DOrbitShowcase() {
   const horizontalSpacing = Math.min(180, Math.max(120, (windowWidth * 0.86) / totalItems));
 
   return (
-    <div ref={containerRef} className={styles.orbitWrapper}>
+    <div
+      ref={containerRef}
+      className={`${styles.orbitWrapper} ${isVerticalMode ? styles.orbitWrapperVertical : ''}`}
+      onWheel={handleWheel}
+    >
       {/* Sticky viewport stage */}
       <div className={styles.stickyStage}>
         {/* 1. Left Center Static Info Card (hidden initially in horizontal mode, reveals on click) */}
@@ -520,7 +492,7 @@ export default function Circular3DOrbitShowcase() {
           <div className={styles.textStack}>
             {ITEMS.map((item, index) => {
               const textD = index - virtualIndex;
-              const isTextVisible = uiVisible && Math.abs(textD) <= 1.0;
+              const isTextVisible = isVerticalMode && Math.abs(textD) <= 1.0;
 
               const textY = textD * 28;
               const textOpacity = Math.max(0, Math.min(1, 1 - Math.pow(Math.abs(textD) / 0.62, 1.4)));
@@ -549,15 +521,23 @@ export default function Circular3DOrbitShowcase() {
             })}
           </div>
 
-          <Link
-            href="/collections"
-            className={styles.shopButton}
-            style={{
-              opacity: uiVisible ? 1 : 0,
+          <button
+            type="button"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setGalleryTriggerRect({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+              });
+              setIsProduct2GalleryOpen(true);
             }}
+            className={styles.shopButton}
+            aria-label="View product 2 images"
           >
-            <ScrambleText text="Shop" />
-          </Link>
+            <ScrambleText text="View" />
+          </button>
         </div>
 
         {/* 2. 3D Model Items: Horizontal line initially, GSAP morphs to Vertical Center on click */}
@@ -609,9 +589,7 @@ export default function Circular3DOrbitShowcase() {
                     type="button"
                     className={styles.cardClickTrigger}
                     onClick={() => handleModelClick(index)}
-                    onMouseEnter={() => {
-                      if (!isVerticalMode) setHoveredIndex(index);
-                    }}
+                    onMouseEnter={() => handleModelHover(index)}
                     onMouseLeave={() => {
                       if (!isVerticalMode) setHoveredIndex((prev) => (prev === index ? null : prev));
                     }}
@@ -624,13 +602,14 @@ export default function Circular3DOrbitShowcase() {
                   <PixelCubeModelTransition
                     modelIndex={index}
                     triggerEntry={hasEnteredPhase2}
-                  />
-                  <ModelViewer3D
-                    modelPath={item.modelPath}
-                    texturePath={item.texturePath}
-                    autoRotateSpeed={10.0}
-                    initialRotation={ROTATION_OFFSETS[index] || 0}
-                  />
+                  >
+                    <ModelViewer3D
+                      modelPath={item.modelPath}
+                      texturePath={item.texturePath}
+                      autoRotateSpeed={10.0}
+                      initialRotation={ROTATION_OFFSETS[index] || 0}
+                    />
+                  </PixelCubeModelTransition>
                 </div>
               </div>
             );
@@ -642,7 +621,6 @@ export default function Circular3DOrbitShowcase() {
           ref={indicatorRef}
           className={styles.orbitIndicator}
           style={{
-            opacity: uiVisible ? 1 : 0,
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
         >
@@ -668,25 +646,47 @@ export default function Circular3DOrbitShowcase() {
           onClick={toggleLayoutMode}
           className={styles.toggleModeBtn}
           style={{
-            opacity: uiVisible ? 1 : 0,
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
           aria-label="Return to Horizontal 3D Showcase"
         >
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="6" width="5" height="12" rx="0.5" />
+            <rect x="9.5" y="6" width="5" height="12" rx="0.5" />
+            <rect x="17" y="6" width="5" height="12" rx="0.5" />
+          </svg>
           <ScrambleText text="Horizontal" />
         </button>
 
-        {/* 5. Bottom Center Product Scramble Indicator (Reveals on Hover in Horizontal Mode) */}
+        {/* 5. Bottom Center "Our Collection" / Product Scramble Indicator in Phase 2 */}
         <div
-          className={`${styles.bottomCenterIndicator} ${!isVerticalMode && hoveredIndex !== null ? styles.bottomCenterIndicatorVisible : ''}`}
+          className={`${styles.bottomCenterIndicator} ${!isVerticalMode ? styles.bottomCenterIndicatorVisible : ''}`}
         >
           <ScrambleText
-            text={hoveredIndex !== null ? PRODUCT_CODES[hoveredIndex] || 'Product No. 324' : 'Product No. 324'}
+            text={!isVerticalMode && hoveredIndex !== null ? (PRODUCT_CODES[hoveredIndex] || 'Product No. 324') : 'Our Collection'}
             triggerOnChange={true}
-            triggerKey={hoveredIndex}
+            triggerKey={isVerticalMode ? 'vertical' : hoveredIndex}
             speed="fast"
           />
         </div>
+
+        {/* 6. GSAP Horizontal Full Ratio Product 2 Image Gallery Viewer */}
+        <HorizontalProductGalleryModal
+          isOpen={isProduct2GalleryOpen}
+          onClose={() => setIsProduct2GalleryOpen(false)}
+          productId="2"
+          triggerRect={galleryTriggerRect}
+        />
       </div>
     </div>
   );

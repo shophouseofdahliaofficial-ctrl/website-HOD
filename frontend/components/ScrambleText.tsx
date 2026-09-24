@@ -16,7 +16,8 @@ interface ScrambleTextProps {
 
 /**
  * High-fashion typographic scramble / decode hover effect:
- * Rapidly scrambles through random characters before resolving cleanly back to original text.
+ * Rapidly scrambles through random characters with zero layout shift / jitter.
+ * Each character slot width is strictly locked to the original character width.
  */
 export default function ScrambleText({
   text,
@@ -79,13 +80,69 @@ export default function ScrambleText({
     };
   }, []);
 
+  const origChars = Array.from(text);
+  const dispChars = Array.from(displayText);
+
   return (
     <span
       className={className}
       onMouseEnter={triggerScramble}
-      style={{ display: 'inline-block' }}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'baseline',
+        whiteSpace: 'nowrap',
+        verticalAlign: 'baseline',
+      }}
     >
-      {displayText}
+      {origChars.map((origChar, i) => {
+        const dispChar = dispChars[i] ?? origChar;
+        const isSpace = origChar === ' ';
+
+        if (isSpace) {
+          return (
+            <span key={i} style={{ display: 'inline-block', width: '0.28em' }}>
+              &nbsp;
+            </span>
+          );
+        }
+
+        return (
+          <span
+            key={i}
+            style={{
+              display: 'inline-grid',
+              placeItems: 'center',
+              verticalAlign: 'baseline',
+            }}
+          >
+            {/* Invisible original anchor char to strictly hold exact width and height without layout shift */}
+            <span
+              style={{
+                gridArea: '1 / 1',
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+                lineHeight: 'inherit',
+              }}
+              aria-hidden="true"
+            >
+              {origChar}
+            </span>
+
+            {/* Scrambling visible char fitted cleanly inside the locked character slot */}
+            <span
+              style={{
+                gridArea: '1 / 1',
+                textAlign: 'center',
+                width: '100%',
+                lineHeight: 'inherit',
+              }}
+            >
+              {dispChar}
+            </span>
+          </span>
+        );
+      })}
     </span>
   );
 }

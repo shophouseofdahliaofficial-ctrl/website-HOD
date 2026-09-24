@@ -1,0 +1,190 @@
+.sidebarOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  user-select: none;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* Clear transparent click-outside backdrop (NO background blur) */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  z-index: 1;
+}
+
+/* Expanding/Morphing Dynamic Menu Panel (15px from Top, Right, Bottom) */
+.menuPanel {
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #800020;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.16);
+  z-index: 2;
+  overflow: hidden;
+  box-sizing: border-box;
+  will-change: top, right, left, width, height, opacity;
+}
+
+.innerContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  padding: 2.5rem 2.8rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+  will-change: opacity;
+}
+
+.innerContent::-webkit-scrollbar {
+  display: none;
+}
+
+/* Top Bar: Absolute Close Button at Top-Right */
+.drawerHeader {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.8rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: #ffffff;
+  color: #800020;
+  border: 1px solid #800020;
+  border-radius: 0;
+  padding: 0.38rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.00rem;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.closeButton:hover {
+  background-color: #800020;
+  color: #ffffff;
+}
+
+/* Main Menu Navigation List - Vertically Centered with Equal Height From Top & Bottom */
+.menuNav {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.85rem, 2.6vh, 2rem);
+  padding: 0;
+  margin: auto 0;
+  position: relative;
+  width: 100%;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  color: #800020;
+  padding: 0.3rem 0;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
+}
+
+.menuItemTextWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Interactive Pixelated Cube Canvas: Placed ON TOP of the text, covering only the text */
+.pixelCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.menuItemText {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-size: clamp(2.2rem, 3.2vw, 3.4rem);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: #800020;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.menuItemArrow {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translate(-6px, 6px);
+  color: #800020;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuItem:hover .menuItemText {
+  color: #550116;
+  transform: translateX(0px);
+}
+
+.menuItem:hover .menuItemArrow {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+@media (max-width: 900px) {
+  .innerContent {
+    padding: 2.2rem 2rem;
+  }
+
+  .drawerHeader {
+    top: 1.6rem;
+    right: 1.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .innerContent {
+    padding: 1.8rem 1.4rem;
+  }
+
+  .drawerHeader {
+    top: 1.2rem;
+    right: 1.2rem;
+  }
+
+  .menuItemText {
+    font-size: clamp(1.9rem, 7vw, 2.4rem);
+  }
+}

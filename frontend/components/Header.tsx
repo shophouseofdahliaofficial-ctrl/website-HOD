@@ -2708,8 +2708,8 @@ export default function Header() {
                   >
                     <div ref={navLinksRowRef} className={styles.navLinksRow}>
                       <Link
-                        href="/journals"
-                        className={`${styles.navLink} ${isHeaderNavActive(pathname, '/journals') ? styles.navLinkActive : ''}`}
+                        href="/products"
+                        className={`${styles.navLink} ${isHeaderNavActive(pathname, '/products') ? styles.navLinkActive : ''}`}
                         onClick={() => setExpandedDropdown(null)}
                       >
                         Collections
@@ -3124,8 +3124,8 @@ export default function Header() {
                         data-lenis-prevent
                       >
                         <Link
-                          href="/journals"
-                          className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/journals') ? styles.mobileNavLinkActive : ''}`}
+                          href="/products"
+                          className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/products') ? styles.mobileNavLinkActive : ''}`}
                           onClick={closeMobileMenu}
                         >
                           Collections

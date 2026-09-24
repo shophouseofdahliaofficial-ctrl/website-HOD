@@ -1,8 +1,12 @@
 .orbitWrapper {
   position: relative;
   width: 100vw;
-  min-height: 550vh;
+  min-height: 180vh;
   background-color: transparent;
+}
+
+.orbitWrapperVertical {
+  min-height: 440vh;
 }
 
 .stickyStage {
@@ -30,15 +34,16 @@
   width: clamp(210px, 18vw, 290px);
   max-width: 90vw;
   z-index: 25;
-  pointer-events: auto;
+  pointer-events: none;
   user-select: none;
-
+  opacity: 0;
+  will-change: opacity;
 }
 
 .textStack {
   position: relative;
   width: 100%;
-  min-height: 180px;
+  min-height: 171px;
 }
 
 .textBlock {
@@ -140,14 +145,16 @@
   color: #000000;
   border: 1px solid #000000;
   border-radius: 0 !important;
-  padding: 0.38rem 0.5rem;
+  padding: 0.18rem 0.3rem;
   font-family: inherit;
   font-size: 0.76rem;
   font-weight: 400;
-  letter-spacing: 0.05rem;
-  text-transform: uppercase;
+  letter-spacing: 0.00rem;
+  text-transform: lowercase;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
   will-change: filter, opacity;
   transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, color 0.25s ease;
 }
@@ -241,8 +248,8 @@
   gap: 0.2rem;
   z-index: 20;
   pointer-events: none;
+  opacity: 0;
   will-change: opacity, transform, filter;
-  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .counterText {
@@ -323,16 +330,20 @@
   color: #000000;
   border: 1px solid #000000;
   border-radius: 0 !important;
-  padding: 0.38rem 0.5rem;
+  padding: 0.18rem 0.3rem;
   font-family: inherit;
   font-size: 0.76rem;
   font-weight: 400;
-  letter-spacing: 0.05rem;
-  text-transform: uppercase;
+  letter-spacing: 0.00rem;
+  text-transform: lowercase;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  gap: 0.25rem;
+  opacity: 0;
   will-change: filter, opacity;
-  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
   user-select: none;
 }
 
@@ -342,10 +353,10 @@
   color: white;
 }
 
-/* Bottom Center Hover Product Scramble Indicator */
+/* Bottom Center "Our Collection" / Hover Product Scramble Indicator */
 .bottomCenterIndicator {
   position: absolute;
-  bottom: clamp(1.8rem, 4vw, 3rem);
+  bottom: clamp(5.8rem, 5vw, 7rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: 45;
@@ -354,21 +365,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: clamp(1.02rem, 1vw, 1.32rem);
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
   font-weight: 300;
-  letter-spacing: 0.0em;
-  text-transform: capitalize;
-  color: #000000;
+  letter-spacing: -0.01em;
+  color: #111111;
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.4s ease-out;
-  /* Smooth fade out on unhover */
   will-change: opacity;
 }
 
 .bottomCenterIndicatorVisible {
   opacity: 1;
-  transition: none !important;
-  /* Instant appear on hover */
 }

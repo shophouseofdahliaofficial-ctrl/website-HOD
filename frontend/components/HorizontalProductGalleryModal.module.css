@@ -1,0 +1,291 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* Translucent Blurred Backdrop */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #800020;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  z-index: 1;
+}
+
+/* Expanding Box: Starts at button's exact coordinates & borders, expands out to 15px viewport margin */
+.popupBox {
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #800020;
+  box-shadow: 0 32px 84px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
+  z-index: 2;
+  box-sizing: border-box;
+  will-change: top, left, width, height, opacity, box-shadow;
+}
+
+.innerContent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.0rem 0rem 1.5rem 0rem;
+  box-sizing: border-box;
+  will-change: opacity, transform;
+}
+
+/* Top Header */
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 28px 9px 30px;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.productTitle {
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-size: clamp(1.4rem, 2.2vw, 1.95rem);
+  font-weight: 300;
+  color: #800020;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* "Buy" Button */
+.buyButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.00rem;
+  text-transform: lowercase;
+  text-decoration: none;
+  color: #ffffff;
+  background-color: #800020;
+  padding: 6px 8px 6px 11px;
+  border: 1px solid #800020;
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.buyButton:hover {
+  background-color: #ffffff;
+  color: #550116;
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #ffffff;
+  color: #800020;
+  border: 1px solid #800020;
+  border-radius: 0 !important;
+  padding: 0.38rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.00rem;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.closeButton:hover {
+  background-color: #ffffff;
+  color: #500014;
+}
+
+/* Horizontal Full Ratio Track: Fills remaining height completely down to the bottom border */
+.horizontalTrack {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  cursor: grab;
+}
+
+.horizontalTrack:active {
+  cursor: grabbing;
+}
+
+.horizontalTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.trackSpacer {
+  min-width: clamp(1.5rem, 4vw, 4rem);
+  flex-shrink: 0;
+}
+
+/* Individual Image Card in Full Ratio: Touches the bottom edge */
+.imageCard {
+  flex: 0 0 auto;
+  height: 100%;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+  position: relative;
+  user-select: none;
+  margin: 0;
+}
+
+.imageCard:hover {
+  transform: translateY(-4px);
+}
+
+.imageCardActive {
+  transform: translateY(-1px);
+}
+
+.imageFrame {
+  position: relative;
+  height: 100%;
+  width: auto;
+  flex: 1 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: #ffffff;
+  overflow: hidden;
+  border: 0px solid rgb(0 0 0);
+  border-bottom: none;
+  box-shadow: none;
+}
+
+.imageElement {
+  height: 100%;
+  width: auto;
+  max-width: 85vw;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  display: block;
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.imageCard:hover .imageElement {
+  transform: scale(1.00);
+}
+
+@media (max-width: 768px) {
+  .headerBar {
+    padding: 0.2rem 1rem 0.6rem 1rem;
+  }
+
+  .imageCard {
+    height: 100%;
+    width: auto;
+  }
+
+  .imageElement {
+    max-width: 88vw;
+  }
+
+  .sideNavBtn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sideNavLeft {
+    left: 10px;
+  }
+
+  .sideNavRight {
+    right: 10px;
+  }
+}
+
+/* Side Arrow Navigation Buttons */
+.sideNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 45px;
+  height: 45px;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px) saturate(5.5);
+  -webkit-backdrop-filter: blur(12px) saturate(5.5);
+  color: #800020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, opacity 0.25s ease;
+  user-select: none;
+}
+
+.sideNavBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-50%) scale(1.00);
+}
+
+.sideNavBtn:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.sideNavBtn:disabled {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sideNavLeft {
+  left: 20px;
+}
+
+.sideNavRight {
+  right: 20px;
+}

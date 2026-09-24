@@ -7,6 +7,7 @@ import Logo from '@/components/Logo';
 import ScrambleText from '@/components/ScrambleText';
 import Circular3DOrbitShowcase from '@/components/Circular3DOrbitShowcase';
 import SitePreloader from '@/components/SitePreloader';
+import HomeMenuSidebar from '@/components/HomeMenuSidebar';
 import styles from './page.module.css';
 
 /**
@@ -18,12 +19,16 @@ import styles from './page.module.css';
 export default function HomePage() {
   const [isPreloaded, setIsPreloaded] = useState(false);
   const [isInverted, setIsInverted] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuTriggerRect, setMenuTriggerRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const topNavRef = useRef<HTMLElement>(null);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const nextSectionRef = useRef<HTMLElement>(null);
   const pixelCanvasRef = useRef<HTMLCanvasElement>(null);
+  const phase3SectionRef = useRef<HTMLElement>(null);
+  const phase3PixelCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Strictly lock scroll to top of Phase 1 while preloader is running
   useEffect(() => {
@@ -222,6 +227,67 @@ export default function HomePage() {
       }
     };
 
+    const renderPhase3PixelTransition = () => {
+      const canvas = phase3PixelCanvasRef.current;
+      const phase3Section = phase3SectionRef.current;
+      if (!canvas || !phase3Section) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const rect = phase3Section.getBoundingClientRect();
+      const vh = window.innerHeight || 800;
+      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+      const height = (canvas.height = canvas.offsetHeight || vh);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Only start pixel emergence as Phase 3 actually begins entering the viewport (rect.top < vh)
+      if (rect.top >= vh) return;
+
+      const scrollRatio = Math.min(1.0, Math.max(0, (vh - rect.top) / (vh * 0.85)));
+
+      if (scrollRatio <= 0) return;
+
+      // If fully covered in Phase 3 (#530000), fill solid once and return
+      if (scrollRatio >= 1.0) {
+        ctx.fillStyle = '#530000';
+        ctx.fillRect(0, 0, width, height);
+        return;
+      }
+
+      const PIXEL_SIZE = 14;
+      const cols = Math.ceil(width / PIXEL_SIZE);
+      const rows = Math.ceil(height / PIXEL_SIZE);
+      const emergence = Math.min(1.0, scrollRatio * 2.8);
+
+      ctx.fillStyle = '#530000';
+
+      for (let c = 0; c < cols; c++) {
+        const wave1 = Math.sin(c * 0.28) * 0.25;
+        const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
+        const randomSpike = (pseudoRandom(c * 11 + 23) - 0.5) * 0.45;
+        const colOffset = wave1 + wave2 + randomSpike;
+
+        const baselineRow = rows - Math.floor(scrollRatio * (rows + 15));
+        const jaggedOffset = Math.floor(colOffset * 10 * emergence);
+        const startRow = Math.max(0, Math.min(rows, baselineRow - jaggedOffset));
+
+        for (let r = startRow; r < rows; r++) {
+          ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+        }
+
+        if (startRow < rows && emergence > 0.05) {
+          for (let r = Math.max(0, startRow - 4); r < startRow; r++) {
+            const distanceAbove = startRow - r;
+            const spawnChance = Math.max(0, (0.6 - distanceAbove * 0.15) * emergence);
+            if (pseudoRandom(c * 47 + r * 71) < spawnChance) {
+              ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            }
+          }
+        }
+      }
+    };
+
     const handleScroll = () => {
       const scrollY = window.scrollY || window.pageYOffset;
       const vh = window.innerHeight || 800;
@@ -235,17 +301,24 @@ export default function HomePage() {
         titleRef.current.style.transform = `perspective(380px) rotateX(${tiltX.toFixed(2)}deg) scaleX(${scaleX.toFixed(4)}) scaleY(${scaleY.toFixed(4)})`;
       }
 
-      if (nextSectionRef.current) {
+      if (nextSectionRef.current && phase3SectionRef.current) {
+        const nextRect = nextSectionRef.current.getBoundingClientRect();
+        const phase3Rect = phase3SectionRef.current.getBoundingClientRect();
+        // Invert nav colors only when over the white Phase 2 section
+        // Switch back to white text and hide center logo as Phase 3 (#530000) pixels emerge
+        setIsInverted(nextRect.top <= 80 && phase3Rect.top > vh * 0.7);
+      } else if (nextSectionRef.current) {
         const rect = nextSectionRef.current.getBoundingClientRect();
-        // Invert nav colors when the white section reaches top nav area (within 80px)
         setIsInverted(rect.top <= 80);
       }
 
       renderPixelTransition();
+      renderPhase3PixelTransition();
     };
 
     const handleResize = () => {
       renderPixelTransition();
+      renderPhase3PixelTransition();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -277,7 +350,7 @@ export default function HomePage() {
         className={`${styles.topHeader} ${isInverted ? styles.invertedNav : ''}`}
       >
         <div className={styles.headerLeft}>
-          <Link href="/collections" className={styles.navLink}>
+          <Link href="/products" className={styles.navLink}>
             <ScrambleText text="Collections" />
           </Link>
         </div>
@@ -300,12 +373,29 @@ export default function HomePage() {
           <button
             type="button"
             className={styles.navLinkButton}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setMenuTriggerRect({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+              });
+              setIsMenuOpen(true);
+            }}
             aria-label="Toggle menu"
           >
             <ScrambleText text="Menu" />
           </button>
         </div>
       </header>
+
+      {/* Smooth Expanding 40% Width Menu Panel with 6 Items in Big Text */}
+      <HomeMenuSidebar
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        triggerRect={menuTriggerRect}
+      />
 
       {/* 1. Hero Fullscreen Section (#530000) */}
       <section className={styles.heroSection}>
@@ -374,6 +464,104 @@ export default function HomePage() {
         {/* 3D Circular Orbit Carousel in Phase 2 */}
         <div className={styles.whiteContentContainer}>
           <Circular3DOrbitShowcase />
+        </div>
+      </section>
+
+      {/* Leading Procedural Phase 3 #530000 Pixel Square Crest */}
+      <div className={styles.phase3PixelTransitionContainer}>
+        <canvas ref={phase3PixelCanvasRef} className={styles.phase3PixelCanvas} />
+      </div>
+
+      {/* 3. Phase 3 Fullscreen Footer Section (#530000) */}
+      <section ref={phase3SectionRef} className={styles.phase3Section}>
+        <div className={styles.phase3Content}>
+          {/* Centered Large Brand Heading */}
+          <div className={styles.phase3TopHero}>
+            <h2 className={styles.phase3BrandHeading}>
+              House Of Dahlia
+            </h2>
+          </div>
+
+          {/* Horizontal Dot-Separated Links Lineup (as in Image 2) */}
+          <nav className={styles.phase3HorizontalLinks} aria-label="Footer links">
+            <span className={styles.phase3LinkItem}>
+              <Link href="/size-guide" className={styles.phase3Link}>
+                Size Guide
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/faqs" className={styles.phase3Link}>
+                FAQs
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/stories" className={styles.phase3Link}>
+                Stories
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/contact" className={styles.phase3Link}>
+                Contact Us
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/privacy" className={styles.phase3Link}>
+                Privacy
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/terms" className={styles.phase3Link}>
+                Terms
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/dashboard" className={styles.phase3Link}>
+                My Account
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/cart" className={styles.phase3Link}>
+                Cart
+              </Link>
+              <span className={styles.phase3Dot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.phase3LinkItem}>
+              <Link href="/returns" className={styles.phase3Link}>
+                Returns & Exchanges
+              </Link>
+            </span>
+          </nav>
+
+          {/* Bottom Bar */}
+          <div className={styles.phase3BottomBar}>
+            <span>© 2026 House Of Dahlia. All rights reserved.</span>
+            <button
+              type="button"
+              className={styles.phase3BackToTop}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              Back to top
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
     </div>

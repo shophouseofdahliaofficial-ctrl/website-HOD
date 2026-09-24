@@ -6,6 +6,7 @@ interface PixelCubeModelTransitionProps {
   modelIndex: number;
   triggerEntry: boolean;
   className?: string;
+  children?: React.ReactNode;
 }
 
 // Staggered reveal order where the 3rd model (index 2) resolves FIRST, followed randomly by others
@@ -26,13 +27,18 @@ export default function PixelCubeModelTransition({
   modelIndex,
   triggerEntry,
   className,
+  children,
 }: PixelCubeModelTransitionProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const modelWrapperRef = useRef<HTMLDivElement>(null);
   const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
     if (!triggerEntry) {
       setIsResolved(false);
+      if (modelWrapperRef.current) {
+        modelWrapperRef.current.style.opacity = '1';
+      }
       return;
     }
 
@@ -71,48 +77,41 @@ export default function PixelCubeModelTransition({
       let halfSpan = 0;
 
       if (normY < 0.12) {
-        // Head
         halfSpan = 1.8;
       } else if (normY < 0.18) {
-        // Neck
         halfSpan = 1.2;
       } else if (normY < 0.38) {
-        // Torso / shoulders
         halfSpan = 3.6;
       } else if (normY < 0.50) {
-        // Waist
         halfSpan = 2.4;
       } else if (normY < 0.65) {
-        // Skirt
         halfSpan = 4.0;
       } else if (normY < 0.88) {
-        // Legs
         halfSpan = 2.2;
       } else {
-        // Shoes / base
         halfSpan = 2.6;
       }
 
       for (let c = Math.floor(centerX - halfSpan); c <= Math.ceil(centerX + halfSpan); c++) {
         if (c >= 0 && c < cols) {
-          // Slight procedural dithering on the outer boundary
           const distFromCenter = Math.abs(c - centerX);
           if (distFromCenter > halfSpan * 0.75 && Math.random() > 0.65) {
             continue;
           }
 
-          // 100% Pure White Pixel Cubes Only
           cubes.push({
             col: c,
             row: r,
             baseColor: '#ffffff',
-            // Truly randomized disappear timing per individual cube across the entire silhouette
             disappearStart: Math.random() * (DURATION - 0.12),
             disappearDuration: 0.08 + Math.random() * 0.08,
           });
         }
       }
     }
+
+    let lastBlinkTime = 0;
+    let currentBlinkOpacity = 1;
 
     const render = (time: number) => {
       if (!startTime) startTime = time;
@@ -121,42 +120,52 @@ export default function PixelCubeModelTransition({
       ctx.clearRect(0, 0, width, height);
 
       if (elapsed < delay) {
-        // Before dissolve starts for this model: Render static cubic silhouette
+        // Before dissolve starts: Model is hidden under solid pixel cubes
+        if (modelWrapperRef.current) {
+          modelWrapperRef.current.style.opacity = '0';
+        }
+
         for (const cube of cubes) {
           ctx.fillStyle = cube.baseColor;
           ctx.fillRect(
             cube.col * CUBE_SIZE,
             cube.row * CUBE_SIZE,
-            CUBE_SIZE - 1,
-            CUBE_SIZE - 1
+            CUBE_SIZE,
+            CUBE_SIZE
           );
         }
         animId = requestAnimationFrame(render);
         return;
       }
 
-      // Dissolve phase: each cube pops and dissolves away at its own random moment
+      // Dissolve phase: Model fast blinks (every ~35ms) until all cubes are gone
+      if (time - lastBlinkTime > 35) {
+        lastBlinkTime = time;
+        currentBlinkOpacity = Math.random() > 0.35 ? 1 : 0.08;
+      }
+      if (modelWrapperRef.current) {
+        modelWrapperRef.current.style.opacity = String(currentBlinkOpacity);
+      }
+
       const dissolveElapsed = elapsed - delay;
       let remainingCount = 0;
 
       for (const cube of cubes) {
         if (dissolveElapsed < cube.disappearStart) {
-          // Cube is still active
           remainingCount++;
           ctx.fillStyle = cube.baseColor;
           ctx.fillRect(
             cube.col * CUBE_SIZE,
             cube.row * CUBE_SIZE,
-            CUBE_SIZE - 1,
-            CUBE_SIZE - 1
+            CUBE_SIZE,
+            CUBE_SIZE
           );
         } else if (dissolveElapsed < cube.disappearStart + cube.disappearDuration) {
-          // Cube is actively shrinking / popping away
           remainingCount++;
           const t = (dissolveElapsed - cube.disappearStart) / cube.disappearDuration;
           const currentScale = Math.max(0, 1 - Math.pow(t, 1.6));
           const currentOpacity = Math.max(0, 1 - t);
-          const currentSize = (CUBE_SIZE - 1) * currentScale;
+          const currentSize = CUBE_SIZE * currentScale;
 
           if (currentSize > 0.5 && currentOpacity > 0.02) {
             ctx.save();
@@ -175,11 +184,13 @@ export default function PixelCubeModelTransition({
             ctx.restore();
           }
         }
-        // If dissolveElapsed >= disappearStart + disappearDuration, cube is completely gone
       }
 
       if (remainingCount === 0 || dissolveElapsed >= DURATION + 0.1) {
         ctx.clearRect(0, 0, width, height);
+        if (modelWrapperRef.current) {
+          modelWrapperRef.current.style.opacity = '1'; // Settle cleanly to solid normal model
+        }
         setIsResolved(true);
         return;
       }
@@ -191,24 +202,49 @@ export default function PixelCubeModelTransition({
 
     return () => {
       cancelAnimationFrame(animId);
+      if (modelWrapperRef.current) {
+        modelWrapperRef.current.style.opacity = '1';
+      }
     };
   }, [triggerEntry, modelIndex]);
 
-  if (isResolved) return null;
-
   return (
-    <canvas
-      ref={canvasRef}
+    <div
       className={className}
       style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
+        position: 'relative',
         width: '100%',
         height: '100%',
-        pointerEvents: 'none',
-        zIndex: 25,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-    />
+    >
+      <div
+        ref={modelWrapperRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          transition: 'opacity 0.04s ease-out',
+        }}
+      >
+        {children}
+      </div>
+
+      {!isResolved && (
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 25,
+          }}
+        />
+      )}
+    </div>
   );
 }

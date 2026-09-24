@@ -5,7 +5,6 @@ export const runtime = 'edge';
 import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
-import ProductBackgroundWatermark from '@/components/product/ProductBackgroundWatermark';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
 
@@ -217,20 +216,17 @@ function ProductDeepLinkContent() {
 
 export default function ProductDeepLinkPage() {
   return (
-    <>
-      <ProductBackgroundWatermark />
-      <Suspense
-        fallback={
-          <ProductDetailsModal
-            product={null as any}
-            isOpen
-            onClose={() => {}}
-            isFlatPage
-          />
-        }
-      >
-        <ProductDeepLinkContent />
-      </Suspense>
-    </>
+    <Suspense
+      fallback={
+        <ProductDetailsModal
+          product={null as any}
+          isOpen
+          onClose={() => {}}
+          isFlatPage
+        />
+      }
+    >
+      <ProductDeepLinkContent />
+    </Suspense>
   );
 }
