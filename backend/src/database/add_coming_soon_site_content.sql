@@ -4,5 +4,7 @@
 -- Toggle in Admin > More > Coming Soon Mode.
 
 INSERT INTO site_content (content_type, title, content, metadata, is_active)
-VALUES ('coming_soon', 'We will be back, but this time 2X Stronger', 'We’re working behind the scenes to bring you 100% pure, chemical-free milk and dairy products.', '{}', false)
-ON CONFLICT (content_type) DO NOTHING;
+VALUES ('coming_soon', 'We will be back soon', 'We are working behind the scenes to craft something extraordinary for you.', '{}', false)
+ON CONFLICT (content_type) DO UPDATE SET 
+  title = EXCLUDED.title,
+  content = EXCLUDED.content;

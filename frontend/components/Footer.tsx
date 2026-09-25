@@ -208,6 +208,7 @@ export default function Footer() {
 
       {/* House of Dahlia Signature Watermark */}
       <div className={styles.simpleLogoSection}>
+        <span className={styles.copyrightText}>&copy; 2026-house of Dahlia</span>
         <h2 className={styles.simpleLogoText}>House of Dahlia</h2>
       </div>
     </footer>

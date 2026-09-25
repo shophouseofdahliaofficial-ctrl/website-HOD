@@ -10,9 +10,10 @@ import styles from './content.module.css';
 const CONTENT_TYPES = [
   { type: 'terms', label: 'Terms & Conditions', path: '/terms' },
   { type: 'privacy', label: 'Privacy Policy', path: '/privacy' },
+  { type: 'refunds', label: 'Exchanges & Refunds', path: '/refunds' },
   { type: 'about', label: 'About Us', path: '/about' },
   { type: 'contact', label: 'Contact Details', path: '/contact' },
-  { type: 'reviews', label: 'Reviews Settings', path: '/reviews' },
+  { type: 'reviews', label: 'Reviews Settings', path: '/admin/content/reviews' },
 ];
 
 const OTHER_OPTIONS = [
@@ -53,6 +54,12 @@ function Icon({ name }: { name: string }) {
           <path d="M12 3 20 7v6c0 5-3.5 9-8 9s-8-4-8-9V7l8-4Z" />
           <path d="M9.5 12.5a2.5 2.5 0 0 1 5 0V16h-5v-3.5Z" />
           <path d="M10 16h4" />
+        </svg>
+      );
+    case 'refunds':
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       );
     case 'about':

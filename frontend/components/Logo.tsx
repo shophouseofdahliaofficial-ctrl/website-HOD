@@ -54,7 +54,7 @@ export default function Logo({ textClassName, imageClassName, fallbackText }: Lo
     );
   }
 
-  const defaultLogoUrl = '/house-of-dahlia-logo.png';
+  const defaultLogoUrl = '/finallogo (1).png';
   const displayUrl = config?.imageUrl || defaultLogoUrl;
 
   return (

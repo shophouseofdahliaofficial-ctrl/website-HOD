@@ -1,0 +1,94 @@
+/* Top Ambient Dull Red Glow */
+.topGlowContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  height: 520px;
+  pointer-events: none;
+  z-index: 999;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+/* Primary soft ambient aura dissolving downward */
+.ambientAura {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140vw;
+  max-width: 1600px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse 85% 65% at 50% 0%,
+      rgba(255, 0, 0, 0.42) 0%,
+      rgba(206, 46, 46, 0.596) 28%,
+      rgba(153, 27, 27, 0.14) 55%,
+      rgba(127, 29, 29, 0.04) 75%,
+      transparent 100%);
+  filter: blur(36px);
+  opacity: 0;
+  animation: glowCycle 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Secondary deeper core glow for rich diffusion */
+.ambientCore {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90vw;
+  max-width: 1000px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse 70% 50% at 50% 0%,
+      rgba(239, 68, 68, 0.38) 0%,
+      rgba(220, 38, 38, 0.20) 35%,
+      rgba(185, 28, 28, 0.06) 65%,
+      transparent 100%);
+  filter: blur(24px);
+  opacity: 0;
+  animation: glowCycle 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Very subtle wide horizon wash */
+.ambientWash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(to bottom,
+      rgba(220, 38, 38, 0.12) 0%,
+      rgba(220, 38, 38, 0.05) 40%,
+      transparent 100%);
+  filter: blur(16px);
+  opacity: 0;
+  animation: glowCycle 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes glowCycle {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.6);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  78% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.85);
+  }
+}

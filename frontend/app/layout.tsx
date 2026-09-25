@@ -15,6 +15,7 @@ import ConditionalHeader from '@/components/ConditionalHeader';
 import ConditionalFooter from '@/components/ConditionalFooter';
 
 import Toast from '@/components/Toast';
+import TopAmbientGlow from '@/components/ui/TopAmbientGlow';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import NativeGoogleBridge from '@/components/NativeGoogleBridge';
@@ -117,6 +118,7 @@ export default function RootLayout({
                 <ConditionalFooter />
 
                 <Toast />
+                <TopAmbientGlow />
                 <Analytics />
                 <SpeedInsights />
                 <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} />

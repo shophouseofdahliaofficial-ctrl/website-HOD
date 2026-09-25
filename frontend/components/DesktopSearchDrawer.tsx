@@ -3,10 +3,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '@/types';
 import { getPrimaryProductImageUrl, getOrderedProductImageUrls } from '@/lib/utils/productImages';
 import { getCardPriceDisplay } from '@/lib/utils/productCardPricing';
+import ProductCardImage from '@/components/ui/ProductCardImage';
 import cardStyles from '@/components/ProductsSection.module.css';
 import headerStyles from '@/components/Header.module.css';
 import styles from './DesktopSearchDrawer.module.css';
@@ -98,22 +98,6 @@ export default function DesktopSearchDrawer({
             onChange={(e) => setSearchQuery(e.target.value)}
             className={headerStyles.desktopSearchInput}
           />
-          {searchQuery && (
-            <button
-              type="button"
-              className={styles.clearButton}
-              onClick={() => {
-                setSearchQuery('');
-                inputRef.current?.focus();
-              }}
-              aria-label="Clear search"
-              style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
         </form>
       </div>
 
@@ -136,78 +120,48 @@ export default function DesktopSearchDrawer({
             <span>Loading products...</span>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <motion.div layout className={styles.productsGrid}>
-            <AnimatePresence mode="popLayout">
-              {filteredProducts.map((product) => {
-                const imageUrl = getPrimaryProductImageUrl(product) || '';
-                const isOutOfStock = product.isActive === false || (typeof product.quantity === 'number' && product.quantity <= 0);
-                const categoryLabel = product.categoryId
-                  ? categoryMap.get(String(product.categoryId)) || 'Collection'
-                  : 'Collection';
-                const priceDisplay = getCardPriceDisplay(product, '₹');
+          <div className={styles.productsGrid}>
+            {filteredProducts.map((product) => {
+              const imageUrl = getPrimaryProductImageUrl(product) || '';
+              const isOutOfStock = product.isActive === false || (typeof product.quantity === 'number' && product.quantity <= 0);
+              const categoryLabel = product.categoryId
+                ? categoryMap.get(String(product.categoryId)) || 'Collection'
+                : 'Collection';
+              const priceDisplay = getCardPriceDisplay(product, '₹');
 
-                return (
-                  <motion.div
-                    key={product.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.96, y: 8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, y: -8 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 35, mass: 0.8 }}
-                    className={`${cardStyles.productCard} ${isOutOfStock ? cardStyles.productCardOutOfStock : ''}`}
-                    onClick={() => handleProductClick(product.id)}
-                  >
-                    <div className={`${cardStyles.productImage} ${styles.productImage}`} style={imageUrl ? { aspectRatio: 'auto' } : undefined}>
-                      {isOutOfStock && (
-                        <div className={cardStyles.outOfStockBadge}>Out of stock</div>
-                      )}
-                      {imageUrl ? (
-                        <div className="product-card-image-wrapper">
-                          <Image
-                            src={imageUrl}
-                            alt={product.name}
-                            width={500}
-                            height={500}
-                            sizes="(max-width: 600px) 50vw, 240px"
-                            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '19px' }}
-                          />
-                          {product.hoverNextImage && getOrderedProductImageUrls(product)[1] && (
-                            <div className="product-card-hover-image-container">
-                              <Image
-                                src={getOrderedProductImageUrls(product)[1]}
-                                alt={product.name}
-                                width={500}
-                                height={500}
-                                sizes="(max-width: 600px) 50vw, 240px"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '19px' }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className={cardStyles.placeholderImage}>
-                          <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={cardStyles.placeholderLogo} />
-                        </div>
-                      )}
+              return (
+                <div
+                  key={product.id}
+                  className={`${cardStyles.productCard} ${isOutOfStock ? cardStyles.productCardOutOfStock : ''}`}
+                  onClick={() => handleProductClick(product.id)}
+                >
+                  <div className={`${cardStyles.productImage} ${styles.productImage}`} style={imageUrl ? { aspectRatio: 'auto' } : undefined}>
+                    {isOutOfStock && (
+                      <div className={cardStyles.outOfStockBadge}>Out of stock</div>
+                    )}
+                    <ProductCardImage
+                      src={imageUrl}
+                      alt={product.name}
+                      hoverSrc={product.hoverNextImage ? getOrderedProductImageUrls(product)[1] : undefined}
+                    />
+                  </div>
+
+                  <div className={cardStyles.productInfo}>
+                    <div className={`${cardStyles.productTitleRow} ${styles.productTitleRow}`}>
+                      <h3 className={`${cardStyles.productName} ${styles.productName}`}>{product.name}</h3>
+                      <span className={`${cardStyles.productPrice} ${styles.productPrice}`}>{priceDisplay}</span>
                     </div>
 
-                    <div className={cardStyles.productInfo}>
-                      <div className={`${cardStyles.productTitleRow} ${styles.productTitleRow}`}>
-                        <h3 className={`${cardStyles.productName} ${styles.productName}`}>{product.name}</h3>
-                        <span className={`${cardStyles.productPrice} ${styles.productPrice}`}>{priceDisplay}</span>
-                      </div>
-
-                      <div className={`${cardStyles.productCategoryRow} ${styles.productCategoryRow}`}>
-                        <div className={`${cardStyles.productCategory} ${styles.productCategory}`}>
-                          {categoryLabel}
-                        </div>
+                    <div className={`${cardStyles.productCategoryRow} ${styles.productCategoryRow}`}>
+                      <div className={`${cardStyles.productCategory} ${styles.productCategory}`}>
+                        {categoryLabel}
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </motion.div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className={styles.emptyState}>
             <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

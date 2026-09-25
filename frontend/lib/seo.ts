@@ -24,6 +24,7 @@ export const PUBLIC_SITEMAP_ROUTES = [
   '/contact',
   '/privacy',
   '/terms',
+  '/refunds',
 ] as const;
 
 export function getSiteUrl(): URL {

@@ -676,7 +676,7 @@ export default function CartPage() {
           </svg>
           <h1 className={styles.emptyCartText}>Your cart is empty</h1>
           <p className={styles.emptyCartTagline}>This cart deserves better.</p>
-          <Link href="/" className={styles.continueShoppingButton}>
+          <Link href="/products" className={styles.continueShoppingButton} style={{ cursor: 'pointer', position: 'relative', zIndex: 10 }}>
             Continue shopping
           </Link>
         </div>

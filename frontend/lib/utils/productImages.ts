@@ -1,4 +1,18 @@
-import type { ProductImage } from '@/types';
+/**
+ * Automatically applies Cloudinary automatic format (WebP/AVIF) and compression (q_auto)
+ * to any Cloudinary image URL and ensures .webp extension.
+ */
+export function optimizeCloudinaryUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  if (!url.includes('res.cloudinary.com')) return url;
+
+  let result = url;
+  if (result.includes('/upload/') && !result.includes('/f_webp') && !result.includes('/f_auto')) {
+    result = result.replace('/upload/', '/upload/f_webp,q_auto/');
+  }
+  result = result.replace(/\.(png|jpg|jpeg|jfif|pjpeg|pjp|avif|bmp|tiff|tif)(\?.*)?$/i, '.webp$2');
+  return result;
+}
 
 /**
  * Ordered image URLs for product gallery + listing: merges `products.image_url` with `product_images`
@@ -15,7 +29,8 @@ export function getOrderedProductImageUrls(product: {
 
   // Primary image
   if (product.imageUrl && typeof product.imageUrl === 'string') {
-    list.push(product.imageUrl);
+    const opt = optimizeCloudinaryUrl(product.imageUrl);
+    if (opt) list.push(opt);
   }
 
   // Related ProductImage[] objects
@@ -24,8 +39,11 @@ export function getOrderedProductImageUrls(product: {
       (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
     );
     for (const img of sorted) {
-      if (img?.imageUrl && typeof img.imageUrl === 'string' && !list.includes(img.imageUrl)) {
-        list.push(img.imageUrl);
+      if (img?.imageUrl && typeof img.imageUrl === 'string') {
+        const opt = optimizeCloudinaryUrl(img.imageUrl);
+        if (opt && !list.includes(opt)) {
+          list.push(opt);
+        }
       }
     }
   }
@@ -33,8 +51,11 @@ export function getOrderedProductImageUrls(product: {
   // String array imageUrls if present
   if (Array.isArray((product as any).imageUrls)) {
     for (const url of (product as any).imageUrls) {
-      if (url && typeof url === 'string' && !list.includes(url)) {
-        list.push(url);
+      if (url && typeof url === 'string') {
+        const opt = optimizeCloudinaryUrl(url);
+        if (opt && !list.includes(opt)) {
+          list.push(opt);
+        }
       }
     }
   }

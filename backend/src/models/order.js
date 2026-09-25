@@ -317,6 +317,15 @@ async function ensureOrdersSchema() {
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_awb VARCHAR(255);`).catch(() => {});
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_courier VARCHAR(255);`).catch(() => {});
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_order_id VARCHAR(255);`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delhivery_waybill VARCHAR(255);`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delhivery_status VARCHAR(255);`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delhivery_upload_wbn VARCHAR(255);`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delhivery_tracking_url TEXT;`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMPTZ;`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS in_transit_at TIMESTAMPTZ;`).catch(() => {});
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS reached_destination_hub_at TIMESTAMPTZ;`).catch(() => {});
+  await query(`ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;`).catch(() => {});
+  await query(`ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN ('placed', 'confirmed', 'package_prepared', 'shipped', 'in_transit', 'reached_destination_hub', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'));`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variation_size TEXT;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variation_id INTEGER;`).catch(() => {});
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS line_total DECIMAL(10, 2);`).catch(() => {});
@@ -774,6 +783,10 @@ async function getOrderByIdForUser(userId, orderId) {
       o.shiprocket_awb,
       o.shiprocket_courier,
       o.shiprocket_order_id,
+      o.delhivery_waybill,
+      o.delhivery_status,
+      o.delhivery_upload_wbn,
+      o.delhivery_tracking_url,
       u.name AS user_name,
       u.email AS user_email
     FROM orders o
@@ -889,6 +902,10 @@ async function getOrderByIdForUser(userId, orderId) {
     shiprocketAwb: r.shiprocket_awb || null,
     shiprocketCourier: r.shiprocket_courier || null,
     shiprocketOrderId: r.shiprocket_order_id || null,
+    delhiveryWaybill: r.delhivery_waybill || null,
+    delhiveryStatus: r.delhivery_status || null,
+    delhiveryUploadWbn: r.delhivery_upload_wbn || null,
+    delhiveryTrackingUrl: r.delhivery_tracking_url || (r.delhivery_waybill ? `https://www.delhivery.com/track/package/${r.delhivery_waybill}` : null),
     feedbackSubmitted,
     feedbackRating,
   };
@@ -1140,7 +1157,8 @@ async function getOrderByIdForAdmin(orderId) {
     `
     SELECT
       oi.product_name,
-      oi.variation_size,
+      COALESCE(oi.variation_size, pv.size) AS variation_size,
+      oi.variation_id,
       oi.quantity,
       oi.unit_price,
       oi.line_total,
@@ -1151,10 +1169,12 @@ async function getOrderByIdForAdmin(orderId) {
       pb.generated_pdf_url AS generated_pdf_url,
       p.image_url,
       p.buy_again_enabled,
+      p.customization_options,
       oi.customizations,
       oi.gift_wrap
     FROM order_items oi
     LEFT JOIN products p ON p.id = oi.product_id
+    LEFT JOIN product_variations pv ON pv.id = oi.variation_id
     LEFT JOIN photobooth_projects pb ON pb.id = oi.photobooth_project_id
     LEFT JOIN photobook_projects pbook ON pbook.id = oi.photobook_project_id
     WHERE oi.order_id = $1
@@ -1173,9 +1193,56 @@ async function getOrderByIdForAdmin(orderId) {
       try { giftWrap = JSON.parse(giftWrap); } catch {}
     }
 
+    let custOptions = row.customization_options;
+    if (typeof custOptions === 'string') {
+      try { custOptions = JSON.parse(custOptions); } catch {}
+    }
+    if (!Array.isArray(custOptions)) custOptions = [];
+
+    const variationDetails = [];
+    const varSize = row.variation_size ? String(row.variation_size).trim() : '';
+    if (varSize && !varSize.startsWith('group_') && !varSize.startsWith('val_')) {
+      variationDetails.push(/^size\s*:/i.test(varSize) || varSize.includes(':') ? varSize : `Variant: ${varSize}`);
+    }
+
+    if (customizations && typeof customizations === 'object') {
+      const selectedOpts = customizations.selectedOptions || (customizations.options && typeof customizations.options === 'object' && !Array.isArray(customizations.options) ? customizations.options : null);
+      if (selectedOpts && typeof selectedOpts === 'object') {
+        Object.entries(selectedOpts).forEach(([groupId, valId]) => {
+          const group = custOptions.find((g) => String(g.id) === String(groupId) || String(g.title || '').toLowerCase() === String(groupId).toLowerCase());
+          const val = group ? (group.values || []).find((v) => String(v.id) === String(valId) || String(v.name || '').toLowerCase() === String(valId).toLowerCase()) : null;
+          if (group && val) {
+            variationDetails.push(`${group.title}: ${val.name}`);
+          } else if (val) {
+            variationDetails.push(`${val.name}`);
+          } else if (typeof valId === 'string' && !valId.startsWith('val_') && !groupId.startsWith('group_')) {
+            variationDetails.push(`${groupId}: ${valId}`);
+          } else if (typeof valId === 'string' && !valId.startsWith('val_')) {
+            variationDetails.push(`${valId}`);
+          }
+        });
+      }
+
+      if (customizations.textPersonalization && typeof customizations.textPersonalization === 'object') {
+        Object.entries(customizations.textPersonalization).forEach(([k, v]) => {
+          if (v) variationDetails.push(`Personalization (${k}): ${v}`);
+        });
+      }
+      if (customizations.color && typeof customizations.color === 'string') {
+        variationDetails.push(`Color: ${customizations.color}`);
+      }
+      if (customizations.paperType && typeof customizations.paperType === 'string') {
+        variationDetails.push(`Paper: ${customizations.paperType}`);
+      }
+      if (customizations.finish && typeof customizations.finish === 'string') {
+        variationDetails.push(`Finish: ${customizations.finish}`);
+      }
+    }
+
     return {
       productName: row.product_name || 'Product',
       variationSize: row.variation_size || null,
+      variationDetails: Array.from(new Set(variationDetails)),
       quantity: row.quantity != null ? parseInt(row.quantity, 10) : 1,
       unitPrice: row.unit_price != null ? parseFloat(row.unit_price) : 0,
       lineTotal: row.line_total != null ? parseFloat(row.line_total) : 0,
@@ -1212,6 +1279,7 @@ async function getOrderByIdForAdmin(orderId) {
     deliveredAt: r.delivered_at ? new Date(r.delivered_at).toISOString() : null,
     fulfilledAt: r.fulfilled_at ? new Date(r.fulfilled_at).toISOString() : null,
     isNationwideDelivery: r.is_nationwide_delivery,
+    delhiveryWaybill: r.delhivery_waybill || null,
     shiprocketOrderId: r.shiprocket_order_id || null,
     customer: {
       name: r.user_name || '',
@@ -1296,6 +1364,41 @@ async function markAsDelivered(orderId) {
   }
 
   return result.rows[0];
+}
+
+/**
+ * Advance or set order timeline status (package_prepared, shipped, in_transit, reached_destination_hub, out_for_delivery, delivered)
+ */
+async function updateTimelineStatus(orderId, targetStatus) {
+  await ensureOrdersSchema();
+  const valid = ['package_prepared', 'shipped', 'in_transit', 'reached_destination_hub', 'out_for_delivery', 'delivered', 'cancelled'];
+  if (!valid.includes(targetStatus)) {
+    throw new Error(`Invalid status: ${targetStatus}. Must be one of: ${valid.join(', ')}`);
+  }
+
+  let queryStr = `UPDATE orders SET status = $1, updated_at = NOW()`;
+  const values = [targetStatus, orderId];
+
+  if (targetStatus === 'package_prepared') {
+    queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW())`;
+  } else if (targetStatus === 'shipped') {
+    queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW())`;
+  } else if (targetStatus === 'in_transit') {
+    queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW()), in_transit_at = COALESCE(in_transit_at, NOW())`;
+  } else if (targetStatus === 'reached_destination_hub') {
+    queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW()), in_transit_at = COALESCE(in_transit_at, NOW()), reached_destination_hub_at = COALESCE(reached_destination_hub_at, NOW())`;
+  } else if (targetStatus === 'out_for_delivery') {
+    queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW()), in_transit_at = COALESCE(in_transit_at, NOW()), reached_destination_hub_at = COALESCE(reached_destination_hub_at, NOW()), out_for_delivery_at = COALESCE(out_for_delivery_at, NOW())`;
+  } else if (targetStatus === 'delivered') {
+    queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW()), in_transit_at = COALESCE(in_transit_at, NOW()), reached_destination_hub_at = COALESCE(reached_destination_hub_at, NOW()), out_for_delivery_at = COALESCE(out_for_delivery_at, NOW()), delivered_at = COALESCE(delivered_at, NOW()), fulfilled_at = COALESCE(fulfilled_at, NOW()), delivery_date = CURRENT_DATE, payment_status = CASE WHEN LOWER(payment_method) = 'cod' THEN 'paid' ELSE payment_status END`;
+  }
+
+  queryStr += ` WHERE id::text = $2::text RETURNING *`;
+  const res = await query(queryStr, values);
+  if (res.rows.length === 0) {
+    throw new Error('Order not found');
+  }
+  return res.rows[0];
 }
 
 /**
@@ -1567,6 +1670,7 @@ module.exports = {
   markAsOutForDelivery,
   markAsDelivered,
   markAsFulfilled,
+  updateTimelineStatus,
   listOrderDeliveriesAdmin,
   listOutForDeliveryStops,
   submitOrderFeedback,

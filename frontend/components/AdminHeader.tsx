@@ -25,8 +25,8 @@ export default function AdminHeader() {
   const adminMenuItems = [
     { name: 'Products', path: '/admin/products', description: 'Manage products' },
     { name: 'Banners', path: '/admin/banners', description: 'Manage banners' },
-    { name: 'Orders', path: '/admin/customers', description: 'View orders' },
-    { name: 'Deliveries', path: '/admin/deliveries', description: 'Delivery schedule' },
+    { name: 'Orders', path: '/admin/orders', description: 'View paid orders & Delhivery shipments' },
+    { name: 'Customers', path: '/admin/customers', description: 'Customer list & analytics' },
     { name: 'More', path: '/admin/content', description: 'Manage site content' },
     { name: 'Dashboard', path: '/admin', description: 'Admin dashboard' },
   ];
@@ -194,16 +194,16 @@ export default function AdminHeader() {
             Banners
           </Link>
           <Link 
-            href="/admin/customers"
-            className={pathname === '/admin/customers' ? styles.activeLink : ''}
+            href="/admin/orders"
+            className={pathname === '/admin/orders' ? styles.activeLink : ''}
           >
             Orders
           </Link>
           <Link 
-            href="/admin/deliveries"
-            className={pathname === '/admin/deliveries' ? styles.activeLink : ''}
+            href="/admin/customers"
+            className={pathname === '/admin/customers' ? styles.activeLink : ''}
           >
-            Deliveries
+            Customers
           </Link>
           <Link 
             href="/admin/content"

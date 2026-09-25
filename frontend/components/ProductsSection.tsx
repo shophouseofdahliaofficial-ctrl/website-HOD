@@ -20,6 +20,7 @@ import { getAverageProductRating, getProductReviewCount } from '@/lib/utils/prod
 import { useCategoryMap } from '@/hooks/useCategoryMap';
 import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
 import QuickAddModal from '@/components/QuickAddModal';
+import ProductCardImage from '@/components/ui/ProductCardImage';
 import styles from './ProductsSection.module.css';
 
 /**
@@ -266,34 +267,11 @@ export default function ProductsSection() {
                     {isOutOfStock ? (
                       <div className={styles.outOfStockBadge}>Out of stock</div>
                     ) : null}
-                    {productImage ? (
-                      <div className="product-card-image-wrapper">
-                        <Image
-                          src={productImage}
-                          alt={product.name}
-                          width={500}
-                          height={500}
-                          sizes="(max-width: 640px) 50vw, (max-width: 968px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                          style={{ width: '100%', height: 'auto', display: 'block' }}
-                        />
-                        {product.hoverNextImage && getOrderedProductImageUrls(product)[1] && (
-                          <div className="product-card-hover-image-container">
-                            <Image
-                              src={getOrderedProductImageUrls(product)[1]}
-                              alt={product.name}
-                              width={500}
-                              height={500}
-                              sizes="(max-width: 640px) 50vw, (max-width: 968px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className={styles.placeholderImage}>
-                        <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={styles.placeholderLogo} />
-                      </div>
-                    )}
+                    <ProductCardImage
+                      src={productImage}
+                      alt={product.name}
+                      hoverSrc={product.hoverNextImage ? getOrderedProductImageUrls(product)[1] : undefined}
+                    />
                     {/* Add to Favorite Button */}
                     <button
                       className={`${styles.favoriteButton} ${favorites[product.id] ? styles.favoriteButtonActive : ''}`}

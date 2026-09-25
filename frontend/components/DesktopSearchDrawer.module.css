@@ -55,26 +55,11 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.clearButton {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: color 0.15s;
-}
-
-.clearButton:hover {
-  color: #374151;
-}
-
 /* Results Content Area */
 .resultsScrollArea {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   padding: 14px 14px 24px;
   box-sizing: border-box;
@@ -97,6 +82,7 @@
   justify-content: space-between;
   margin-bottom: 12px;
   padding: 0 4px;
+  flex-shrink: 0;
 }
 
 .resultsCount {
@@ -112,6 +98,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+  width: 100%;
 }
 
 /* Product Card Custom Typography & Layout Overrides */
@@ -147,12 +134,14 @@
 
 /* Empty / Loading States */
 .emptyState {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px;
+  padding: 32px 16px;
   text-align: center;
+  min-height: 280px;
 }
 
 .emptyIcon {
@@ -178,11 +167,13 @@
 }
 
 .loadingSpinner {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px;
+  padding: 32px 16px;
   color: #9ca3af;
   gap: 8px;
   font-size: 0.88rem;
+  min-height: 200px;
 }

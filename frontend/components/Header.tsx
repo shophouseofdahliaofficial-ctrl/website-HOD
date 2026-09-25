@@ -25,6 +25,7 @@ import gsap from 'gsap';
 import { SITE_NAME } from '@/lib/seo';
 import DesktopCartDrawer from './DesktopCartDrawer';
 import DesktopSearchDrawer from './DesktopSearchDrawer';
+import ProductCardImage from '@/components/ui/ProductCardImage';
 
 const REVIEW_US_URL =
   'https://www.google.com/search?q=milko+gwalior&sca_esv=8fdea6dbd6add952&authuser=3&sxsrf=ANbL-n7qfx2M_iJY6Dk6JYLRfKEGrnK91w%3A1777917729569&source=hp&ei=Id_4afLiH-6q4-EPrrmjiQ0&iflsig=AFdpzrgAAAAAafjtMdqwAiRFfJiXKjlPPoicbxX6o5Sg&oq=milko&gs_lp=Egdnd3Mtd2l6IgVtaWxrbyoCCAAyBBAjGCcyCxAAGIAEGIoFGJECMgsQABiABBiKBRiRAjIKEC4YgAQYigUYQzIKEC4YgAQYigUYQzIFEAAYgAQyBRAAGIAEMgUQABiABDILEC4YgAQYxwEYrwEyBRAAGIAESP4NUABYqgRwAHgAkAEAmAGPAaABigWqAQMwLjW4AQHIAQD4AQGYAgWgArYFwgIREC4YgAQYigUYkQIYxwEY0QPCAg4QLhiABBixAxjHARjRA8ICDhAAGIAEGIoFGLEDGIMBwgIOEC4YgAQYigUYsQMYgwHCAgsQABiABBixAxiDAcICCBAuGIAEGLEDwgIOEAAYgAQYigUYkQIYsQPCAhMQLhiABBiKBRhDGMcBGK8BGI4FwgIKEAAYgAQYigUYQ8ICCBAAGIAEGLEDmAMA4gMFEgExIECSBwMwLjWgB8pIsgcDMC41uAe2BcIHBTItNC4xyAcigAgB&sclient=gws-wiz#lrd=0x3976c12bef6ae93f:0x8427baeae2ab4794,3,,,,';
@@ -405,12 +406,6 @@ function UserDropdown({ user, logout, isAdmin, isMobile = false, className = '',
             <path d="M12 2C9.5 2 7.5 4 7.5 6.5C7.5 8 8.5 9 10 10L12 12L14 10C15.5 9 16.5 8 16.5 6.5C16.5 4 14.5 2 12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Gift Cards
-        </Link>
-        <Link href="/reviews" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
-          <svg className={styles.dropdownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Reviews
         </Link>
         {isAdmin && (
           <Link href="/admin" className={styles.dropdownItem} onClick={() => setIsOpen(false)}>
@@ -2303,18 +2298,12 @@ export default function Header() {
       });
   }, [savedPincode, serviceablePincodes, allProducts, pinUserId]);
 
-  // Focus first pincode input when modal opens & initialize with saved pincode if present
+  // Focus first pincode input when modal opens & ensure boxes are blank for fresh entry
   useEffect(() => {
     if (isAddressModalOpen) {
-      if (savedPincode && savedPincode.length === 6) {
-        const digits = savedPincode.split('').slice(0, 6);
-        setPincode(digits);
-        checkPincodeDelivery(savedPincode);
-      } else {
-        setPincode(['', '', '', '', '', '']);
-        setDeliveryStatus(null);
-        setPincodeDetails(null);
-      }
+      setPincode(['', '', '', '', '', '']);
+      setDeliveryStatus(null);
+      setPincodeDetails(null);
       setTimeout(() => {
         pincodeInputRefs.current[0]?.focus();
       }, 100);
@@ -2806,7 +2795,7 @@ export default function Header() {
                           isDraggingRef.current = false;
                           try {
                             (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-                          } catch {}
+                          } catch { }
                         }}
                         onPointerCancel={() => {
                           isDraggingRef.current = false;
@@ -2862,469 +2851,469 @@ export default function Header() {
                     ref={rightButtonsRef}
                     className={`${styles.rightButtons} ${isMobileMenuOpen ? styles.rightButtonsExpanded : ''}`}
                   >
-                  {/* Collapsed Mode Icons */}
-                  <div
-                    ref={rightButtonsCollapsedRef}
-                    className={styles.rightButtonsCollapsed}
-                  >
-                    {/* Desktop Search Button */}
-                    <button
-                      type="button"
-                      className={styles.searchButton}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openDesktopSearch();
-                      }}
-                      aria-label="Search"
+                    {/* Collapsed Mode Icons */}
+                    <div
+                      ref={rightButtonsCollapsedRef}
+                      className={styles.rightButtonsCollapsed}
                     >
-                      <svg className={`${styles.buttonIcon} ${styles.searchButtonIcon}`} viewBox="0 -0.5 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                        <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                          <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
-                          <path d="M15.989 15.4905L19.5 19.0015" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
-                        </g>
-                      </svg>
-                      <span className={styles.buttonText}>Search</span>
-                    </button>
-
-                    {/* Desktop WhatsApp / Help Button (left of account) */}
-                    <button
-                      type="button"
-                      className={styles.helpButton}
-                      aria-label="Help"
-                      title="Need help?"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openDesktopHelp();
-                      }}
-                    >
-                      <WhatsAppIcon className={styles.helpButtonIcon} />
-                    </button>
-
-                    {/* Desktop Login/User Button */}
-                    {isAuthenticated ? (
-                      <UserDropdown user={user} logout={logout} isAdmin={isAdmin} />
-                    ) : (
-                      <Link
-                        href="/auth/login"
-                        className={styles.loginButton}
-                        aria-label="Login"
-                      >
-                        <svg className={styles.buttonIcon} viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="0.00024000000000000003">
-                          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                          <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                          <g id="SVGRepo_iconCarrier">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M8.25 9C8.25 6.92893 9.92893 5.25 12 5.25C14.0711 5.25 15.75 6.92893 15.75 9C15.75 11.0711 14.0711 12.75 12 12.75C9.92893 12.75 8.25 11.0711 8.25 9ZM12 6.75C10.7574 6.75 9.75 7.75736 9.75 9C9.75 10.2426 10.7574 11.25 12 11.25C13.2426 11.25 14.25 10.2426 14.25 9C14.25 7.75736 13.2426 6.75 12 6.75Z" fill="currentColor"></path>
-                            <path fillRule="evenodd" clipRule="evenodd" d="M1.25 12C1.25 6.06294 6.06294 1.25 12 1.25C17.9371 1.25 22.75 6.06294 22.75 12C22.75 17.9371 17.9371 22.75 12 22.75C6.06294 22.75 1.25 17.9371 1.25 12ZM12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 14.5456 3.77827 16.851 5.4421 18.5235C5.6225 17.5504 5.97694 16.6329 6.68837 15.8951C7.75252 14.7915 9.45416 14.25 12 14.25C14.5457 14.25 16.2474 14.7915 17.3115 15.8951C18.023 16.6329 18.3774 17.5505 18.5578 18.5236C20.2217 16.8511 21.25 14.5456 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75ZM17.1937 19.6554C17.0918 18.4435 16.8286 17.5553 16.2318 16.9363C15.5823 16.2628 14.3789 15.75 12 15.75C9.62099 15.75 8.41761 16.2628 7.76815 16.9363C7.17127 17.5553 6.90811 18.4434 6.80622 19.6553C8.28684 20.6618 10.0747 21.25 12 21.25C13.9252 21.25 15.7131 20.6618 17.1937 19.6554Z" fill="currentColor"></path>
-                          </g>
-                        </svg>
-                        <span className={styles.buttonText}>Login</span>
-                      </Link>
-                    )}
-
-                    {/* Mobile & Tablet Menu Button */}
-                    {(isMobile || isTablet) && (
+                      {/* Desktop Search Button */}
                       <button
                         type="button"
-                        className={`${styles.iconButton} ${styles.mobileMenuButton}`}
-                        aria-label="Menu"
-                        onClick={openMobileMenu}
+                        className={styles.searchButton}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openDesktopSearch();
+                        }}
+                        aria-label="Search"
                       >
-                        <svg viewBox="0 0 24 24" fill="none" className={styles.buttonIcon} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                          <path d="M4 17H20M4 12H20M4 7H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg className={`${styles.buttonIcon} ${styles.searchButtonIcon}`} viewBox="0 -0.5 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                          <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+                          <g id="SVGRepo_iconCarrier">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path d="M15.989 15.4905L19.5 19.0015" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
+                          </g>
                         </svg>
+                        <span className={styles.buttonText}>Search</span>
                       </button>
+
+                      {/* Desktop WhatsApp / Help Button (left of account) */}
+                      <button
+                        type="button"
+                        className={styles.helpButton}
+                        aria-label="Help"
+                        title="Need help?"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openDesktopHelp();
+                        }}
+                      >
+                        <WhatsAppIcon className={styles.helpButtonIcon} />
+                      </button>
+
+                      {/* Desktop Login/User Button */}
+                      {isAuthenticated ? (
+                        <UserDropdown user={user} logout={logout} isAdmin={isAdmin} />
+                      ) : (
+                        <Link
+                          href="/auth/login"
+                          className={styles.loginButton}
+                          aria-label="Login"
+                        >
+                          <svg className={styles.buttonIcon} viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="0.00024000000000000003">
+                            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                              <path fillRule="evenodd" clipRule="evenodd" d="M8.25 9C8.25 6.92893 9.92893 5.25 12 5.25C14.0711 5.25 15.75 6.92893 15.75 9C15.75 11.0711 14.0711 12.75 12 12.75C9.92893 12.75 8.25 11.0711 8.25 9ZM12 6.75C10.7574 6.75 9.75 7.75736 9.75 9C9.75 10.2426 10.7574 11.25 12 11.25C13.2426 11.25 14.25 10.2426 14.25 9C14.25 7.75736 13.2426 6.75 12 6.75Z" fill="currentColor"></path>
+                              <path fillRule="evenodd" clipRule="evenodd" d="M1.25 12C1.25 6.06294 6.06294 1.25 12 1.25C17.9371 1.25 22.75 6.06294 22.75 12C22.75 17.9371 17.9371 22.75 12 22.75C6.06294 22.75 1.25 17.9371 1.25 12ZM12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 14.5456 3.77827 16.851 5.4421 18.5235C5.6225 17.5504 5.97694 16.6329 6.68837 15.8951C7.75252 14.7915 9.45416 14.25 12 14.25C14.5457 14.25 16.2474 14.7915 17.3115 15.8951C18.023 16.6329 18.3774 17.5505 18.5578 18.5236C20.2217 16.8511 21.25 14.5456 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75ZM17.1937 19.6554C17.0918 18.4435 16.8286 17.5553 16.2318 16.9363C15.5823 16.2628 14.3789 15.75 12 15.75C9.62099 15.75 8.41761 16.2628 7.76815 16.9363C7.17127 17.5553 6.90811 18.4434 6.80622 19.6553C8.28684 20.6618 10.0747 21.25 12 21.25C13.9252 21.25 15.7131 20.6618 17.1937 19.6554Z" fill="currentColor"></path>
+                            </g>
+                          </svg>
+                          <span className={styles.buttonText}>Login</span>
+                        </Link>
+                      )}
+
+                      {/* Mobile & Tablet Menu Button */}
+                      {(isMobile || isTablet) && (
+                        <button
+                          type="button"
+                          className={`${styles.iconButton} ${styles.mobileMenuButton}`}
+                          aria-label="Menu"
+                          onClick={openMobileMenu}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" className={styles.buttonIcon} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M4 17H20M4 12H20M4 7H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      )}
+
+                      {/* Cart Button - Icon Only on Mobile */}
+                      <Link
+                        href="/cart"
+                        className={`${styles.iconButton} ${styles.mobileCartButton}`}
+                        aria-label="Cart"
+                        data-cart-target="mobile"
+                      >
+                        <div ref={cartButtonMobileRef as any} className={styles.cartIconWrapper} data-cart-icon-wrapper="true">
+                          <svg className={`${styles.buttonIcon} ${styles.cartIcon}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                              <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11M8 8H16C19 8 20 11.8899 20 13.5C20 19.5259 18.3966 20.5 12 20.5C5.60338 20.5 4 19.5259 4 13.5C4 11.8899 5 8 8 8Z" stroke="currentColor" strokeWidth="1.488" strokeLinecap="round" strokeLinejoin="round"></path>
+                            </g>
+                          </svg>
+                          {itemCount > 0 && (
+                            <span className={styles.cartBadge}>{itemCount}</span>
+                          )}
+                        </div>
+                        <span className={styles.iconButtonText}>Cart</span>
+                      </Link>
+
+                      {/* Desktop Cart Button */}
+                      <button
+                        type="button"
+                        className={styles.cartButton}
+                        aria-label="Cart"
+                        data-cart-target="desktop"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openDesktopCart();
+                        }}
+                      >
+                        <div ref={cartButtonDesktopRef as any} className={styles.cartIconWrapper} data-cart-icon-wrapper="true">
+                          <svg className={`${styles.buttonIcon} ${styles.cartIcon}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                              <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11M8 8H16C19 8 20 11.8899 20 13.5C20 19.5259 18.3966 20.5 12 20.5C5.60338 20.5 4 19.5259 4 13.5C4 11.8899 5 8 8 8Z" stroke="currentColor" strokeWidth="1.488" strokeLinecap="round" strokeLinejoin="round"></path>
+                            </g>
+                          </svg>
+                          {itemCount > 0 && (
+                            <span className={styles.cartBadge}>{itemCount}</span>
+                          )}
+                        </div>
+                        <span className={styles.buttonText}>Cart</span>
+                      </button>
+                    </div>
+
+                    {/* Expanded Desktop Help Content directly inside .rightButtons */}
+                    {isDesktopHelpOpen && (
+                      <div
+                        ref={desktopHelpExpandedRef}
+                        className={styles.desktopHelpExpandedInner}
+                        style={{ display: isDesktopHelpOpen ? 'flex' : 'none', width: '100%' }}
+                      >
+                        <div className={styles.desktopHelpHeader}>
+                          <span className={styles.desktopHelpTitle}>Need help?</span>
+                          <button
+                            type="button"
+                            className={styles.desktopHelpCloseBtn}
+                            onClick={closeDesktopHelp}
+                            aria-label="Close help"
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <ul className={styles.desktopHelpList}>
+                          <li>
+                            <a
+                              href={formatWhatsAppLink(whatsappNumber)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.desktopHelpLink}
+                              onClick={closeDesktopHelp}
+                            >
+                              <WhatsAppIcon className={styles.desktopHelpItemIcon} />
+                              <span>WhatsApp</span>
+                            </a>
+                          </li>
+                          <li>
+                            <Link
+                              href="/contact"
+                              className={styles.desktopHelpLink}
+                              onClick={closeDesktopHelp}
+                            >
+                              <PhoneIcon className={styles.desktopHelpItemIcon} />
+                              <span>Contact</span>
+                            </Link>
+                          </li>
+                          <li>
+                            <button
+                              type="button"
+                              className={styles.desktopHelpLink}
+                              onClick={() => {
+                                closeDesktopHelp();
+                                setReviewOpen(true);
+                              }}
+                            >
+                              <StarIcon className={styles.desktopHelpItemIcon} />
+                              <span>Review us</span>
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              type="button"
+                              className={styles.desktopHelpLink}
+                              onClick={() => {
+                                closeDesktopHelp();
+                                setFeedbackOpen(true);
+                              }}
+                            >
+                              <FeedbackIcon className={styles.desktopHelpItemIcon} />
+                              <span>Feedback</span>
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
                     )}
 
-                    {/* Cart Button - Icon Only on Mobile */}
-                    <Link
-                      href="/cart"
-                      className={`${styles.iconButton} ${styles.mobileCartButton}`}
-                      aria-label="Cart"
-                      data-cart-target="mobile"
-                    >
-                      <div ref={cartButtonMobileRef as any} className={styles.cartIconWrapper} data-cart-icon-wrapper="true">
-                        <svg className={`${styles.buttonIcon} ${styles.cartIcon}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                          <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                          <g id="SVGRepo_iconCarrier">
-                            <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11M8 8H16C19 8 20 11.8899 20 13.5C20 19.5259 18.3966 20.5 12 20.5C5.60338 20.5 4 19.5259 4 13.5C4 11.8899 5 8 8 8Z" stroke="currentColor" strokeWidth="1.488" strokeLinecap="round" strokeLinejoin="round"></path>
-                          </g>
-                        </svg>
-                        {itemCount > 0 && (
-                          <span className={styles.cartBadge}>{itemCount}</span>
-                        )}
-                      </div>
-                      <span className={styles.iconButtonText}>Cart</span>
-                    </Link>
-
-                    {/* Desktop Cart Button */}
-                    <button
-                      type="button"
-                      className={styles.cartButton}
-                      aria-label="Cart"
-                      data-cart-target="desktop"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openDesktopCart();
-                      }}
-                    >
-                      <div ref={cartButtonDesktopRef as any} className={styles.cartIconWrapper} data-cart-icon-wrapper="true">
-                        <svg className={`${styles.buttonIcon} ${styles.cartIcon}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                          <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                          <g id="SVGRepo_iconCarrier">
-                            <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11M8 8H16C19 8 20 11.8899 20 13.5C20 19.5259 18.3966 20.5 12 20.5C5.60338 20.5 4 19.5259 4 13.5C4 11.8899 5 8 8 8Z" stroke="currentColor" strokeWidth="1.488" strokeLinecap="round" strokeLinejoin="round"></path>
-                          </g>
-                        </svg>
-                        {itemCount > 0 && (
-                          <span className={styles.cartBadge}>{itemCount}</span>
-                        )}
-                      </div>
-                      <span className={styles.buttonText}>Cart</span>
-                    </button>
-                  </div>
-
-                  {/* Expanded Desktop Help Content directly inside .rightButtons */}
-                  {isDesktopHelpOpen && (
-                    <div
-                      ref={desktopHelpExpandedRef}
-                      className={styles.desktopHelpExpandedInner}
-                      style={{ display: isDesktopHelpOpen ? 'flex' : 'none', width: '100%' }}
-                    >
-                      <div className={styles.desktopHelpHeader}>
-                        <span className={styles.desktopHelpTitle}>Need help?</span>
-                        <button
-                          type="button"
-                          className={styles.desktopHelpCloseBtn}
-                          onClick={closeDesktopHelp}
-                          aria-label="Close help"
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <ul className={styles.desktopHelpList}>
-                        <li>
-                          <a
-                            href={formatWhatsAppLink(whatsappNumber)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.desktopHelpLink}
-                            onClick={closeDesktopHelp}
-                          >
-                            <WhatsAppIcon className={styles.desktopHelpItemIcon} />
-                            <span>WhatsApp</span>
-                          </a>
-                        </li>
-                        <li>
-                          <Link
-                            href="/contact"
-                            className={styles.desktopHelpLink}
-                            onClick={closeDesktopHelp}
-                          >
-                            <PhoneIcon className={styles.desktopHelpItemIcon} />
-                            <span>Contact</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            className={styles.desktopHelpLink}
-                            onClick={() => {
-                              closeDesktopHelp();
-                              setReviewOpen(true);
-                            }}
-                          >
-                            <StarIcon className={styles.desktopHelpItemIcon} />
-                            <span>Review us</span>
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            className={styles.desktopHelpLink}
-                            onClick={() => {
-                              closeDesktopHelp();
-                              setFeedbackOpen(true);
-                            }}
-                          >
-                            <FeedbackIcon className={styles.desktopHelpItemIcon} />
-                            <span>Feedback</span>
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Expanded Desktop Cart & Checkout Content directly inside .rightButtons */}
-                  {isDesktopCartOpen && (
-                    <div
-                      ref={desktopCartExpandedRef}
-                      className={styles.rightButtonsExpandedInner}
-                      style={{ display: isDesktopCartOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
-                    >
-                      <DesktopCartDrawer onClose={closeDesktopCart} />
-                    </div>
-                  )}
-
-                  {/* Expanded Desktop Search Content directly inside .rightButtons */}
-                  {isDesktopSearchDrawerOpen && (
-                    <div
-                      ref={desktopSearchExpandedRef}
-                      className={styles.rightButtonsExpandedInner}
-                      style={{ display: isDesktopSearchDrawerOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
-                    >
-                      <DesktopSearchDrawer
-                        onClose={closeDesktopSearch}
-                        allProducts={allProducts}
-                        isSearchProductsLoading={isSearchProductsLoading}
-                        categoryMap={categoryMap}
-                      />
-                    </div>
-                  )}
-
-                  {/* Expanded Mobile Menu Content directly inside .rightButtons */}
-                  {showNavMenuOverlay && (
-                    <div
-                      ref={rightButtonsExpandedRef}
-                      className={styles.rightButtonsExpandedInner}
-                      style={{ display: isMobileMenuOpen ? 'flex' : 'none' }}
-                    >
-                      <div ref={mobileMenuHeaderRef} className={styles.mobileMenuHeader}>
-                        <div className={styles.mobileMenuHeaderLeft}>
-                          {/* Account Icon */}
-                          {isAuthenticated ? (
-                            <UserDropdown
-                              user={user}
-                              logout={logout}
-                              isAdmin={isAdmin}
-                              isMobile={true}
-                              className={styles.mobileMenuHeaderButton}
-                              onClose={closeMobileMenu}
-                            />
-                          ) : (
-                            <Link
-                              href="/auth/login"
-                              className={`${styles.iconButton} ${styles.mobileMenuHeaderButton}`}
-                              aria-label="Login"
-                              onClick={closeMobileMenu}
-                            >
-                              <svg className={styles.buttonIcon} viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="0.00024">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M8.25 9C8.25 6.92893 9.92893 5.25 12 5.25C14.0711 5.25 15.75 6.92893 15.75 9C15.75 11.0711 14.0711 12.75 12 12.75C9.92893 12.75 8.25 11.0711 8.25 9ZM12 6.75C10.7574 6.75 9.75 7.75736 9.75 9C9.75 10.2426 10.7574 11.25 12 11.25C13.2426 11.25 14.25 10.2426 14.25 9C14.25 7.75736 13.2426 6.75 12 6.75Z" fill="currentColor"></path>
-                                <path fillRule="evenodd" clipRule="evenodd" d="M1.25 12C1.25 6.06294 6.06294 1.25 12 1.25C17.9371 1.25 22.75 6.06294 22.75 12C22.75 17.9371 17.9371 22.75 12 22.75C6.06294 22.75 1.25 17.9371 1.25 12ZM12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 14.5456 3.77827 16.851 5.4421 18.5235C5.6225 17.5504 5.97694 16.6329 6.68837 15.8951C7.75252 14.7915 9.45416 14.25 12 14.25C14.5457 14.25 16.2474 14.7915 17.3115 15.8951C18.023 16.6329 18.3774 17.5505 18.5578 18.5236C20.2217 16.8511 21.25 14.5456 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75ZM17.1937 19.6554C17.0918 18.4435 16.8286 17.5553 16.2318 16.9363C15.5823 16.2628 14.3789 15.75 12 15.75C9.62099 15.75 8.41761 16.2628 7.76815 16.9363C7.17127 17.5553 6.90811 18.4434 6.80622 19.6553C8.28684 20.6618 10.0747 21.25 12 21.25C13.9252 21.25 15.7131 20.6618 17.1937 19.6554Z" fill="currentColor"></path>
-                              </svg>
-                            </Link>
-                          )}
-
-                          {/* Search Icon */}
-                          <button
-                            type="button"
-                            className={`${styles.iconButton} ${styles.mobileMenuHeaderButton}`}
-                            aria-label="Search"
-                            onClick={() => {
-                              ensureProducts();
-                              setIsSearchOverlayOpen(true);
-                              closeMobileMenu();
-                            }}
-                          >
-                            <svg viewBox="0 -0.5 25 25" fill="none" className={styles.buttonIcon} xmlns="http://www.w3.org/2000/svg">
-                              <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
-                              <path d="M15.989 15.4905L19.5 19.0015" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
-                            </svg>
-                          </button>
-                        </div>
-
-                        {/* Close Button */}
-                        <button
-                          type="button"
-                          className={styles.mobileMenuCloseBtn}
-                          onClick={closeMobileMenu}
-                          aria-label="Close menu"
-                        >
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {/* Top Linear Gradient Scroll Fade (Transparent to White) */}
+                    {/* Expanded Desktop Cart & Checkout Content directly inside .rightButtons */}
+                    {isDesktopCartOpen && (
                       <div
-                        className={`${styles.mobileNavFadeTop} ${canScrollTop ? styles.mobileNavFadeTopActive : ''}`}
-                        aria-hidden="true"
-                      />
-
-                      <nav
-                        ref={mobileNavMenuRef}
-                        className={styles.mobileNavMenu}
-                        onScroll={updateScrollFades}
-                        data-lenis-prevent
+                        ref={desktopCartExpandedRef}
+                        className={styles.rightButtonsExpandedInner}
+                        style={{ display: isDesktopCartOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
                       >
-                        <Link
-                          href="/products"
-                          className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/products') ? styles.mobileNavLinkActive : ''}`}
-                          onClick={closeMobileMenu}
-                        >
-                          Collections
-                        </Link>
+                        <DesktopCartDrawer onClose={closeDesktopCart} />
+                      </div>
+                    )}
 
-                        <Link
-                          href="/size-guide"
-                          className={`${styles.mobileNavLink} ${styles.mobileNavLinkHighlight} ${isHeaderNavActive(pathname, '/size-guide') ? styles.mobileNavLinkActive : ''}`}
-                          onClick={closeMobileMenu}
-                        >
-                          Size Guide
-                        </Link>
-                        <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
-                          <button
-                            type="button"
-                            className={styles.mobileNavLink}
-                            onClick={() => setIsMobileOthersOpen(!isMobileOthersOpen)}
-                            style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
-                          >
-                            <span>Others</span>
-                            <svg
-                              className={`${styles.dropdownArrow} ${isMobileOthersOpen ? styles.dropdownArrowOpen : ''}`}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              style={{ width: '16px', height: '16px' }}
-                            >
-                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                          {isMobileOthersOpen && (
-                            <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                              <Link
-                                href="/calendars"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/calendars') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Calendars
-                              </Link>
-                              <Link
-                                href="/notepads"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/notepads') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Notepads
-                              </Link>
-                              <Link
-                                href="/posters"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/posters') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Posters
-                              </Link>
-                              <Link
-                                href="/sketchbooks"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/sketchbooks') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Sketchbooks
-                              </Link>
-                              <Link
-                                href="/planners"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/planners') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Planners
-                              </Link>
-                              <Link
-                                href="/papers"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/papers') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Papers
-                              </Link>
-                              <Link
-                                href="/cardstocks"
-                                className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/cardstocks') ? styles.mobileSubNavLinkActive : ''}`}
-                                onClick={closeMobileMenu}
-                              >
-                                Card Stocks
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Help Submenu in Mobile Drawer */}
-                        <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
-                          <button
-                            type="button"
-                            className={styles.mobileNavLink}
-                            onClick={() => setIsMobileHelpOpen(!isMobileHelpOpen)}
-                            style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
-                          >
-                            <span>Help</span>
-                            <svg
-                              className={`${styles.dropdownArrow} ${isMobileHelpOpen ? styles.dropdownArrowOpen : ''}`}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              style={{ width: '16px', height: '16px' }}
-                            >
-                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                          {isMobileHelpOpen && (
-                            <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                              <a
-                                href={formatWhatsAppLink(whatsappNumber)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.mobileSubNavLink}
-                                onClick={closeMobileMenu}
-                              >
-                                WhatsApp
-                              </a>
-                              <Link
-                                href="/contact"
-                                className={styles.mobileSubNavLink}
-                                onClick={closeMobileMenu}
-                              >
-                                Contact
-                              </Link>
-                              <button
-                                type="button"
-                                className={styles.mobileSubNavLink}
-                                style={{ background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' }}
-                                onClick={() => {
-                                  closeMobileMenu();
-                                  setReviewOpen(true);
-                                }}
-                              >
-                                Review us
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.mobileSubNavLink}
-                                style={{ background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' }}
-                                onClick={() => {
-                                  closeMobileMenu();
-                                  setFeedbackOpen(true);
-                                }}
-                              >
-                                Feedback
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </nav>
-
-                      {/* Bottom Linear Gradient Scroll Fade (Transparent to White) */}
+                    {/* Expanded Desktop Search Content directly inside .rightButtons */}
+                    {isDesktopSearchDrawerOpen && (
                       <div
-                        className={`${styles.mobileNavFadeBottom} ${canScrollBottom ? styles.mobileNavFadeBottomActive : ''}`}
-                        aria-hidden="true"
-                      />
-                    </div>
-                  )}
+                        ref={desktopSearchExpandedRef}
+                        className={styles.rightButtonsExpandedInner}
+                        style={{ display: isDesktopSearchDrawerOpen ? 'flex' : 'none', height: '100%', width: '100%' }}
+                      >
+                        <DesktopSearchDrawer
+                          onClose={closeDesktopSearch}
+                          allProducts={allProducts}
+                          isSearchProductsLoading={isSearchProductsLoading}
+                          categoryMap={categoryMap}
+                        />
+                      </div>
+                    )}
+
+                    {/* Expanded Mobile Menu Content directly inside .rightButtons */}
+                    {showNavMenuOverlay && (
+                      <div
+                        ref={rightButtonsExpandedRef}
+                        className={styles.rightButtonsExpandedInner}
+                        style={{ display: isMobileMenuOpen ? 'flex' : 'none' }}
+                      >
+                        <div ref={mobileMenuHeaderRef} className={styles.mobileMenuHeader}>
+                          <div className={styles.mobileMenuHeaderLeft}>
+                            {/* Account Icon */}
+                            {isAuthenticated ? (
+                              <UserDropdown
+                                user={user}
+                                logout={logout}
+                                isAdmin={isAdmin}
+                                isMobile={true}
+                                className={styles.mobileMenuHeaderButton}
+                                onClose={closeMobileMenu}
+                              />
+                            ) : (
+                              <Link
+                                href="/auth/login"
+                                className={`${styles.iconButton} ${styles.mobileMenuHeaderButton}`}
+                                aria-label="Login"
+                                onClick={closeMobileMenu}
+                              >
+                                <svg className={styles.buttonIcon} viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="0.00024">
+                                  <path fillRule="evenodd" clipRule="evenodd" d="M8.25 9C8.25 6.92893 9.92893 5.25 12 5.25C14.0711 5.25 15.75 6.92893 15.75 9C15.75 11.0711 14.0711 12.75 12 12.75C9.92893 12.75 8.25 11.0711 8.25 9ZM12 6.75C10.7574 6.75 9.75 7.75736 9.75 9C9.75 10.2426 10.7574 11.25 12 11.25C13.2426 11.25 14.25 10.2426 14.25 9C14.25 7.75736 13.2426 6.75 12 6.75Z" fill="currentColor"></path>
+                                  <path fillRule="evenodd" clipRule="evenodd" d="M1.25 12C1.25 6.06294 6.06294 1.25 12 1.25C17.9371 1.25 22.75 6.06294 22.75 12C22.75 17.9371 17.9371 22.75 12 22.75C6.06294 22.75 1.25 17.9371 1.25 12ZM12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 14.5456 3.77827 16.851 5.4421 18.5235C5.6225 17.5504 5.97694 16.6329 6.68837 15.8951C7.75252 14.7915 9.45416 14.25 12 14.25C14.5457 14.25 16.2474 14.7915 17.3115 15.8951C18.023 16.6329 18.3774 17.5505 18.5578 18.5236C20.2217 16.8511 21.25 14.5456 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75ZM17.1937 19.6554C17.0918 18.4435 16.8286 17.5553 16.2318 16.9363C15.5823 16.2628 14.3789 15.75 12 15.75C9.62099 15.75 8.41761 16.2628 7.76815 16.9363C7.17127 17.5553 6.90811 18.4434 6.80622 19.6553C8.28684 20.6618 10.0747 21.25 12 21.25C13.9252 21.25 15.7131 20.6618 17.1937 19.6554Z" fill="currentColor"></path>
+                                </svg>
+                              </Link>
+                            )}
+
+                            {/* Search Icon */}
+                            <button
+                              type="button"
+                              className={`${styles.iconButton} ${styles.mobileMenuHeaderButton}`}
+                              aria-label="Search"
+                              onClick={() => {
+                                ensureProducts();
+                                setIsSearchOverlayOpen(true);
+                                closeMobileMenu();
+                              }}
+                            >
+                              <svg viewBox="0 -0.5 25 25" fill="none" className={styles.buttonIcon} xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
+                                <path d="M15.989 15.4905L19.5 19.0015" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
+                              </svg>
+                            </button>
+                          </div>
+
+                          {/* Close Button */}
+                          <button
+                            type="button"
+                            className={styles.mobileMenuCloseBtn}
+                            onClick={closeMobileMenu}
+                            aria-label="Close menu"
+                          >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Top Linear Gradient Scroll Fade (Transparent to White) */}
+                        <div
+                          className={`${styles.mobileNavFadeTop} ${canScrollTop ? styles.mobileNavFadeTopActive : ''}`}
+                          aria-hidden="true"
+                        />
+
+                        <nav
+                          ref={mobileNavMenuRef}
+                          className={styles.mobileNavMenu}
+                          onScroll={updateScrollFades}
+                          data-lenis-prevent
+                        >
+                          <Link
+                            href="/products"
+                            className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/products') ? styles.mobileNavLinkActive : ''}`}
+                            onClick={closeMobileMenu}
+                          >
+                            Collections
+                          </Link>
+
+                          <Link
+                            href="/size-guide"
+                            className={`${styles.mobileNavLink} ${styles.mobileNavLinkHighlight} ${isHeaderNavActive(pathname, '/size-guide') ? styles.mobileNavLinkActive : ''}`}
+                            onClick={closeMobileMenu}
+                          >
+                            Size Guide
+                          </Link>
+                          <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
+                            <button
+                              type="button"
+                              className={styles.mobileNavLink}
+                              onClick={() => setIsMobileOthersOpen(!isMobileOthersOpen)}
+                              style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
+                            >
+                              <span>Others</span>
+                              <svg
+                                className={`${styles.dropdownArrow} ${isMobileOthersOpen ? styles.dropdownArrowOpen : ''}`}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                style={{ width: '16px', height: '16px' }}
+                              >
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            {isMobileOthersOpen && (
+                              <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                <Link
+                                  href="/calendars"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/calendars') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Calendars
+                                </Link>
+                                <Link
+                                  href="/notepads"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/notepads') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Notepads
+                                </Link>
+                                <Link
+                                  href="/posters"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/posters') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Posters
+                                </Link>
+                                <Link
+                                  href="/sketchbooks"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/sketchbooks') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Sketchbooks
+                                </Link>
+                                <Link
+                                  href="/planners"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/planners') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Planners
+                                </Link>
+                                <Link
+                                  href="/papers"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/papers') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Papers
+                                </Link>
+                                <Link
+                                  href="/cardstocks"
+                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/cardstocks') ? styles.mobileSubNavLinkActive : ''}`}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Card Stocks
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Help Submenu in Mobile Drawer */}
+                          <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
+                            <button
+                              type="button"
+                              className={styles.mobileNavLink}
+                              onClick={() => setIsMobileHelpOpen(!isMobileHelpOpen)}
+                              style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
+                            >
+                              <span>Help</span>
+                              <svg
+                                className={`${styles.dropdownArrow} ${isMobileHelpOpen ? styles.dropdownArrowOpen : ''}`}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                style={{ width: '16px', height: '16px' }}
+                              >
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            {isMobileHelpOpen && (
+                              <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                <a
+                                  href={formatWhatsAppLink(whatsappNumber)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.mobileSubNavLink}
+                                  onClick={closeMobileMenu}
+                                >
+                                  WhatsApp
+                                </a>
+                                <Link
+                                  href="/contact"
+                                  className={styles.mobileSubNavLink}
+                                  onClick={closeMobileMenu}
+                                >
+                                  Contact
+                                </Link>
+                                <button
+                                  type="button"
+                                  className={styles.mobileSubNavLink}
+                                  style={{ background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' }}
+                                  onClick={() => {
+                                    closeMobileMenu();
+                                    setReviewOpen(true);
+                                  }}
+                                >
+                                  Review us
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.mobileSubNavLink}
+                                  style={{ background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit' }}
+                                  onClick={() => {
+                                    closeMobileMenu();
+                                    setFeedbackOpen(true);
+                                  }}
+                                >
+                                  Feedback
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </nav>
+
+                        {/* Bottom Linear Gradient Scroll Fade (Transparent to White) */}
+                        <div
+                          className={`${styles.mobileNavFadeBottom} ${canScrollBottom ? styles.mobileNavFadeBottomActive : ''}`}
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             </>
           )}
         </div>
@@ -3334,7 +3323,12 @@ export default function Header() {
         {/* Address Modal */}
         {isAddressModalOpen ? (
           <div className={styles.modalOverlay} onClick={() => setIsAddressModalOpen(false)}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <motion.div
+              layout
+              transition={{ layout: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }}
+              className={styles.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Modal Header */}
               <div className={styles.modalHeader}>
                 <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${styles.modalMainSvg} ${deliveryStatus === 'available' ? styles.modalMainSvgSuccess : deliveryStatus === 'unavailable' ? styles.modalMainSvgError : ''}`}>
@@ -3359,40 +3353,44 @@ export default function Header() {
               </div>
 
               {/* Delivery Location Text & Estimated Transit Details */}
-              {(() => {
-                const fullPincode = pincode.join('');
-                if (deliveryStatus === 'available') {
-                  return (
-                    <div key="available" className={styles.deliveryStatusBlock}>
-                      <p className={`${styles.deliveryLocationText} ${styles.deliveryLocationTextSuccess}`}>
-                        ✓ Delivery available to {pincodeDetails?.locationLabel || fullPincode}
-                      </p>
-                      <div className={styles.deliveryMetaRow}>
-                        <span>Estimated delivery: <strong>{pincodeDetails?.deliveryTimeText || '3-5 Days'}</strong></span>
+              <div className={styles.deliveryStatusBlock}>
+                <p
+                  className={`${styles.deliveryLocationText} ${deliveryStatus === 'available'
+                      ? styles.deliveryLocationTextSuccess
+                      : deliveryStatus === 'unavailable'
+                        ? styles.deliveryLocationTextError
+                        : deliveryStatus === 'checking'
+                          ? styles.deliveryLocationTextChecking
+                          : ''
+                    }`}
+                >
+                  {deliveryStatus === 'available'
+                    ? `Delivery available to ${pincodeDetails?.locationLabel || pincode.join('')}`
+                    : deliveryStatus === 'unavailable'
+                      ? `Currently not deliverable to ${pincodeDetails?.locationLabel || pincode.join('')}`
+                      : deliveryStatus === 'checking'
+                        ? `Checking deliverability for ${pincode.join('')}...`
+                        : 'Delivering to all over India'}
+                </p>
+                <AnimatePresence initial={false}>
+                  {deliveryStatus === 'available' && (
+                    <motion.div
+                      key="delivery-meta"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      style={{ overflow: 'hidden', width: '100%' }}
+                    >
+                      <div className={styles.deliveryMetaRow} style={{ paddingTop: 4 }}>
+                        <span>
+                          Estimated delivery: <strong>{pincodeDetails?.deliveryTimeText || '3-5 Days'}</strong>
+                        </span>
                       </div>
-                    </div>
-                  );
-                }
-                if (deliveryStatus === 'unavailable') {
-                  return (
-                    <p key="unavailable" className={`${styles.deliveryLocationText} ${styles.deliveryLocationTextError}`}>
-                      ✕ Currently not deliverable to {pincodeDetails?.locationLabel || fullPincode}
-                    </p>
-                  );
-                }
-                if (deliveryStatus === 'checking') {
-                  return (
-                    <p key="checking" className={`${styles.deliveryLocationText} ${styles.deliveryLocationTextChecking}`}>
-                      Checking deliverability for {fullPincode}...
-                    </p>
-                  );
-                }
-                return (
-                  <p key="default" className={styles.deliveryLocationText}>
-                    Delivering to all over India
-                  </p>
-                );
-              })()}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Pincode Field - 6 separate boxes */}
               <div className={styles.modalField}>
@@ -3489,7 +3487,7 @@ export default function Header() {
                 {deliveryStatus === 'checking' ? 'Checking...' :
                   deliveryStatus === 'available' || deliveryStatus === 'unavailable' ? 'Done' : 'Check'}
               </button>
-            </div>
+            </motion.div>
           </div>
         ) : null}
       </header>
@@ -3530,24 +3528,14 @@ export default function Header() {
               <p className={styles.searchOverlayStatus}>Loading...</p>
             ) : searchQuery.trim() ? (
               searchResults.length > 0 ? (
-                <AnimatePresence mode="popLayout">
+                <>
                   {searchResults.slice(0, 6).map((p) => {
                     const isOutOfStock = p.isActive === false || (typeof p.quantity === 'number' && p.quantity <= 0);
                     const imageUrl = getPrimaryProductImageUrl(p);
                     const categoryLabel = p.categoryId ? (categoryMap.get(p.categoryId) || 'Dairy') : 'Dairy';
 
                     return (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.96, y: 8 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96, y: -8 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 450,
-                          damping: 35,
-                          mass: 0.8,
-                        }}
+                      <div
                         key={p.id}
                         className={`${cardStyles.productCard} ${isOutOfStock ? cardStyles.productCardOutOfStock : ''}`}
                         onClick={() => {
@@ -3559,32 +3547,11 @@ export default function Header() {
                           {isOutOfStock ? (
                             <div className={cardStyles.outOfStockBadge}>Out of stock</div>
                           ) : null}
-                          {imageUrl ? (
-                            <div className="product-card-image-wrapper">
-                              <Image
-                                src={imageUrl}
-                                alt={p.name}
-                                width={500}
-                                height={500}
-                                style={{ width: '100%', height: 'auto', display: 'block' }}
-                              />
-                              {p.hoverNextImage && getOrderedProductImageUrls(p)[1] && (
-                                <div className="product-card-hover-image-container">
-                                  <Image
-                                    src={getOrderedProductImageUrls(p)[1]}
-                                    alt={p.name}
-                                    width={500}
-                                    height={500}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className={cardStyles.placeholderImage}>
-                              <span>🥛</span>
-                            </div>
-                          )}
+                          <ProductCardImage
+                            src={imageUrl}
+                            alt={p.name}
+                            hoverSrc={p.hoverNextImage ? getOrderedProductImageUrls(p)[1] : undefined}
+                          />
                         </div>
 
                         <div className={cardStyles.productInfo}>
@@ -3599,17 +3566,13 @@ export default function Header() {
                             </div>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
 
                   {searchResults.length > 6 && (
-                    <motion.button
-                      layout
+                    <button
                       key="show-more-mobile"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
                       type="button"
                       className={styles.searchShowMore}
                       onClick={() => {
@@ -3619,9 +3582,9 @@ export default function Header() {
                       style={{ width: '100%' }}
                     >
                       Show all {searchResults.length} results
-                    </motion.button>
+                    </button>
                   )}
-                </AnimatePresence>
+                </>
               ) : (
                 <p className={styles.searchOverlayStatus}>No products match</p>
               )

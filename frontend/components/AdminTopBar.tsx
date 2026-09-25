@@ -28,7 +28,6 @@ export default function AdminTopBar() {
     { name: 'Banners', path: '/admin/banners', description: 'Manage promotional homepage banners' },
     { name: 'Orders', path: '/admin/orders', description: 'View paid customer orders and details' },
     { name: 'Customers', path: '/admin/customers', description: 'Customer list, analytics, and wallet history' },
-    { name: 'Deliveries', path: '/admin/deliveries', description: 'Manage delivery schedule, runs, and assign riders' },
     { name: 'Feedback', path: '/admin/feedback', description: 'Customer feedback, reviews, and suggestions' },
     { name: 'Categories', path: '/admin/categories', description: 'Manage product categories' },
     { name: 'Coupons', path: '/admin/coupons', description: 'Manage active discount coupons and promo codes' },

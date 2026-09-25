@@ -831,34 +831,53 @@
   max-height: min(90vh, 640px);
   overflow: auto;
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
-  border: 1px solid #c9c9c9;
+  border: 1px solid #e2e8f0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.modalPanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalPanel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.modalPanel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 @media (min-width: 480px) {
   .modalPanel {
-    border-radius: 16px;
+    border-radius: 24px !important;
   }
 }
 
 .modalClose {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 40px;
-  height: 40px;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 100px;
   background: #f1f5f9;
   color: #64748b;
-  font-size: 2rem;
+  font-size: 1.35rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  z-index: 1;
-  padding-bottom: 3px;
+  z-index: 10;
+  transition: all 0.2s ease;
 }
 
 .modalClose:hover {
   background: #e2e8f0;
+  color: #0f172a;
 }
 
 .modalLoading {
@@ -867,8 +886,8 @@
 }
 
 .modalBody {
-  padding: 1.75rem;
-  padding-top: 1.75rem;
+  padding: 2rem;
+  padding-top: 2rem;
 }
 
 .modalTitle {

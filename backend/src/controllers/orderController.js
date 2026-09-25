@@ -15,6 +15,7 @@ const {
   assertSubscriptionPostalCodeServiceable,
 } = require('../services/productDeliverabilityService');
 const shiprocketService = require('../services/shiprocketService');
+const delhiveryService = require('../services/delhiveryService');
 
 async function incrementCouponUsageByCode(couponCode) {
   const code = (couponCode || '').toString().trim().toUpperCase();
@@ -104,7 +105,7 @@ const createOrder = async (req, res, next) => {
 
     const method = (paymentMethod || 'cod').toString().toLowerCase();
     if (method !== 'cod' && method !== 'online' && method !== 'wallet') throw new ValidationError('Invalid payment method');
-    
+
     let totalSavings = 0;
 
     // Compute item pricing server-side
@@ -219,9 +220,9 @@ const createOrder = async (req, res, next) => {
       const subscriptionProductId = normalizeInt(subscriptionItem?.productId);
       const subscriptionVariationId = normalizeInt(
         subscriptionItem?.variationId
-          ?? subscriptionItem?.variation_id
-          ?? subscriptionItem?.productVariationId
-          ?? subscriptionItem?.product_variation_id
+        ?? subscriptionItem?.variation_id
+        ?? subscriptionItem?.productVariationId
+        ?? subscriptionItem?.product_variation_id
       );
       const litresPerDay = Number(subscriptionItem?.litresPerDay);
       const durationMonths = Number(subscriptionItem?.durationMonths);
@@ -279,7 +280,7 @@ const createOrder = async (req, res, next) => {
       const perUnit = variation?.price !== null && variation?.price !== undefined
         ? parseFloat(variation.price) / variationMultiplier
         : basePerUnit;
-      
+
       const days = hasDayDuration
         ? Math.min(3650, Math.floor(durationDays))
         : Math.max(1, Math.round(durationMonths * 30));
@@ -396,6 +397,10 @@ const createOrder = async (req, res, next) => {
         }
       }
       await lockPhotobookProjectsForItems(computedItems, userId);
+
+      if (hasSubscriptionItem) {
+        await subscriptionService.createFromCheckoutOrder(order.id);
+      }
 
       if (hasSubscriptionItem) {
         await subscriptionService.createFromCheckoutOrder(order.id);
@@ -755,25 +760,26 @@ const verifyPayment = async (req, res, next) => {
       [orderId]
     );
     const orderSummary = orderSummaryRes.rows[0] || {};
-    
-    if (isNationwideDelivery && !wasAlreadyPaid) {
+
+    if (!wasAlreadyPaid) {
+      // Push order directly to Delhivery logistics
       try {
         const userDetails = await userModel.findById(userId);
         const deliveryAddress = typeof orderSummary.delivery_address === 'string' ? JSON.parse(orderSummary.delivery_address) : orderSummary.delivery_address;
-        const shiprocketCustomer = {
+        const delhiveryCustomer = {
           ...(deliveryAddress || {}),
           email: userDetails?.email || '',
         };
-        
-        // Fetch items for shiprocket
+
+        // Fetch items
         const itemsRes = await query(
           'SELECT product_id, variation_id, product_name, unit_price, quantity FROM order_items WHERE order_id = $1',
           [orderId]
         );
-        
-        const shiprocketItems = [];
+
+        const orderItemsList = [];
         for (const row of itemsRes.rows) {
-          let weight = 0.1;
+          let weight = 0.25;
           try {
             if (row.variation_id) {
               const vRes = await query('SELECT weight FROM product_variations WHERE id = $1', [row.variation_id]);
@@ -787,10 +793,10 @@ const verifyPayment = async (req, res, next) => {
               }
             }
           } catch (e) {
-            console.error('[ORDER] Failed to fetch weight for shiprocket item:', e.message);
+            console.error('[ORDER] Failed to fetch weight for item:', e.message);
           }
-          
-          shiprocketItems.push({
+
+          orderItemsList.push({
             productId: row.product_id,
             productName: row.product_name,
             unitPrice: row.unit_price,
@@ -798,23 +804,69 @@ const verifyPayment = async (req, res, next) => {
             weight
           });
         }
-        
-        const shiprocketOrderData = {
-          orderNumber: orderSummary.order_number,
-          paymentMethod: 'online',
-          total: orderSummary.total
-        };
-        
-        const shiprocketRes = await shiprocketService.createShiprocketOrder(shiprocketOrderData, shiprocketCustomer, shiprocketItems);
-        if (shiprocketRes && shiprocketRes.order_id) {
-          await query('UPDATE orders SET shiprocket_order_id = $1 WHERE id = $2', [
-            String(shiprocketRes.order_id),
-            orderId
-          ]);
-          console.log(`[ORDER] Saved Shiprocket Order ID ${shiprocketRes.order_id} for Online order ${orderSummary.order_number}`);
-        }
       } catch (e) {
-        console.error('[ORDER] Shiprocket integration failed for Online order:', e?.message || e);
+        console.error('[ORDER] Items preparation notice:', e?.message || e);
+      }
+
+      if (isNationwideDelivery) {
+        try {
+          const userDetails = await userModel.findById(userId);
+          const deliveryAddress = typeof orderSummary.delivery_address === 'string' ? JSON.parse(orderSummary.delivery_address) : orderSummary.delivery_address;
+          const shiprocketCustomer = {
+            ...(deliveryAddress || {}),
+            email: userDetails?.email || '',
+          };
+
+          const itemsRes = await query(
+            'SELECT product_id, variation_id, product_name, unit_price, quantity FROM order_items WHERE order_id = $1',
+            [orderId]
+          );
+
+          const shiprocketItems = [];
+          for (const row of itemsRes.rows) {
+            let weight = 0.1;
+            try {
+              if (row.variation_id) {
+                const vRes = await query('SELECT weight FROM product_variations WHERE id = $1', [row.variation_id]);
+                if (vRes.rows[0]?.weight != null) {
+                  weight = parseFloat(vRes.rows[0].weight);
+                }
+              } else {
+                const pRes = await query('SELECT weight FROM products WHERE id = $1', [row.product_id]);
+                if (pRes.rows[0]?.weight != null) {
+                  weight = parseFloat(pRes.rows[0].weight);
+                }
+              }
+            } catch (e) {
+              console.error('[ORDER] Failed to fetch weight for shiprocket item:', e.message);
+            }
+
+            shiprocketItems.push({
+              productId: row.product_id,
+              productName: row.product_name,
+              unitPrice: row.unit_price,
+              quantity: row.quantity,
+              weight
+            });
+          }
+
+          const shiprocketOrderData = {
+            orderNumber: orderSummary.order_number,
+            paymentMethod: 'online',
+            total: orderSummary.total
+          };
+
+          const shiprocketRes = await shiprocketService.createShiprocketOrder(shiprocketOrderData, shiprocketCustomer, shiprocketItems);
+          if (shiprocketRes && shiprocketRes.order_id) {
+            await query('UPDATE orders SET shiprocket_order_id = $1 WHERE id = $2', [
+              String(shiprocketRes.order_id),
+              orderId
+            ]);
+            console.log(`[ORDER] Saved Shiprocket Order ID ${shiprocketRes.order_id} for Online order ${orderSummary.order_number}`);
+          }
+        } catch (e) {
+          console.error('[ORDER] Shiprocket integration failed for Online order:', e?.message || e);
+        }
       }
     }
 
@@ -878,6 +930,54 @@ const getDeliveredForReview = async (req, res, next) => {
   }
 };
 
+async function syncDelhiveryStatusForOrder(order) {
+  if (!order || !order.delhiveryWaybill) return order;
+  if (['delivered', 'cancelled', 'refunded'].includes(order.status)) return order;
+
+  try {
+    const trackRes = await delhiveryService.trackDelhiveryShipment(order.delhiveryWaybill);
+    if (!trackRes || !trackRes.success) return order;
+
+    const rawStatus = String(trackRes.status || '').toUpperCase();
+    const statusType = String(trackRes.statusType || '').toUpperCase();
+    let targetStatus = null;
+
+    if (rawStatus.includes('MANIFEST') || rawStatus.includes('PICKED UP') || rawStatus.includes('PICKUP DONE') || rawStatus.includes('DISPATCHED') || (statusType === 'UD' && rawStatus.includes('ORIGIN'))) {
+      targetStatus = 'shipped';
+    } else if (rawStatus === 'IN TRANSIT' || rawStatus.includes('LINEHAUL') || rawStatus.includes('CONNECTED') || rawStatus.includes('IN-TRANSIT') || rawStatus.includes('PENDING CONNECTION')) {
+      targetStatus = 'in_transit';
+    } else if (rawStatus.includes('DESTINATION') || rawStatus.includes('AT DESTINATION') || rawStatus.includes('REACHED DESTINATION') || rawStatus.includes('BAG RECEIVED')) {
+      targetStatus = 'reached_destination_hub';
+    } else if (rawStatus === 'OUT FOR DELIVERY' || rawStatus.includes('DISPATCHED FOR DELIVERY') || rawStatus.includes('OUT FOR') || statusType === 'OFD') {
+      targetStatus = 'out_for_delivery';
+    } else if (rawStatus === 'DELIVERED' || rawStatus.includes('DELIVERED') || rawStatus === 'DL' || statusType === 'DL') {
+      targetStatus = 'delivered';
+    } else if (rawStatus.includes('CANCEL') || rawStatus.includes('RTO') || rawStatus.includes('RETURN')) {
+      targetStatus = 'cancelled';
+    }
+
+    if (targetStatus && targetStatus !== order.status) {
+      const updated = await orderModel.updateTimelineStatus(order.id, targetStatus, trackRes.statusDateTime);
+      if (updated) {
+        return {
+          ...order,
+          status: updated.status,
+          shippedAt: updated.shippedAt || order.shippedAt,
+          inTransitAt: updated.inTransitAt || order.inTransitAt,
+          reachedDestinationHubAt: updated.reachedDestinationHubAt || order.reachedDestinationHubAt,
+          outForDeliveryAt: updated.outForDeliveryAt || order.outForDeliveryAt,
+          deliveredAt: updated.deliveredAt || order.deliveredAt,
+          fulfilledAt: updated.fulfilledAt || order.fulfilledAt,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn(`[Delhivery Sync] Error syncing waybill ${order.delhiveryWaybill}:`, err.message);
+  }
+
+  return order;
+}
+
 /**
  * Get a single order by ID (customer's own order only)
  * GET /api/orders/:id
@@ -888,9 +988,12 @@ const getOrderById = async (req, res, next) => {
     const { id: orderId } = req.params;
     if (!userId) throw new ValidationError('User not found');
     if (!orderId) throw new ValidationError('Order ID is required');
-    const order = await orderModel.getOrderByIdForUser(userId, orderId);
+    let order = await orderModel.getOrderByIdForUser(userId, orderId);
     if (!order) {
       return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+    if (order.delhiveryWaybill && !['delivered', 'cancelled', 'refunded'].includes(order.status)) {
+      order = await syncDelhiveryStatusForOrder(order);
     }
     res.json({ success: true, data: order });
   } catch (error) {
@@ -1009,7 +1112,7 @@ const getOrderInvoice = async (req, res, next) => {
     }
 
     if (!shiprocketOrderId) {
-      return res.status(400).json({ success: false, error: 'Scribble has not created or processed for this order. No worries, Try again soon' });
+      return res.status(400).json({ success: false, error: 'House of Dahlia has not created or processed for this order. No worries, Try again soon' });
     }
 
     const invoiceData = await shiprocketService.getOrderInvoice(shiprocketOrderId);

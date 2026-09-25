@@ -985,11 +985,11 @@
 
 /* Tracking Card */
 .trackingCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  background: #f2f1f6;
+  border: 0px solid #f2f1f6;
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1004,7 +1004,7 @@
 .trackingIcon {
   width: 24px;
   height: 24px;
-  color: #3b82f6;
+  color: #677487;
   flex-shrink: 0;
   margin-top: 0.15rem;
 }
@@ -1044,10 +1044,10 @@
 .trackingValue {
   color: #0f172a;
   font-weight: 700;
-  background: #f1f5f9;
+  background: #ffffff00;
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  border: 1px dashed #cbd5e1;
+  border-radius: 40px;
+  border: 1px dashed #767676;
   font-family: monospace;
 }
 
@@ -1056,21 +1056,19 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #2563eb;
+  background: #2c4691;
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 600;
   padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+  border-radius: 80px;
   text-decoration: none;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
 .trackOrderLinkButton:hover {
   background: #1d4ed8;
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
-  transform: translateY(-1px);
+
 }
 
 .trackOrderLinkButton:active {
@@ -1092,7 +1090,7 @@
   align-items: center;
   justify-content: center;
   gap: .5rem;
-  background: #f2f1f6;
+  background: #f1f1f1;
   color: #292929;
   font-size: .9rem;
   font-weight: 600;
@@ -1123,7 +1121,7 @@
 
 
 .trackingPlaceholder {
-  background: #F2F1F6;
+  background: #f1f1f1;
   border: 1px dashed #F2F1F6;
   border-radius: 24px;
   padding: 1.5rem 1.25rem;

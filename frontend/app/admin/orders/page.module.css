@@ -573,54 +573,120 @@
   inset: 0;
   /* Above AdminMobileNav (1002), AdminTopBar / sidebar overlays (~1001) */
   z-index: 1100;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(90, 90, 90, 0.562);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.5rem;
   /* Stop scroll chaining / pull-to-refresh from starting on the dimmed area (Android Chrome) */
   overscroll-behavior: none;
   touch-action: none;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .modalPanel {
-  background: #fff;
-  border-radius: 12px;
-  max-width: 800px;
+  background: #ffffff;
+  border-radius: 24px;
+  max-width: 600px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 88vh;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  /* Keep fling inside the sheet so it does not trigger page pull-to-refresh */
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
   overscroll-behavior-y: contain;
-  touch-action: pan-y pinch-zoom;
-  -webkit-overflow-scrolling: touch;
+  animation: slideUpModal 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpModal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modalClose {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: transparent;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: #f1f1f1;
   border: none;
-  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
   cursor: pointer;
-  color: #666;
-  padding: 0.5rem;
+  color: #3c3c3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
-  border-radius: 8px;
-  z-index: 2;
+  z-index: 20;
+  transition: all 0.2s ease;
+}
+
+.modalClose svg {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .modalClose:hover {
-  background: #f3f4f6;
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: scale(1.00);
 }
 
 .modalBody {
-  padding: 2rem;
-  padding-top: 2.75rem;
+  padding: 2.25rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.modalBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 16px 0;
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .modalTitle {
@@ -652,13 +718,15 @@
   font-size: 1rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: #374151;
+  color: #505050;
 }
 
 .infoBox {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
+  background: #f7f7f7b8;
+  padding: 1rem 1.35rem;
+  border-radius: 24px;
+  box-shadow: 0 1px 2px 0px #bdbdbd;
+  border: 1px solid #d1d1d1;
 }
 
 .infoBox p {
@@ -672,21 +740,30 @@
 
 .orderItem {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
+  gap: 1.15rem;
+  padding: 1.15rem;
+  box-shadow: 0 1px 2px 0px #bdbdbd;
+  border: 1px solid #d1d1d1;
+  border-radius: 24px;
+  margin-bottom: 0.75rem;
   align-items: flex-start;
+  transition: all 0.2s ease;
+  background: #f7f7f7b8;
+}
+
+.orderItem:hover {
+  background: #f7f7f7b8;
+  border-color: #d1d1d1;
 }
 
 .orderItemThumb {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  background: #e5e7eb;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: #e2e8f0;
   overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid #e2e8f0;
 }
 
 .orderItemThumb img {
@@ -701,24 +778,50 @@
 }
 
 .orderItemName {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
   margin: 0 0 0.25rem 0;
 }
 
+.itemVariationList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0.35rem 0 0.5rem 0;
+}
+
+.itemVariant {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #dbe7f1;
+  border: 1px solid #dbe7f1;
+  padding: 0.2rem 0.55rem;
+  border-radius: 60px;
+  line-height: 1.35;
+}
+
 .orderItemMeta {
-  font-size: 0.875rem;
-  color: #666;
+  font-size: 0.85rem;
+  color: #64748b;
   margin: 0 0 0.25rem 0;
 }
 
 .orderItemQty {
-  font-size: 0.875rem;
-  color: #666;
+  font-size: 0.85rem;
+  color: #64748b;
   margin: 0;
+  font-weight: 500;
 }
 
 .orderItemTotal {
   font-weight: 700;
+  font-size: 1rem;
+  color: #0f172a;
   flex-shrink: 0;
 }
 
@@ -822,25 +925,95 @@
   background: #059669;
 }
 
+.modalStickyFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  padding: 1.1rem 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.modalStickyFooterInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.modalStickyFooterTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modalStickyFooterSubtitle {
+  font-size: 0.78rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modalStickyActionBtn {
+  padding: 0.8rem 1.1rem;
+  background: #00603d;
+  color: #ffffff;
+  border: none;
+  border-radius: 36px;
+  font-weight: 500;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  border: 1px solid #00603d;
+  box-shadow: inset 0 0 5px 0 #e4e4e4;
+
+}
+
+.modalStickyActionBtn:hover {
+  background: #003a25;
+
+  transform: translateY(0px);
+}
+
+.modalStickyActionBtn:active {
+  transform: translateY(0);
+}
+
 .confirmBackdrop {
   position: fixed;
   inset: 0;
   /* Above order detail modal (1100) */
   z-index: 1200;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.25rem;
   overscroll-behavior: none;
   touch-action: none;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .confirmPanel {
-  background: #fff;
-  border-radius: 12px;
+  background: #ffffff;
+  border-radius: 24px;
   padding: 2rem;
-  max-width: 400px;
+  max-width: 440px;
   width: 100%;
   max-height: min(90vh, 520px);
   min-height: 0;
@@ -849,18 +1022,31 @@
   overscroll-behavior-y: contain;
   touch-action: pan-y pinch-zoom;
   -webkit-overflow-scrolling: touch;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  animation: slideUpModal 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirmPanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.confirmPanel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
 
 .confirmTitle {
   font-size: 1.25rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  color: #0f172a;
 }
 
 .confirmText {
-  color: #666;
-  margin-bottom: 2rem;
-  line-height: 1.45;
+  color: #475569;
+  margin-bottom: 1.75rem;
+  line-height: 1.5;
+  font-size: 0.92rem;
 }
 
 .confirmActions {
@@ -1212,9 +1398,26 @@
     display: grid;
   }
 
+  .modalPanel {
+    border-radius: 24px;
+    max-height: 98vh;
+  }
+
   .modalBody {
-    padding: 1.25rem;
+    padding: 1.5rem 1.25rem;
     padding-top: 1.5rem;
+  }
+
+  .modalStickyFooter {
+    padding: 1rem 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .modalStickyActionBtn {
+    width: 100%;
+    justify-content: center;
   }
 
   .modalTitle {
@@ -1236,6 +1439,7 @@
   }
 
   .confirmPanel {
+    border-radius: 24px;
     max-width: 400px;
     padding: 1.5rem;
   }

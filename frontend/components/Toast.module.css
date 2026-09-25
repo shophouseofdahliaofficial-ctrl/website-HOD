@@ -19,10 +19,11 @@
   align-items: center;
   gap: 12px;
   padding: 14px 20px;
-  background: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #ffffffb6;
+  border: 1px solid #ffffff;
+  border-radius: 120px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px) saturate(5.6);
   min-width: 180px;
   max-width: 500px;
   pointer-events: auto;
@@ -36,6 +37,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -75,6 +77,7 @@
   flex: 1;
   font-size: 0.95rem;
   font-weight: 500;
+  letter-spacing: 0;
   color: #333;
   line-height: 1.4;
 }

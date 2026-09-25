@@ -1447,7 +1447,25 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
               </svg>
               <h1 className={styles.emptyCartText}>Your cart is empty</h1>
               <p className={styles.emptyCartTagline}>This cart deserves better.</p>
-              <button type="button" onClick={onClose} className={styles.continueShoppingButton} style={{ border: 'none', cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    if (typeof onClose === 'function') onClose();
+                  } catch (e) {
+                    console.error(e);
+                  }
+                  router.push('/products');
+                }}
+                className={styles.continueShoppingButton}
+                style={{
+                  border: 'none',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  zIndex: 10,
+                  pointerEvents: 'auto',
+                }}
+              >
                 Continue shopping
               </button>
             </div>
@@ -1477,7 +1495,7 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
                           <div key={itemKey} className={`${styles.cartItem} ${styles.drawerCartItem}`}>
                             <div className={styles.itemImage}>
                               {productImage && productImage !== '/placeholder-product.png' ? (
-                                <Image src={productImage} alt={p?.name || 'Product'} width={80} height={80} style={{ objectFit: 'cover', borderRadius: '8px' }} />
+                                <Image src={productImage} alt={p?.name || 'Product'} width={80} height={80} style={{ width: '100%', height: 'auto', maxHeight: '120px', objectFit: 'contain', borderRadius: '8px' }} />
                               ) : (
                                 <div className={styles.itemImagePlaceholder}>🎁</div>
                               )}

@@ -95,6 +95,9 @@ type OrderDetail = {
   shiprocketAwb?: string | null;
   shiprocketCourier?: string | null;
   shiprocketOrderId?: string | null;
+  delhiveryWaybill?: string | null;
+  delhiveryTrackingUrl?: string | null;
+  delhiveryStatus?: string | null;
 };
 
 function isSubscriptionOrderItem(item: OrderItem): boolean {
@@ -152,7 +155,7 @@ function getTimelineSteps(order: OrderDetail) {
     completed: true
   });
 
-  if (order.isNationwideDelivery) {
+  if (order.isNationwideDelivery || order.delhiveryWaybill || order.shiprocketAwb) {
     const status = order.status;
     const isDelivered = status === 'delivered';
     const isOut = isDelivered || status === 'out_for_delivery';
@@ -570,7 +573,7 @@ export default function OrderDetailsPage() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>TRACK ORDER</h2>
 
-            {order.shiprocketAwb ? (
+            {order.delhiveryWaybill || order.shiprocketAwb ? (
               <div className={styles.trackingCard}>
                 <div className={styles.trackingHeader}>
                   <svg className={styles.trackingIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -580,21 +583,21 @@ export default function OrderDetailsPage() {
                   </svg>
                   <div className={styles.trackingSummary}>
                     <p className={styles.trackingText}>
-                      Your courier partner is <strong className={styles.courierNameHighlight}>{order.shiprocketCourier || 'Shiprocket'}</strong> which will safely deliver the order.
+                      Your courier partner is <strong className={styles.courierNameHighlight}>{order.delhiveryWaybill ? 'Delhivery Express' : (order.shiprocketCourier || 'Shiprocket')}</strong> which will safely deliver the order.
                     </p>
                     <div className={styles.trackingMeta}>
                       <span className={styles.trackingLabel}>AWB Number / Tracking ID: </span>
-                      <span className={styles.trackingValue}>{order.shiprocketAwb}</span>
+                      <span className={styles.trackingValue}>{order.delhiveryWaybill || order.shiprocketAwb}</span>
                     </div>
                   </div>
                 </div>
                 <a
-                  href={`https://shiprocket.co/tracking/${order.shiprocketAwb}`}
+                  href={order.delhiveryWaybill ? (order.delhiveryTrackingUrl || `https://www.delhivery.com/track/package/${order.delhiveryWaybill}`) : `https://shiprocket.co/tracking/${order.shiprocketAwb}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.trackOrderLinkButton}
                 >
-                  Track on Shiprocket
+                  {order.delhiveryWaybill ? 'Track on Delhivery' : 'Track on Shiprocket'}
                   <svg className={styles.linkArrowIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
@@ -608,7 +611,7 @@ export default function OrderDetailsPage() {
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
                 <p className={styles.trackingPlaceholderText}>
-                  AWB Number (or Tracking ID) has not been generated yet, please try again later
+                  AWB Number (or Tracking ID) will be generated once package preparation is confirmed.
                 </p>
               </div>
             )}

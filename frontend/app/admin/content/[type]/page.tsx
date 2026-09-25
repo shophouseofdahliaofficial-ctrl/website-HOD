@@ -17,6 +17,8 @@ import {
 const CONTENT_TYPE_LABELS: Record<string, string> = {
   terms: 'Terms & Conditions',
   privacy: 'Privacy Policy',
+  refunds: 'Exchanges & Refunds',
+  exchanges_refunds: 'Exchanges & Refunds',
   about: 'About Us',
   contact: 'Contact Details',
   reviews: 'Reviews Settings',

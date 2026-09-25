@@ -80,7 +80,7 @@ export function animateToCart(
     flyingImage.style.display = 'flex';
     flyingImage.style.alignItems = 'center';
     flyingImage.style.justifyContent = 'center';
-    flyingImage.innerHTML = '<img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" style="max-width:70%;max-height:70%;object-fit:contain;" />';
+    flyingImage.innerHTML = '<img src="/finallogo (1).png" alt="House Of Dahlia" style="max-width:70%;max-height:70%;object-fit:contain;" />';
   };
   flyingImage.appendChild(img);
 

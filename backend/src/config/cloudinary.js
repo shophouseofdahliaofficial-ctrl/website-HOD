@@ -14,6 +14,25 @@ cloudinary.config({
 });
 
 /**
+ * Formats a Cloudinary URL to ensure it transforms to WebP and ends with .webp
+ * @param {string} secureUrl - Raw Cloudinary secure_url
+ * @returns {string} WebP-optimized URL
+ */
+const formatToWebpUrl = (secureUrl) => {
+  if (!secureUrl || typeof secureUrl !== 'string') return secureUrl;
+  if (!secureUrl.includes('res.cloudinary.com')) return secureUrl;
+
+  let url = secureUrl;
+  // Inject /f_webp,q_auto/ if not already present
+  if (url.includes('/upload/') && !url.includes('/f_webp') && !url.includes('/f_auto')) {
+    url = url.replace('/upload/', '/upload/f_webp,q_auto/');
+  }
+  // Convert any image extension to .webp
+  url = url.replace(/\.(png|jpg|jpeg|jfif|pjpeg|pjp|avif|bmp|tiff|tif)(\?.*)?$/i, '.webp$2');
+  return url;
+};
+
+/**
  * Upload image to Cloudinary
  * @param {Buffer|string} file - File buffer or file path
  * @param {Object} options - Upload options
@@ -53,10 +72,17 @@ const uploadImage = async (file, options = {}) => {
       });
       
       try {
+        const isImage = (options.resource_type || 'image') === 'image';
+        const defaultTransformations = isImage
+          ? [{ quality: options.quality || 'auto:good', fetch_format: options.format || 'webp' }]
+          : undefined;
+
         // Remove mimeType from options as it's not a Cloudinary option
         const { mimeType: _, ...uploadOptions } = {
           folder: options.folder || 'houseofdahlia/products',
           resource_type: options.resource_type || 'image',
+          format: options.format || (isImage ? 'webp' : undefined),
+          transformation: options.transformation || defaultTransformations,
           ...options,
         };
         delete uploadOptions.mimeType; // Ensure it's removed
@@ -65,7 +91,7 @@ const uploadImage = async (file, options = {}) => {
         
         // Always use upload_stream for better reliability and timeout handling
         // This works better than data URI for all file sizes
-        console.log('[CLOUDINARY] Using upload_stream for reliable upload...');
+        console.log('[CLOUDINARY] Using upload_stream with WebP conversion & auto-compression...');
         const timeoutDuration = useStream ? 120000 : 90000; // 120s for large, 90s for small
         
         result = await new Promise((resolve, reject) => {
@@ -114,17 +140,19 @@ const uploadImage = async (file, options = {}) => {
           uploadStream.end(file);
         });
         
-        console.log('[CLOUDINARY] ✅ Upload successful:', {
-          url: result.secure_url,
+        const finalUrl = formatToWebpUrl(result.secure_url);
+        console.log('[CLOUDINARY] ✅ Upload successful (WebP & Compressed):', {
+          url: finalUrl,
           publicId: result.public_id,
           format: result.format,
           width: result.width,
           height: result.height,
+          bytes: result.bytes,
         });
         
         clearMediaCache();
         return {
-          url: result.secure_url,
+          url: finalUrl,
           publicId: result.public_id,
         };
       } catch (uploadError) {
@@ -158,19 +186,29 @@ const uploadImage = async (file, options = {}) => {
       }
     } else {
       // If it's a file path or data URI
-      console.log('[CLOUDINARY] Uploading file path/data URI...');
+      const isImage = (options.resource_type || 'image') === 'image';
+      const defaultTransformations = isImage
+        ? [{ quality: options.quality || 'auto:good', fetch_format: options.format || 'webp' }]
+        : undefined;
+
+      console.log('[CLOUDINARY] Uploading file path/data URI with WebP conversion & auto-compression...');
       const result = await cloudinary.uploader.upload(file, {
         folder: options.folder || 'houseofdahlia/products',
         resource_type: options.resource_type || 'image',
+        format: options.format || (isImage ? 'webp' : undefined),
+        transformation: options.transformation || defaultTransformations,
         ...options,
       });
-      console.log('[CLOUDINARY] ✅ Upload successful:', {
-        url: result.secure_url,
+      const finalUrl = formatToWebpUrl(result.secure_url);
+      console.log('[CLOUDINARY] ✅ Upload successful (WebP & Compressed):', {
+        url: finalUrl,
         publicId: result.public_id,
+        format: result.format,
+        bytes: result.bytes,
       });
       clearMediaCache();
       return {
-        url: result.secure_url,
+        url: finalUrl,
         publicId: result.public_id,
       };
     }
@@ -274,13 +312,13 @@ const listMediaResources = async (options = {}) => {
       resultData = {
         resources: (result.resources || []).map((r) => ({
           publicId: r.public_id,
-          url: r.secure_url || r.url,
-          format: r.format,
+          url: formatToWebpUrl(r.secure_url || r.url),
+          format: 'webp',
           width: r.width,
           height: r.height,
           bytes: r.bytes,
           folder: r.folder || (r.public_id.includes('/') ? r.public_id.substring(0, r.public_id.lastIndexOf('/')) : ''),
-          filename: r.filename || r.public_id.split('/').pop(),
+          filename: (r.filename || r.public_id.split('/').pop()).replace(/\.[^/.]+$/, '') + '.webp',
           createdAt: r.created_at,
         })),
         nextCursor: result.next_cursor || null,
@@ -301,13 +339,13 @@ const listMediaResources = async (options = {}) => {
       resultData = {
         resources: (result.resources || []).map((r) => ({
           publicId: r.public_id,
-          url: r.secure_url || r.url,
-          format: r.format,
+          url: formatToWebpUrl(r.secure_url || r.url),
+          format: 'webp',
           width: r.width,
           height: r.height,
           bytes: r.bytes,
           folder: r.folder || (r.public_id.includes('/') ? r.public_id.substring(0, r.public_id.lastIndexOf('/')) : ''),
-          filename: r.public_id.split('/').pop(),
+          filename: (r.public_id.split('/').pop()).replace(/\.[^/.]+$/, '') + '.webp',
           createdAt: r.created_at,
         })),
         nextCursor: result.next_cursor || null,

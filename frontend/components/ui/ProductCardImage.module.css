@@ -1,0 +1,76 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.placeholderWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.placeholderLogo {
+  max-width: 45%;
+  max-height: 45%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.04));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.mainImage {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.mainImageLoaded {
+  opacity: 1;
+}
+
+.hoverImageContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
+}
+
+.container:hover .hoverImageContainer {
+  opacity: 1;
+}

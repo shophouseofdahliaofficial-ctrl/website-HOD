@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
+import { triggerTopRedGlow } from '@/lib/utils/topRedGlow';
+
 export interface Toast {
   id: string;
   message: string;
@@ -40,6 +42,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     (message: string, type: 'success' | 'error' | 'info' = 'success', duration: number = 3000) => {
       const id = Math.random().toString(36).substring(2, 9);
       const newToast: Toast = { id, message, type, duration };
+
+      if (type === 'error') {
+        triggerTopRedGlow();
+      }
 
       setToasts((prev) => [...prev, newToast]);
 

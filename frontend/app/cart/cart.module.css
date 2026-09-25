@@ -5,10 +5,12 @@
     filter: blur(14px);
     transform: scale(0.985) translateY(4px);
   }
+
   50% {
     opacity: 0.85;
     filter: blur(4px);
   }
+
   100% {
     opacity: 1;
     filter: blur(0px);
@@ -72,14 +74,24 @@
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.15s ease;
   letter-spacing: -0.2px;
-  box-shadow: inset 0px 0px 3px 0px #f9f9f9 !IMPORTANT;
+  box-shadow: inset 0px 0px 3px 0px #f9f9f9 !important;
   border: 1px solid #8d464b !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+  user-select: none;
 }
 
 .continueShoppingButton:hover {
   background: #691212;
+  transform: translateY(0px);
+}
+
+.continueShoppingButton:active {
+  transform: translateY(0);
 }
 
 /* Progress Bar */
@@ -209,7 +221,7 @@
   display: grid !important;
   grid-template-columns: 80px 1fr !important;
   gap: 1rem !important;
-  padding: 1.25rem 1rem !important;
+  padding: 1.0rem 1rem !important;
   border: 0px solid #e5e5e5 !important;
   border-radius: 24px !important;
   background: #fff !important;
@@ -218,7 +230,8 @@
 
 .drawerCartItem .itemImage {
   width: 80px !important;
-  height: 80px !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
   border-radius: 8px !important;
   overflow: hidden !important;
   background: #f5f5f5 !important;
@@ -226,6 +239,15 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+}
+
+.drawerCartItem .itemImage img {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 120px !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+  display: block !important;
 }
 
 .drawerCartItem .itemDetails {
@@ -337,7 +359,8 @@
 }
 
 .drawerCartItem .removeButton:hover {
-  color: #000 !important;
+  color: #a10000 !important;
+  background: #ffececbd !important;
 }
 
 .drawerRootScroll {

@@ -41,7 +41,6 @@ const nextConfig = {
       { source: '/checkout', headers: noIndexHeaders },
       { source: '/coming-soon', headers: noIndexHeaders },
       { source: '/order-success', headers: noIndexHeaders },
-      { source: '/reviews', headers: noIndexHeaders },
       { source: '/search', headers: noIndexHeaders },
       { source: '/subscribe', headers: noIndexHeaders },
     ];

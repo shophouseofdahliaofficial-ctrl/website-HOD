@@ -378,7 +378,105 @@ const handleShiprocketWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * Handle Delhivery tracking webhook
+ * POST /api/webhooks/delhivery
+ */
+const handleDelhiveryWebhook = async (req, res, next) => {
+  try {
+    const payload = req.body || {};
+    console.log('[Delhivery Webhook] Received payload:', JSON.stringify(payload));
+
+    const shipment = payload.Shipment || payload.shipment || payload;
+    const waybill = shipment.AWB || shipment.awb || shipment.Waybill || shipment.waybill;
+    const orderNumber = shipment.ReferenceNo || shipment.reference_no || shipment.order_number || shipment.order;
+    const statusObj = shipment.Status || {};
+    const rawStatus = String(statusObj.Status || shipment.status || statusObj.status || '').toUpperCase().trim();
+    const statusType = String(statusObj.StatusType || shipment.status_type || '').toUpperCase().trim();
+    const statusDateTime = statusObj.StatusDateTime || shipment.status_date_time || new Date();
+
+    if (!waybill && !orderNumber) {
+      return res.status(200).json({ success: true, message: 'No waybill or order number found in payload' });
+    }
+
+    let newStatus = null;
+    let timestampCol = null;
+
+    if (rawStatus.includes('MANIFEST') || rawStatus.includes('PICKED UP') || rawStatus.includes('PICKUP DONE') || rawStatus.includes('DISPATCHED') || (statusType === 'UD' && rawStatus.includes('ORIGIN'))) {
+      newStatus = 'shipped';
+      timestampCol = 'shipped_at';
+    } else if (rawStatus === 'IN TRANSIT' || rawStatus.includes('LINEHAUL') || rawStatus.includes('CONNECTED') || rawStatus.includes('IN-TRANSIT') || rawStatus.includes('PENDING CONNECTION')) {
+      newStatus = 'in_transit';
+      timestampCol = 'in_transit_at';
+    } else if (rawStatus.includes('DESTINATION') || rawStatus.includes('AT DESTINATION') || rawStatus.includes('REACHED DESTINATION') || rawStatus.includes('BAG RECEIVED')) {
+      newStatus = 'reached_destination_hub';
+      timestampCol = 'reached_destination_hub_at';
+    } else if (rawStatus === 'OUT FOR DELIVERY' || rawStatus.includes('DISPATCHED FOR DELIVERY') || rawStatus.includes('OUT FOR') || statusType === 'OFD') {
+      newStatus = 'out_for_delivery';
+      timestampCol = 'out_for_delivery_at';
+    } else if (rawStatus === 'DELIVERED' || rawStatus.includes('DELIVERED') || rawStatus === 'DL' || statusType === 'DL') {
+      newStatus = 'delivered';
+      timestampCol = 'delivered_at';
+    } else if (rawStatus.includes('CANCEL') || rawStatus.includes('RTO') || rawStatus.includes('RETURN')) {
+      newStatus = 'cancelled';
+    }
+
+    const { query } = require('../config/database');
+    let updateQuery = `UPDATE orders SET updated_at = NOW()`;
+    const values = [];
+    let valIdx = 1;
+
+    if (newStatus) {
+      updateQuery += `, status = $${valIdx}`;
+      values.push(newStatus);
+      valIdx++;
+
+      if (timestampCol) {
+        updateQuery += `, ${timestampCol} = COALESCE(${timestampCol}, $${valIdx})`;
+        values.push(new Date(statusDateTime));
+        valIdx++;
+      }
+      if (newStatus === 'delivered') {
+        updateQuery += `, fulfilled_at = COALESCE(fulfilled_at, NOW())`;
+      }
+    }
+
+    if (waybill) {
+      updateQuery += `, delhivery_waybill = COALESCE(delhivery_waybill, $${valIdx})`;
+      values.push(String(waybill));
+      valIdx++;
+      updateQuery += `, delhivery_status = $${valIdx}`;
+      values.push(rawStatus || newStatus || 'Updated');
+      valIdx++;
+    }
+
+    if (waybill && orderNumber) {
+      updateQuery += ` WHERE (delhivery_waybill = $${valIdx} OR order_number = $${valIdx + 1})`;
+      values.push(String(waybill), String(orderNumber));
+    } else if (waybill) {
+      updateQuery += ` WHERE delhivery_waybill = $${valIdx}`;
+      values.push(String(waybill));
+    } else {
+      updateQuery += ` WHERE order_number = $${valIdx}`;
+      values.push(String(orderNumber));
+    }
+
+    if (newStatus && newStatus !== 'cancelled') {
+      updateQuery += ` AND status != 'delivered' AND status != 'cancelled' AND status != 'refunded'`;
+    }
+
+    await query(updateQuery, values);
+    console.log(`[Delhivery Webhook] Processed update (Waybill: ${waybill || 'N/A'}, Order: ${orderNumber || 'N/A'}, Status: ${newStatus || rawStatus})`);
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[Delhivery Webhook] Error:', error);
+    return res.status(200).json({ success: false, error: 'Webhook processing failed' });
+  }
+};
+
 module.exports = {
   handleRazorpayWebhook,
   handleShiprocketWebhook,
+  handleDelhiveryWebhook,
 };

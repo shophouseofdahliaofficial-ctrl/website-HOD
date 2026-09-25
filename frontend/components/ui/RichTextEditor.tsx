@@ -142,6 +142,7 @@ export default function RichTextEditor({
         onPaste={onPaste}
         onBlur={syncEditorHtml}
         data-placeholder={placeholder}
+        data-lenis-prevent="true"
       />
     </div>
   );

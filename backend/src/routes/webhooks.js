@@ -26,5 +26,12 @@ router.post(
   webhookController.handleShiprocketWebhook
 );
 
+// Delhivery webhook for automated tracking updates
+router.post(
+  '/delhivery',
+  express.json(),
+  webhookController.handleDelhiveryWebhook
+);
+
 module.exports = router;
 

@@ -18,6 +18,7 @@ import { triggerSparkleBurst } from '@/lib/utils/sparkleBurst';
 import { animateToCart } from '@/lib/utils/cartAnimation';
 import { cartIconRefStore } from '@/lib/utils/cartIconRef';
 import QuickAddModal from '@/components/QuickAddModal';
+import ProductCardImage from '@/components/ui/ProductCardImage';
 import styles from './products.module.css';
 import cardStyles from '@/components/ProductsSection.module.css';
 
@@ -193,32 +194,11 @@ export default function ProductsClient({
                 {isOutOfStock ? (
                   <div className={cardStyles.outOfStockBadge}>Out of stock</div>
                 ) : null}
-                {productImage ? (
-                  <div className="product-card-image-wrapper">
-                    <Image
-                      src={productImage}
-                      alt={product.name}
-                      width={500}
-                      height={500}
-                      style={{ width: '100%', height: 'auto', display: 'block' }}
-                    />
-                    {product.hoverNextImage && getOrderedProductImageUrls(product)[1] && (
-                      <div className="product-card-hover-image-container">
-                        <Image
-                          src={getOrderedProductImageUrls(product)[1]}
-                          alt={product.name}
-                          width={500}
-                          height={500}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className={cardStyles.placeholderImage}>
-                    <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={cardStyles.placeholderLogo} />
-                  </div>
-                )}
+                <ProductCardImage
+                  src={productImage}
+                  alt={product.name}
+                  hoverSrc={product.hoverNextImage ? getOrderedProductImageUrls(product)[1] : undefined}
+                />
                 {/* Add to Favorite Button */}
                 <button
                   className={`${cardStyles.favoriteButton} ${favorites[product.id] ? cardStyles.favoriteButtonActive : ''}`}

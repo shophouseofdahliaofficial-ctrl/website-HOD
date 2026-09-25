@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
 import productStyles from '@/components/ProductsSection.module.css';
+import ProductCardImage from '@/components/ui/ProductCardImage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useCategoryMap } from '@/hooks/useCategoryMap';
@@ -735,32 +736,11 @@ export default function TrialPackPageClient({ stepsOnly = false }: TrialPackPage
                           <div className={productStyles.assuredBadge}>
                             <span>Trial ready</span>
                           </div>
-                          {productImage ? (
-                            <div className={`${styles.productImageWrapper} product-card-image-wrapper`}>
-                              <Image
-                                src={productImage}
-                                alt={product.name}
-                                fill
-                                className={styles.productImageTag}
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              />
-                              {product.hoverNextImage && getOrderedProductImageUrls(product)[1] && (
-                                <div className="product-card-hover-image-container">
-                                  <Image
-                                    src={getOrderedProductImageUrls(product)[1]}
-                                    alt={product.name}
-                                    fill
-                                    style={{ objectFit: 'cover' }}
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className={productStyles.placeholderImage}>
-                              <img src="/house-of-dahlia-logo.png" alt="House Of Dahlia" className={productStyles.placeholderLogo} />
-                            </div>
-                          )}
+                          <ProductCardImage
+                            src={productImage}
+                            alt={product.name}
+                            hoverSrc={product.hoverNextImage ? getOrderedProductImageUrls(product)[1] : undefined}
+                          />
                         </div>
                         <div className={productStyles.productInfo}>
                           <div className={productStyles.productCategory}>{categoryLabel}</div>

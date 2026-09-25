@@ -21,6 +21,7 @@ const { assertProductsDeliverableToPostalCode } = require('../services/productDe
 const { getPlatformFeeAmount, roundMoney } = require('../services/pricingService');
 const adminPushService = require('../services/adminPushNotificationService');
 const walletService = require('../services/walletService');
+const delhiveryService = require('../services/delhiveryService');
 const crypto = require('crypto');
 
 /**
@@ -724,15 +725,45 @@ const markOrderAsPackagePrepared = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Update order status
+    // 1. Update order status to package_prepared
     await orderModel.markAsPackagePrepared(id);
 
-    // TODO: Create delivery entry in deliveries table
-    // This will be implemented when we have the deliveries schema ready
+    // 2. If order is nationwide and has no waybill yet, manifest with Delhivery now
+    let waybill = null;
+    let trackingUrl = null;
+    try {
+      const fullOrder = await orderModel.getOrderByIdForAdmin(id);
+      if (fullOrder && (fullOrder.isNationwideDelivery || fullOrder.deliveryAddress?.postalCode) && !fullOrder.delhiveryWaybill) {
+        console.log(`[Admin] Package prepared confirmed for order #${fullOrder.orderNumber}. Manifesting with Delhivery...`);
+        const dRes = await delhiveryService.createDelhiveryOrder({
+          order: fullOrder,
+          customer: fullOrder.deliveryAddress,
+          items: fullOrder.items,
+        });
+        if (dRes && dRes.waybill) {
+          waybill = dRes.waybill;
+          trackingUrl = dRes.trackingUrl || `https://www.delhivery.com/track/package/${dRes.waybill}`;
+          await query(
+            `UPDATE orders 
+             SET delhivery_waybill = $1, 
+                 delhivery_status = $2, 
+                 delhivery_upload_wbn = $3, 
+                 delhivery_tracking_url = $4 
+             WHERE id = $5`,
+            [dRes.waybill, dRes.status || 'Manifested', dRes.uploadWbn || null, trackingUrl, id]
+          );
+          console.log(`[Admin] Order #${fullOrder.orderNumber} successfully pushed to Delhivery! AWB: ${dRes.waybill}`);
+        }
+      }
+    } catch (err) {
+      console.warn('[Delhivery] Auto-push during package preparation notice:', err.message);
+    }
 
     res.json({
       success: true,
-      message: 'Order marked as package prepared successfully'
+      message: 'Order marked as package prepared and dispatched to Delhivery',
+      waybill,
+      trackingUrl,
     });
   } catch (error) {
     next(error);
@@ -804,6 +835,29 @@ const markOrderAsFulfilled = async (req, res, next) => {
     const { id } = req.params;
     await orderModel.markAsFulfilled(id);
     res.json({ success: true, message: 'Order marked as fulfilled' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update order milestone status (package_prepared, shipped, in_transit, reached_destination_hub, out_for_delivery, delivered)
+ * POST /api/admin/orders/:id/update-status
+ */
+const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ success: false, message: 'Status is required' });
+    }
+
+    const updated = await orderModel.updateTimelineStatus(id, status);
+    res.json({
+      success: true,
+      message: `Order status successfully updated to ${status}`,
+      data: updated,
+    });
   } catch (error) {
     next(error);
   }
@@ -2251,6 +2305,115 @@ const deleteMedia = async (req, res, next) => {
   }
 };
 
+/**
+ * Push an order directly to Delhivery logistics
+ * POST /api/admin/orders/:id/push-delhivery
+ */
+const pushOrderToDelhivery = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const orderRes = await query('SELECT * FROM orders WHERE id = $1', [id]);
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    const order = orderRes.rows[0];
+    const itemsRes = await query(
+      'SELECT product_name, unit_price, quantity, variation_size FROM order_items WHERE order_id = $1',
+      [id]
+    );
+    const userRes = await query('SELECT name, email, phone FROM users WHERE id = $1', [order.user_id]);
+    const user = userRes.rows[0] || {};
+    const deliveryAddress = typeof order.delivery_address === 'string' 
+      ? JSON.parse(order.delivery_address) 
+      : (order.delivery_address || {});
+
+    const customer = {
+      name: deliveryAddress.name || user.name || 'Customer',
+      phone: deliveryAddress.phone || user.phone || '9999999999',
+      address: deliveryAddress.address || deliveryAddress.street,
+      landmark: deliveryAddress.landmark,
+      city: deliveryAddress.city,
+      state: deliveryAddress.state,
+      pincode: deliveryAddress.pincode,
+      email: user.email || '',
+    };
+
+    const delhiveryRes = await delhiveryService.createDelhiveryOrder({
+      order: {
+        orderNumber: order.order_number,
+        paymentMethod: order.payment_method,
+        total: order.total,
+        subtotal: order.subtotal,
+        created_at: order.created_at,
+      },
+      customer,
+      items: itemsRes.rows,
+    });
+
+    if (delhiveryRes && delhiveryRes.success && delhiveryRes.waybill) {
+      await query(
+        `UPDATE orders 
+         SET delhivery_waybill = $1, 
+             delhivery_status = $2, 
+             delhivery_upload_wbn = $3, 
+             delhivery_tracking_url = $4,
+             updated_at = NOW() 
+         WHERE id = $5`,
+        [
+          delhiveryRes.waybill,
+          delhiveryRes.status || 'Success',
+          delhiveryRes.uploadWbn || null,
+          delhiveryRes.trackingUrl,
+          id,
+        ]
+      );
+      return res.json({
+        success: true,
+        message: `Order successfully pushed to Delhivery (AWB: ${delhiveryRes.waybill})`,
+        data: delhiveryRes,
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: delhiveryRes.message || 'Failed to push order to Delhivery',
+      data: delhiveryRes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get live Delhivery tracking for an order
+ * GET /api/admin/orders/:id/delhivery-tracking
+ */
+const getOrderDelhiveryTracking = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const orderRes = await query('SELECT delhivery_waybill, delhivery_tracking_url FROM orders WHERE id = $1', [id]);
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    const { delhivery_waybill, delhivery_tracking_url } = orderRes.rows[0];
+    if (!delhivery_waybill) {
+      return res.status(400).json({ success: false, message: 'Order has not been assigned a Delhivery Waybill yet' });
+    }
+
+    const trackingData = await delhiveryService.trackDelhiveryShipment(delhivery_waybill);
+    res.json({
+      success: true,
+      data: {
+        waybill: delhivery_waybill,
+        trackingUrl: delhivery_tracking_url || `https://www.delhivery.com/track/package/${delhivery_waybill}`,
+        ...trackingData,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   // Products
   getAllProducts,
@@ -2276,6 +2439,8 @@ module.exports = {
   // Orders & Customers
   getAllOrders,
   getOrderById,
+  pushOrderToDelhivery,
+  getOrderDelhiveryTracking,
   getPendingOrdersCount,
   createManualOrder,
   lookupCustomerEmail,
@@ -2286,6 +2451,7 @@ module.exports = {
   markOrderAsOutForDelivery,
   markOrderAsDelivered,
   markOrderAsFulfilled,
+  updateOrderStatus,
   getCustomerStats,
   updateCustomerWalletBalance,
   getFeedback,

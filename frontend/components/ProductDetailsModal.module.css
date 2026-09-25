@@ -2276,7 +2276,7 @@
   transform: translate(-50%, -50%);
   font-size: 1.35rem;
   font-weight: 800;
-  color: #2d1018;
+  color: #111827;
   line-height: 1;
   white-space: nowrap;
   font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -2384,30 +2384,56 @@
   position: fixed;
   inset: 0;
   z-index: 10050;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
   overflow: hidden;
-  animation: ratingMeterFadeIn 0.2s ease-out;
+  animation: reviewsOverlayFadeIn 0.25s ease-out;
+}
+
+@keyframes reviewsOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 .reviewsPopupPanel {
   position: relative;
-  width: min(100%, 560px);
-  max-height: min(88vh, 760px);
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   background: #f2f1f6;
-  border-radius: 24px;
-  padding: 1.35rem 1.25rem 1.25rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  border-radius: 0cap 0 0 0px;
+  padding: 1.5rem 1.4rem 1.4rem;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
   scrollbar-width: none;
   -ms-overflow-style: none;
+  animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reviewsPopupPanel::-webkit-scrollbar {
@@ -2427,7 +2453,7 @@
 }
 
 .reviewsPopupClose {
-  background: rgb(237 237 237);
+  background: white;
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -2620,18 +2646,22 @@
 /* Size Guide Modal Styles */
 .sizeGuideModalPanel {
   position: relative;
-  width: 92vw;
+  width: 100%;
   max-width: 500px;
-  max-height: 88vh;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 1.5rem 1.4rem 1.35rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  -webkit-overflow-scrolling: touch;
+  background: #f2f1f6;
+  border-radius: 0px 0 0 0px;
+  padding: 1.5rem 1.4rem 1.4rem;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
   scrollbar-width: none;
   -ms-overflow-style: none;
+  animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sizeGuideModalPanel::-webkit-scrollbar {
@@ -2697,7 +2727,7 @@
   padding: 10px 14px;
   font-weight: 600;
   color: #18181b;
-  background: #f4f4f5;
+  background: #dfdfdf;
   border-bottom: 1px solid #e4e4e7;
 }
 
@@ -2705,6 +2735,7 @@
   padding: 10px 14px;
   color: #52525b;
   border-bottom: 1px solid #f0f0f0;
+  background: white;
 }
 
 .sizeGuideTable tbody tr:last-child td {
@@ -2717,8 +2748,8 @@
 }
 
 .sizeGuideMeasureGuide {
-  background: #f1f1f1;
-  border: 1px solid #f1f1f1;
+  background: white;
+  border: 1px solid white;
   border-radius: 16px;
   padding: 0.95rem 1.1rem;
   margin-top: 0.75rem;
@@ -2760,7 +2791,7 @@
 }
 
 .deliveryCheckLink:hover {
-  background: #f1f5f9;
+  background: #f1f5f900;
   border-color: #cbd5e1;
   color: #1e293b;
 }
@@ -2857,7 +2888,7 @@
   position: relative;
   z-index: 1;
   padding: 2rem;
-  margin-top: -1.7rem;
+  margin-top: -1.8rem;
   margin-left: 10px;
   margin-right: 10px;
   width: calc(100% - 20px);
@@ -3944,6 +3975,8 @@
     width: 100% !important;
     overflow-x: clip !important;
     overflow-y: visible !important;
+    margin-top: -10px !important;
+
   }
 
   .flatPageBody {

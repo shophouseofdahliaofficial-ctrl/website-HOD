@@ -27,7 +27,6 @@ const MENU_ITEMS = [
   { label: 'Favorites', href: '/favorites' },
   { label: 'Wallet', href: '/dashboard' },
   { label: 'Gift Cards', href: '/customer/giftcard' },
-  { label: 'Reviews', href: '/reviews' },
 ];
 
 const GLYPHS = ['H', 'O', 'D', '0', '1', '7', '8', '9', 'A', 'E', 'X', '+', '§', '•'];
