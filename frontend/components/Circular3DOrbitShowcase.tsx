@@ -855,7 +855,7 @@ export default function Circular3DOrbitShowcase() {
                 style={{
                   transform: `translate3d(calc(-50% + ${currentXPx.toFixed(1)}px), calc(-50% + ${currentYVh.toFixed(2)}vh), 0px) scale(${currentScale.toFixed(3)})`,
                   opacity: isVisible ? Number(currentOpacity.toFixed(3)) : 0,
-                  filter: currentBlur > 0.05 ? `blur(${currentBlur.toFixed(1)}px)` : 'none',
+                  filter: !isMobile && currentBlur > 0.05 ? `blur(${currentBlur.toFixed(1)}px)` : 'none',
                   zIndex: zIndex,
                   visibility: isVisible ? 'visible' : 'hidden',
                   pointerEvents: !isVerticalMode ? (modelsIn > 0.15 ? 'auto' : 'none') : 'auto',

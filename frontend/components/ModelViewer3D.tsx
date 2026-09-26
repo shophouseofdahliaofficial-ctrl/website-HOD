@@ -177,14 +177,19 @@ export default function ModelViewer3D({
 
     // 3. Renderer setup
     const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
+    // Cap pixel ratio at 2.0 (crystal-sharp Retina on iPhone without lagging or overheating)
+    const pixelRatio = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2.0) : 1.0;
+
     const renderer = new THREE.WebGLRenderer({
-      antialias: !isMobileDevice, // Disable expensive MSAA on mobile devices
+      antialias: true,
       alpha: true,
       powerPreference: 'high-performance',
-      precision: isMobileDevice ? 'lowp' : 'mediump',
+      precision: 'mediump',
+      stencil: false,
+      depth: true,
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isMobileDevice ? 1.0 : Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(pixelRatio);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -365,6 +370,9 @@ export default function ModelViewer3D({
       }
       if (standard.map) {
         standard.map.colorSpace = THREE.SRGBColorSpace;
+        standard.map.generateMipmaps = true;
+        standard.map.minFilter = THREE.LinearMipmapLinearFilter;
+        standard.map.magFilter = THREE.LinearFilter;
         standard.map.needsUpdate = true;
       }
       return standard;

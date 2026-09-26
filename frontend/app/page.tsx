@@ -30,12 +30,27 @@ export default function HomePage() {
   const phase3SectionRef = useRef<HTMLElement>(null);
   const phase3PixelCanvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Strictly enforce manual scroll restoration and force Phase 1 top position on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+
   // Strictly lock scroll to top of Phase 1 while preloader is running
   useEffect(() => {
     if (!isPreloaded) {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
       const prevOverflow = document.body.style.overflow;
+      const prevDocOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
 
       const blockScroll = (e: Event) => {
         e.preventDefault();
@@ -46,11 +61,16 @@ export default function HomePage() {
 
       return () => {
         document.body.style.overflow = prevOverflow;
+        document.documentElement.style.overflow = prevDocOverflow;
         window.removeEventListener('wheel', blockScroll);
         window.removeEventListener('touchmove', blockScroll);
       };
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     }
   }, [isPreloaded]);
 
