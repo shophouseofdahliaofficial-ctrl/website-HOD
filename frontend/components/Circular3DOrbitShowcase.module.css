@@ -33,7 +33,7 @@
 
 .introStatementHeading {
   font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
-  font-size: clamp(1.94rem, 2.58vw, 3.88rem);
+  font-size: clamp(1.64rem, 2.58vw, 3.88rem);
   font-weight: 300;
   font-style: italic;
   color: #530000;
@@ -67,6 +67,8 @@
   justify-content: center;
 }
 
+
+
 /* Fixed Left Center Info Card */
 .cardInfo {
   position: absolute;
@@ -77,7 +79,7 @@
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  width: clamp(210px, 18vw, 290px);
+  width: clamp(240px, 22vw, 350px);
   max-width: 90vw;
   z-index: 25;
   pointer-events: none;
@@ -184,77 +186,9 @@
   transition: color 0.45s ease, text-shadow 0.45s ease;
 }
 
-/* Inverted White Styling when Visual Effect is Active */
-.cardInfoVisualActive .itemTitle {
-  color: #ffffff;
-  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.95);
-  transition: color 0.65s ease 1.5s, text-shadow 0.65s ease 1.5s;
-}
 
-.cardInfoVisualActive .itemSubtitle {
-  color: rgba(255, 255, 255);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
-  transition: color 0.65s ease 1.5s, text-shadow 0.65s ease 1.5s;
-}
 
-.cardInfoVisualActive .shopButton {
-  background-color: rgba(255, 255, 255, 0.92);
-  color: #000000;
-  border-color: #ffffff;
-  transition: background-color 0.65s ease 1.5s, border-color 0.65s ease 1.5s, color 0.65s ease 1.5s;
-}
 
-.cardInfoVisualActive .shopButton:hover {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-.cardInfoVisualActive .shopButtonActive {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-}
-
-.buttonGroup {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 0;
-}
-
-.shopButton {
-  margin-top: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #ffffff;
-  color: #000000;
-  border: 1px solid #000000;
-  border-radius: 0 !important;
-  padding: 0.18rem 0.3rem;
-  font-family: inherit;
-  font-size: 0.76rem;
-  font-weight: 400;
-  letter-spacing: 0.00rem;
-  text-transform: lowercase;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
-  box-sizing: border-box;
-  will-change: filter, opacity;
-  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, color 0.25s ease;
-}
-
-.shopButton:hover {
-  background-color: #000000;
-  opacity: 1;
-  color: white;
-}
-
-.shopButtonActive {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-}
 
 .itemsLayer {
   position: absolute;
@@ -283,74 +217,20 @@
   pointer-events: none;
 }
 
-/* Natural Foot Contact Shadow for the 3D Model on Nature Podium */
-.footContactShadow {
+.cardClickTrigger {
   position: absolute;
-  top: 89%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  width: 130px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
-}
-
-.footContactShadowActive {
-  opacity: 0.5;
-  transform: translate(-50%, -50%) scale(1);
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1) 1.2s, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1) 1.2s;
-}
-
-.footShadowAmbient {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120px;
-  height: 28px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center,
-      rgba(10, 25, 5, 0.42) 0%,
-      rgba(20, 45, 10, 0.22) 45%,
-      rgba(0, 0, 0, 0.08) 65%,
-      transparent 80%);
-  filter: blur(5px);
-}
-
-.footShadowLeft {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(calc(-50% - 18px), -50%);
-  width: 32px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center,
-      rgba(0, 0, 0, 0.48) 0%,
-      rgba(15, 30, 8, 0.25) 55%,
-      transparent 80%);
-  filter: blur(2px);
-}
-
-.footShadowRight {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(calc(-50% + 18px), -50%);
-  width: 32px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center,
-      rgba(0, 0, 0, 0.48) 0%,
-      rgba(15, 30, 8, 0.25) 55%,
-      transparent 80%);
-  filter: blur(2px);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 30;
+  outline: none;
+  pointer-events: auto;
 }
 
 .horizontalCard {
@@ -359,17 +239,22 @@
 
 .horizontalCard .modelContainerWrap {
   pointer-events: none !important;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .horizontalCard .modelContainerWrap canvas {
   pointer-events: none !important;
 }
 
-/* Hover scales model only when cursor is directly over this specific model's slim hitbox */
-.horizontalCard .cardClickTrigger:hover+.modelContainerWrap,
-.horizontalCard:has(.cardClickTrigger:hover) .modelContainerWrap {
-  transform: scale(1.08) translateY(-4px);
+/* Hover scales model only when cursor is directly over this specific model's slim hitbox on desktop */
+@media (hover: hover) and (pointer: fine) {
+  .horizontalCard .modelContainerWrap {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .horizontalCard .cardClickTrigger:hover+.modelContainerWrap,
+  .horizontalCard:has(.cardClickTrigger:hover) .modelContainerWrap {
+    transform: scale(1.08) translateY(-4px);
+  }
 }
 
 .modelContainerWrap {
@@ -428,7 +313,7 @@
 }
 
 .activeNumber {
-  color: #530000;
+  color: #800020;
   font-weight: 600;
   transition: color 0.45s ease, text-shadow 0.45s ease;
 }
@@ -446,7 +331,7 @@
 }
 
 .indicatorTrack {
-  width: 4px;
+  width: 3px;
   height: 100px;
   background-color: rgba(83, 0, 0, 0.12);
   border-radius: 30px;
@@ -460,45 +345,21 @@
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #530000;
+  background-color: #800020;
   border-radius: 2px;
   transition: height 0.15s ease-out, background-color 0.45s ease, box-shadow 0.45s ease;
 }
 
-/* Orbit Indicator White Inversion when Visual is active */
-.orbitIndicatorVisualActive .activeNumber {
-  color: #ffffff;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-  transition: color 0.65s ease 1.5s, text-shadow 0.65s ease 1.5s;
-}
 
-.orbitIndicatorVisualActive .divider {
-  color: rgba(255, 255, 255, 0.45);
-  transition: color 0.65s ease 1.5s;
-}
-
-.orbitIndicatorVisualActive .totalNumber {
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-  transition: color 0.65s ease 1.5s, text-shadow 0.65s ease 1.5s;
-}
-
-.orbitIndicatorVisualActive .indicatorTrack {
-  background-color: rgba(255, 255, 255, 0.25);
-  transition: background-color 0.65s ease 1.5s;
-}
-
-.orbitIndicatorVisualActive .indicatorThumb {
-  background-color: #ffffff;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
-  transition: height 0.15s ease-out, background-color 0.65s ease 1.5s, box-shadow 0.65s ease 1.5s;
-}
 
 @media (max-width: 768px) {
   .cardInfo {
     left: 1.5rem;
     max-width: 280px;
   }
+
+
+
 
   .itemTitle {
     font-size: 1.8rem;
@@ -512,32 +373,9 @@
   .orbitIndicator {
     right: 1.2rem;
   }
-
-  .footContactShadow {
-    width: 95px;
-    height: 24px;
-    top: 92%;
-  }
-
-  .footShadowAmbient {
-    width: 88px;
-    height: 20px;
-  }
-
-  .footShadowLeft {
-    transform: translate(calc(-50% - 12px), -50%);
-    width: 24px;
-    height: 10px;
-  }
-
-  .footShadowRight {
-    transform: translate(calc(-50% + 12px), -50%);
-    width: 24px;
-    height: 10px;
-  }
 }
 
-/* Temporary Mode Toggle Button at Bottom-Left (matching shopButton design) */
+/* Bottom-Left Horizontal Toggle Button (reveals in vertical mode) */
 .toggleModeBtn {
   position: absolute;
   bottom: clamp(1.5rem, 3.5vw, 2.5rem);
@@ -550,7 +388,7 @@
   color: #000000;
   border: 1px solid #000000;
   border-radius: 0 !important;
-  padding: 0.18rem 0.3rem;
+  padding: 0.18rem 0.35rem;
   font-family: inherit;
   font-size: 0.76rem;
   font-weight: 400;
@@ -561,6 +399,8 @@
   white-space: nowrap;
   box-sizing: border-box;
   gap: 0.25rem;
+  height: 25px;
+  line-height: 1;
   opacity: 0;
   will-change: filter, opacity;
   transition: background-color 0.25s ease, color 0.25s ease;
@@ -569,16 +409,47 @@
 
 .toggleModeBtn:hover {
   background-color: #000000;
-  opacity: 1;
   color: white;
 }
 
-.toggleModeBtnVisualActive {
-  background-color: rgba(255, 255, 255, 0.92) !important;
-  color: #000000 !important;
-  border-color: #ffffff !important;
-  transition: background-color 0.65s ease 1.5s, color 0.65s ease 1.5s, border-color 0.65s ease 1.5s;
+/* Bottom-Right (Extreme Right) Shop Button */
+.shopButton {
+  position: absolute;
+  bottom: clamp(1.5rem, 3.5vw, 2.5rem);
+  right: clamp(1.5rem, 3.5vw, 2.5rem);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #800020;
+  color: white;
+  border: 1px solid #800020;
+  border-radius: 0 !important;
+  padding: 0.18rem 0.35rem;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: 0.00rem;
+  text-transform: lowercase;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  gap: 0.25rem;
+  height: 25px;
+  line-height: 1;
+  opacity: 0;
+  will-change: filter, opacity;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  user-select: none;
 }
+
+.shopButton:hover {
+  background-color: #000000;
+  color: white;
+}
+
+
 
 /* Bottom Center "Our Collection" / Hover Product Scramble Indicator */
 .bottomCenterIndicator {
@@ -682,9 +553,88 @@
   color: #909090;
 }
 
-/* Inverted White Styling when Visual Background Effect is Active */
-.orbit360PromptVisualActive {
-  color: rgba(255, 255, 255, 0.95) !important;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
-  transition: color 0.65s ease 1.5s, filter 0.65s ease 1.5s, opacity 0.48s ease, transform 0.48s ease;
+
+
+@media (max-width: 768px) {
+  .introStatementHeading {
+    font-size: clamp(1.4rem, 5.5vw, 2.1rem);
+    white-space: normal;
+    flex-wrap: wrap;
+    row-gap: 0.35em;
+    padding: 0 1.2rem;
+  }
+
+  /* Show Product Details (textBlock) at bottom-left strictly above the Horizontal button on mobile */
+  .cardInfo {
+    top: auto !important;
+    bottom: calc(1.5rem + 44px) !important;
+    left: 1.5rem !important;
+    transform: none !important;
+    width: clamp(280px, 78vw, 360px) !important;
+    max-width: calc(100vw - 3rem) !important;
+    z-index: 35;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .textStack {
+    position: relative;
+    width: 100%;
+    min-height: 80px;
+  }
+
+  .textBlock {
+    position: absolute;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  .itemTitle {
+    font-size: clamp(1.35rem, 5.2vw, 1.8rem);
+    margin: 0 0 0.18rem 0;
+    line-height: 1.1;
+    width: 100%;
+  }
+
+  .itemSubtitle {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    max-width: 320px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .bottomCenterIndicator {
+    bottom: 2.2rem;
+    font-size: 1.05rem;
+  }
+
+  .orbit360Prompt {
+    bottom: 4.55rem;
+  }
+
+  .orbitArcSvg {
+    width: 170px;
+  }
+
+  .orbitIndicator {
+    right: 1.5rem;
+  }
+
+  .toggleModeBtn {
+    bottom: 1.5rem !important;
+    left: 1.5rem !important;
+  }
+
+  .shopButton {
+    bottom: 1.5rem !important;
+    right: 1.5rem !important;
+  }
 }

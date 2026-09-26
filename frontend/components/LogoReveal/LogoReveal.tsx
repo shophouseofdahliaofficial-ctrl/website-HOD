@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import styles from './LogoReveal.module.css';
 
-const LOGO_SRC = '/finallogo (1).png';
+const LOGO_SRC = '/finallogo.png';
 
 export default function LogoReveal() {
   const containerRef = useRef<HTMLDivElement | null>(null);

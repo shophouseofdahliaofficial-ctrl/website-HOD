@@ -172,8 +172,9 @@ export default function HorizontalProductGalleryModal({
 
     if (!box) return;
 
-    // 15px gap from each side of the screen
-    const gap = 15;
+    // 10px gap on mobile (<= 768px), 15px gap on desktop from each side of the screen
+    const isMobile = window.innerWidth <= 768;
+    const gap = isMobile ? 10 : 15;
     const targetTop = gap;
     const targetLeft = gap;
     const targetWidth = window.innerWidth - gap * 2;
@@ -238,6 +239,27 @@ export default function HorizontalProductGalleryModal({
       ease: 'power3.out',
     }, 0.35);
   }, [isOpen, mounted, triggerRect]);
+
+  // Handle window resize dynamically while open
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+
+    const handleResize = () => {
+      const box = boxRef.current;
+      if (!box || isClosing) return;
+      const isMobile = window.innerWidth <= 768;
+      const gap = isMobile ? 10 : 15;
+      gsap.set(box, {
+        top: gap,
+        left: gap,
+        width: window.innerWidth - gap * 2,
+        height: window.innerHeight - gap * 2,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen, mounted, isClosing]);
 
   // Capture wheel globally with capture: true & passive: false to prevent background scroll and pan images
   useEffect(() => {

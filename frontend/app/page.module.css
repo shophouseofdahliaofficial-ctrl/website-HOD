@@ -200,20 +200,47 @@
 }
 
 .scrollArrow {
-  color: rgba(255, 255, 255, 0.8);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  animation: scrollArrowGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes scrollArrowGlow {
+  0%, 100% {
+    opacity: 0.5;
+    filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+  }
 }
 
 .scrollText {
   font-family: inherit;
   font-size: 0.82rem;
   letter-spacing: 0;
-  text-transform: capitalize;
-  color: rgba(255, 255, 255, 0.85);
+  text-transform: lowercase;
+  color: #ffffff;
   font-weight: 300;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  animation: scrollTextShimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes scrollTextShimmer {
+  0%, 100% {
+    opacity: 0.5;
+    text-shadow: 0 0 0px rgba(255, 255, 255, 0);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.75), 0 0 16px rgba(255, 255, 255, 0.35);
+  }
 }
 
 .title {
@@ -425,7 +452,7 @@
 
 @media (max-width: 768px) {
   .topHeader {
-    padding: 1.5rem 1.5rem;
+    padding: 1.0rem 1.5rem;
   }
 
   .customLogoImg {
@@ -438,7 +465,7 @@
 
   .navLink,
   .navLinkButton {
-    font-size: 1.05rem;
+    font-size: 0.85rem;
   }
 
   .scrollIndicator {

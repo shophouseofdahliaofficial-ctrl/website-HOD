@@ -54,7 +54,7 @@ export default function Logo({ textClassName, imageClassName, fallbackText }: Lo
     );
   }
 
-  const defaultLogoUrl = '/finallogo (1).png';
+  const defaultLogoUrl = '/finallogo.png';
   const displayUrl = config?.imageUrl || defaultLogoUrl;
 
   return (

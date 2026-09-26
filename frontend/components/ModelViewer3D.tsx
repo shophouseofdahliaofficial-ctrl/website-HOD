@@ -65,7 +65,7 @@ export default function ModelViewer3D({
         ease: 'power2.out',
       });
       gsap.to(lights.cameraSun, {
-        intensity: 1.63,
+        intensity: 0.92,
         duration: 1.2,
         ease: 'power2.out',
       });
@@ -77,22 +77,22 @@ export default function ModelViewer3D({
         ease: 'power2.out',
       });
       gsap.to(lights.cameraFill, {
-        intensity: 0.85,
+        intensity: 0.50,
         duration: 1.2,
         ease: 'power2.out',
       });
       gsap.to(lights.rim, {
-        intensity: 0.72,
+        intensity: 0.52,
         duration: 1.2,
         ease: 'power2.out',
       });
       gsap.to(lights.ambient, {
-        intensity: 1.17,
+        intensity: 1.40,
         duration: 1.2,
         ease: 'power2.out',
       });
       gsap.to(lights.hemi, {
-        intensity: 0.78,
+        intensity: 0.88,
         duration: 1.2,
         ease: 'power2.out',
       });
@@ -105,7 +105,7 @@ export default function ModelViewer3D({
         ease: 'power2.out',
       });
       gsap.to(lights.cameraSun, {
-        intensity: 1.37,
+        intensity: 0.72,
         duration: 1.2,
         ease: 'power2.out',
       });
@@ -117,22 +117,22 @@ export default function ModelViewer3D({
         ease: 'power2.out',
       });
       gsap.to(lights.cameraFill, {
-        intensity: 0.72,
+        intensity: 0.42,
         duration: 1.2,
         ease: 'power2.out',
       });
       gsap.to(lights.rim, {
-        intensity: 0.59,
+        intensity: 0.48,
         duration: 1.2,
         ease: 'power2.out',
       });
       gsap.to(lights.ambient, {
-        intensity: 1.04,
+        intensity: 1.35,
         duration: 1.2,
         ease: 'power2.out',
       });
       gsap.to(lights.hemi, {
-        intensity: 0.65,
+        intensity: 0.82,
         duration: 1.2,
         ease: 'power2.out',
       });
@@ -236,31 +236,31 @@ export default function ModelViewer3D({
       }
     });
 
-    // 5. Normal Balanced Studio Fashion Lighting Setup (+30% Intensity)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.04);
+    // 5. Balanced Soft Studio Fashion Lighting Setup (Diffused luxury finish without sweat/shine)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.35);
     scene.add(ambientLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.65);
+    const hemiLight = new THREE.HemisphereLight(0xfff8f5, 0x333333, 0.82);
     hemiLight.position.set(0, 20, 0);
     scene.add(hemiLight);
 
-    // Front Sunlight attached to camera for balanced front illumination
-    const cameraSunLight = new THREE.DirectionalLight(0xffffff, 1.37);
+    // Front Soft Key Light attached to camera
+    const cameraSunLight = new THREE.DirectionalLight(0xfff5ee, 0.72);
     cameraSunLight.position.set(-1.8, 3.0, 3.8);
     camera.add(cameraSunLight);
 
     // Soft Fill Light attached to camera
-    const cameraFillLight = new THREE.DirectionalLight(0xffffff, 0.72);
+    const cameraFillLight = new THREE.DirectionalLight(0xffffff, 0.42);
     cameraFillLight.position.set(2.2, 2.2, 3.2);
     camera.add(cameraFillLight);
 
     // Top Silhouette Rim Light
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.59);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.48);
     rimLight.position.set(0, 8, -2);
     scene.add(rimLight);
 
     // Subtle ground bounce
-    const groundLight = new THREE.DirectionalLight(0xffffff, 0.33);
+    const groundLight = new THREE.DirectionalLight(0xfafafa, 0.25);
     groundLight.position.set(0, -5, 2);
     scene.add(groundLight);
 
@@ -275,12 +275,12 @@ export default function ModelViewer3D({
 
     if (sunToLeft) {
       cameraSunLight.position.set(-3.5, 3.5, 3.5);
-      cameraSunLight.intensity = 1.63;
+      cameraSunLight.intensity = 0.92;
       cameraFillLight.position.set(3.5, 2.0, 3.0);
-      cameraFillLight.intensity = 0.85;
-      rimLight.intensity = 0.72;
-      ambientLight.intensity = 1.17;
-      hemiLight.intensity = 0.78;
+      cameraFillLight.intensity = 0.50;
+      rimLight.intensity = 0.52;
+      ambientLight.intensity = 1.40;
+      hemiLight.intensity = 0.88;
     }
 
     // 6. Model Root Group
@@ -314,8 +314,8 @@ export default function ModelViewer3D({
               } else {
                 mesh.material = new THREE.MeshStandardMaterial({
                   map: tex,
-                  roughness: 0.65,
-                  metalness: 0.05,
+                  roughness: 0.92,
+                  metalness: 0.0,
                   color: 0xffffff,
                   side: THREE.DoubleSide,
                 });
@@ -330,30 +330,34 @@ export default function ModelViewer3D({
       );
     }
 
-    // Standard material
+    // Standard matte fabric/mannequin material
     const baseMaterial = new THREE.MeshStandardMaterial({
       map: modelTexture,
-      roughness: 0.65,
-      metalness: 0.05,
+      roughness: 0.92,
+      metalness: 0.0,
       color: 0xffffff,
       side: THREE.DoubleSide,
     });
 
     const convertToWarmLitMaterial = (mat: any) => {
-      if (!mat) return new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.65, metalness: 0.05 });
+      if (!mat) return new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, metalness: 0.0 });
       const standard = new THREE.MeshStandardMaterial({
         map: mat.map || null,
         normalMap: mat.normalMap || null,
-        roughnessMap: mat.roughnessMap || null,
-        metalnessMap: mat.metalnessMap || null,
-        roughness: mat.roughness !== undefined ? mat.roughness : 0.65,
-        metalness: mat.metalness !== undefined ? mat.metalness : 0.05,
+        roughnessMap: null, // Remove dark/glossy roughness textures that cause sweaty hotspots
+        metalnessMap: null,
+        roughness: 0.92,    // Soft, diffused matte couture texture with zero oily glare
+        metalness: 0.0,     // Pure non-metallic organic finish
         color: mat.color ? mat.color.clone() : new THREE.Color(0xffffff),
         side: THREE.DoubleSide,
         transparent: mat.transparent || false,
         opacity: mat.opacity !== undefined ? mat.opacity : 1,
         alphaTest: mat.alphaTest || 0,
       });
+      if (standard.normalMap) {
+        // Soften micro-pore normals so they don't produce shiny speckled glints
+        standard.normalScale = new THREE.Vector2(0.25, 0.25);
+      }
       if (standard.map) {
         standard.map.colorSpace = THREE.SRGBColorSpace;
         standard.map.needsUpdate = true;

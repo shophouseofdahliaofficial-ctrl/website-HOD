@@ -7,7 +7,6 @@ import ModelViewer3D from './ModelViewer3D';
 import ScrambleText from './ScrambleText';
 import PixelCubeModelTransition from './PixelCubeModelTransition';
 import HorizontalProductGalleryModal, { TriggerRect } from './HorizontalProductGalleryModal';
-import BackgroundCircularImageReveal from './BackgroundCircularImageReveal';
 import styles from './Circular3DOrbitShowcase.module.css';
 
 interface ShowcaseItem {
@@ -33,19 +32,19 @@ const ITEMS: ShowcaseItem[] = [
   {
     id: 'item-2',
     number: '02',
-    title: 'Dahlia Couturier',
-    subtitle: 'Sculptural Draped Form · Haute Couture Edition',
+    title: 'Evening Couture',
+    subtitle: 'Sculptural Evening Draping · Haute Couture Edition',
     tag: 'Collector Series',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/evening+dress+3d+model.glb',
     texturePath: '',
   },
   {
     id: 'item-3',
     number: '03',
-    title: 'Atelier Silhouette',
-    subtitle: 'Monochromatic Structural Form · Studio Series',
+    title: 'Dahlia Signature Archetype',
+    subtitle: 'Signature Sculptural Form · Master Edition',
     tag: 'Heritage Archive',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/realone.glb',
     texturePath: '',
   },
   {
@@ -90,7 +89,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Sovereign Form',
     subtitle: 'Grand Proportion & Minimalist Drape',
     tag: 'Limited Haute Couture',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/pink+sequin+dress+3d+model.glb',
     texturePath: '',
   },
   {
@@ -178,6 +177,7 @@ export default function Circular3DOrbitShowcase() {
   const cardInfoRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
+  const shopBtnRef = useRef<HTMLButtonElement>(null);
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -189,18 +189,6 @@ export default function Circular3DOrbitShowcase() {
   const [uiVisible, setUiVisible] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400);
   const [isProduct2GalleryOpen, setIsProduct2GalleryOpen] = useState(false);
-  const [activeBackground, setActiveBackground] = useState<'nature' | 'bloom' | 'white' | null>(null);
-  const isVisualActive = isVerticalMode && activeBackground !== null;
-  const isInvertedVisualTheme = isVerticalMode && (activeBackground === 'nature' || activeBackground === 'bloom');
-  const lastActiveBgSrcRef = useRef('/nature_3dmodel.png');
-  if (activeBackground === 'bloom') {
-    lastActiveBgSrcRef.current = '/back2.png';
-  } else if (activeBackground === 'nature') {
-    lastActiveBgSrcRef.current = '/nature_3dmodel.png';
-  } else if (activeBackground === 'white') {
-    lastActiveBgSrcRef.current = '/whiteback.png';
-  }
-  const currentBgSrc = lastActiveBgSrcRef.current;
   const [galleryTriggerRect, setGalleryTriggerRect] = useState<TriggerRect | null>(null);
 
   // First-time prompt cycle state: cycles between "Our Collection" and "Click on any model to view" every 4s
@@ -456,8 +444,6 @@ export default function Circular3DOrbitShowcase() {
       }
     } else {
       // VERTICAL -> HORIZONTAL
-      // Automatically dismiss active nature or blossom background if open
-      setActiveBackground(null);
 
       // Ensure introProgress is locked to 1.0 so statement text is completely invisible
       animRef.current.introProgress = 1.0;
@@ -499,9 +485,9 @@ export default function Circular3DOrbitShowcase() {
           0
         );
       }
-      if (toggleBtnRef.current) {
+      if (toggleBtnRef.current && shopBtnRef.current) {
         tl.to(
-          toggleBtnRef.current,
+          [toggleBtnRef.current, shopBtnRef.current],
           { opacity: 0, duration: 0.35, ease: 'power2.in' },
           0
         );
@@ -544,6 +530,7 @@ export default function Circular3DOrbitShowcase() {
       if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
       if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
       if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
+      if (shopBtnRef.current) gsap.set(shopBtnRef.current, { opacity: 0 });
 
       // Kill any running tweens
       gsap.killTweensOf(animRef.current);
@@ -591,9 +578,9 @@ export default function Circular3DOrbitShowcase() {
           0.85
         );
       }
-      if (toggleBtnRef.current) {
+      if (toggleBtnRef.current && shopBtnRef.current) {
         tl.to(
-          toggleBtnRef.current,
+          [toggleBtnRef.current, shopBtnRef.current],
           { opacity: 1, duration: 0.45, ease: 'power2.out' },
           0.85
         );
@@ -660,13 +647,6 @@ export default function Circular3DOrbitShowcase() {
     >
       {/* Sticky viewport stage */}
       <div className={styles.stickyStage}>
-        {/* 0. Background Circular Pixel Mark Image Reveal (Behind 3D models, text & controls) */}
-        <BackgroundCircularImageReveal
-          isActive={isVisualActive}
-          imageSrc={currentBgSrc}
-          onToggle={() => setActiveBackground(null)}
-        />
-
         {/* 0. Statement Entrance Text: "Wear what feels like yours" (unified phrase in center) */}
         {!isVerticalMode && statementOpacity > 0.005 && (
           <div
@@ -687,7 +667,7 @@ export default function Circular3DOrbitShowcase() {
         {/* 1. Left Center Static Info Card (hidden initially in horizontal mode, reveals on click) */}
         <div
           ref={cardInfoRef}
-          className={`${styles.cardInfo} ${isInvertedVisualTheme ? styles.cardInfoVisualActive : ''}`}
+          className={styles.cardInfo}
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
@@ -723,59 +703,6 @@ export default function Circular3DOrbitShowcase() {
               );
             })}
           </div>
-
-          <div className={styles.buttonGroup}>
-            <button
-              type="button"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setGalleryTriggerRect({
-                  top: rect.top,
-                  left: rect.left,
-                  width: rect.width,
-                  height: rect.height,
-                });
-                setIsProduct2GalleryOpen(true);
-              }}
-              className={styles.shopButton}
-              aria-label="View product 2 images"
-            >
-              <ScrambleText text="View" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveBackground((prev) => (prev === 'nature' ? null : 'nature'));
-              }}
-              className={`${styles.shopButton} ${activeBackground === 'nature' ? styles.shopButtonActive : ''}`}
-              aria-label={activeBackground === 'nature' ? "Hide nature background" : "View nature background"}
-            >
-              <ScrambleText text={activeBackground === 'nature' ? "Hide" : "Nature"} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveBackground((prev) => (prev === 'bloom' ? null : 'bloom'));
-              }}
-              className={`${styles.shopButton} ${activeBackground === 'bloom' ? styles.shopButtonActive : ''}`}
-              aria-label={activeBackground === 'bloom' ? "Hide blossom background" : "View blossom background"}
-            >
-              <ScrambleText text={activeBackground === 'bloom' ? "Hide" : "Blossom"} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveBackground((prev) => (prev === 'white' ? null : 'white'));
-              }}
-              className={`${styles.shopButton} ${activeBackground === 'white' ? styles.shopButtonActive : ''}`}
-              aria-label={activeBackground === 'white' ? "Hide white background" : "View white background"}
-            >
-              <ScrambleText text={activeBackground === 'white' ? "Hide" : "White"} />
-            </button>
-          </div>
         </div>
 
         {/* 2. 3D Model Items: Horizontal line initially, GSAP morphs to Vertical Center on click */}
@@ -786,26 +713,45 @@ export default function Circular3DOrbitShowcase() {
             const isFocused = Math.abs(d) < 0.25;
 
             // --- Horizontal Layout Coordinates (layoutProgress = 0) ---
-            const hOffsetPx = (index - centerIndexOffset) * horizontalSpacing;
-            const hScale = isVerticalMode ? 0.38 : horizontalScale;
-            const hOpacity = isVerticalMode ? 1.0 : horizontalOpacity;
-            const hBlur = isVerticalMode ? 0 : horizontalBlur;
+            const isMobile = windowWidth <= 768;
+            let hOffsetPx: number;
+            let hOffsetYVh: number;
+            const hScale = isMobile ? 0.265 : horizontalScale;
+
+            if (isMobile) {
+              // 2 Rows on mobile: Row 0 has 5 models (0..4), Row 1 has 5 models (5..9)
+              const rowIndex = Math.floor(index / 5); // 0 for top row, 1 for bottom row
+              const colIndex = index % 5;             // 0, 1, 2, 3, 4
+              const colCenterOffset = 2;              // Centered at middle index 2
+              const mobileColSpacing = Math.min(74, Math.max(54, (windowWidth * 0.94) / 5));
+
+              hOffsetPx = (colIndex - colCenterOffset) * mobileColSpacing;
+              // Vertical row gap with +5px spacing
+              hOffsetYVh = rowIndex === 0 ? -9.4 : 9.4;
+            } else {
+              hOffsetPx = (index - centerIndexOffset) * horizontalSpacing;
+              hOffsetYVh = 0;
+            }
+
+            const hOpacity = horizontalOpacity;
+            const hBlur = horizontalBlur;
 
             // --- Vertical Layout Coordinates (layoutProgress = 1) ---
             const vOffsetPx = 0;
-            const vOffsetYVh = d * 60;
-            const vScale = Math.max(0.40, 0.98 - Math.abs(d) * 0.28); // 10% bigger centered model in vertical mode
+            const vCenterOffsetVh = isMobile ? -13.5 : 0;
+            const vOffsetYVh = vCenterOffsetVh + d * 60;
+            const vScale = Math.max(0.40, 0.98 - Math.abs(d) * 0.28); // Focused model scales up to full 0.98 in vertical mode
             const vOpacity = Math.max(0, 1.0 - Math.pow(Math.abs(d) / 0.95, 1.35));
             const vBlur = Math.min(16, Math.pow(Math.abs(d), 1.2) * 14);
 
-            // --- Interpolate using layoutProgress (0 -> 1) ---
+            // --- Interpolate smoothly using layoutProgress (0 -> 1) ---
             const currentXPx = gsap.utils.interpolate(hOffsetPx, vOffsetPx, layoutProgress);
-            const currentYVh = gsap.utils.interpolate(0, vOffsetYVh, layoutProgress);
+            const currentYVh = gsap.utils.interpolate(hOffsetYVh, vOffsetYVh, layoutProgress);
             const currentScale = gsap.utils.interpolate(hScale, vScale, layoutProgress);
             const currentOpacity = gsap.utils.interpolate(hOpacity, vOpacity, layoutProgress);
             const currentBlur = gsap.utils.interpolate(hBlur, vBlur, layoutProgress);
 
-            const isVisible = layoutProgress < 0.15 ? (isVerticalMode ? true : hOpacity > 0.01) : currentOpacity > 0.02;
+            const isVisible = currentOpacity > 0.01;
             const zIndex = isFocused ? 50 : Math.max(1, Math.round((2.0 - Math.abs(d)) * 20));
 
             return (
@@ -818,15 +764,20 @@ export default function Circular3DOrbitShowcase() {
                   filter: currentBlur > 0.05 ? `blur(${currentBlur.toFixed(1)}px)` : 'none',
                   zIndex: zIndex,
                   visibility: isVisible ? 'visible' : 'hidden',
-                  pointerEvents: !isVerticalMode ? (modelsIn > 0.75 ? 'auto' : 'none') : isFocused ? 'auto' : 'auto',
+                  pointerEvents: !isVerticalMode ? (modelsIn > 0.15 ? 'auto' : 'none') : 'auto',
+                  cursor: !isVerticalMode ? 'pointer' : 'default',
                 }}
+                onClick={!isVerticalMode ? () => handleModelClick(index) : undefined}
               >
                 {/* Click & Hover trigger overlay for seamless hover scramble & click response */}
-                {(!isVerticalMode || !isFocused) && (isVerticalMode || modelsIn > 0.75) && (
+                {(!isVerticalMode || !isFocused) && (isVerticalMode || modelsIn > 0.15) && (
                   <button
                     type="button"
                     className={styles.cardClickTrigger}
-                    onClick={() => handleModelClick(index)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleModelClick(index);
+                    }}
                     onMouseEnter={() => handleModelHover(index)}
                     onMouseLeave={() => {
                       if (!isVerticalMode) setHoveredIndex((prev) => (prev === index ? null : prev));
@@ -834,16 +785,6 @@ export default function Circular3DOrbitShowcase() {
                     aria-label={`Select 3D model ${item.title}`}
                   />
                 )}
-
-                {/* Foot Contact Shadow onto the nature podium */}
-                <div
-                  className={`${styles.footContactShadow} ${isVisualActive && (isFocused || !isVerticalMode) ? styles.footContactShadowActive : ''}`}
-                  aria-hidden="true"
-                >
-                  <div className={styles.footShadowAmbient} />
-                  <div className={styles.footShadowLeft} />
-                  <div className={styles.footShadowRight} />
-                </div>
 
                 {/* 3D Model Instance with Pixelated Cubic Transition and Individual Starting Angle */}
                 <div
@@ -861,7 +802,7 @@ export default function Circular3DOrbitShowcase() {
                       texturePath={item.texturePath}
                       autoRotateSpeed={10.0}
                       initialRotation={ROTATION_OFFSETS[index] || 0}
-                      sunToLeft={isVisualActive}
+                      sunToLeft={false}
                       onInteractionStart={() => setHasDismissed360Forever(true)}
                     />
                   </PixelCubeModelTransition>
@@ -874,7 +815,7 @@ export default function Circular3DOrbitShowcase() {
         {/* 3. Orbit Progress & Quick Pagination Indicator (hidden in horizontal mode, reveals on click) */}
         <div
           ref={indicatorRef}
-          className={`${styles.orbitIndicator} ${isInvertedVisualTheme ? styles.orbitIndicatorVisualActive : ''}`}
+          className={styles.orbitIndicator}
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
@@ -894,12 +835,12 @@ export default function Circular3DOrbitShowcase() {
           </div>
         </div>
 
-        {/* 4. Mode Toggle Button at Bottom-Left (hidden in horizontal mode, reveals smoothly in vertical mode) */}
+        {/* 4. Mode Toggle Button at Bottom-Left (reveals smoothly in vertical mode) */}
         <button
           ref={toggleBtnRef}
           type="button"
           onClick={toggleLayoutMode}
-          className={`${styles.toggleModeBtn} ${isInvertedVisualTheme ? styles.toggleModeBtnVisualActive : ''}`}
+          className={styles.toggleModeBtn}
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
@@ -923,6 +864,44 @@ export default function Circular3DOrbitShowcase() {
           <ScrambleText text="Horizontal" />
         </button>
 
+        {/* 5. Shop Button at Bottom-Right (Extreme Right) */}
+        <button
+          ref={shopBtnRef}
+          type="button"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setGalleryTriggerRect({
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+            });
+            setIsProduct2GalleryOpen(true);
+          }}
+          className={styles.shopButton}
+          style={{
+            pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
+          }}
+          aria-label="Shop product"
+        >
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          <ScrambleText text="Shop" />
+        </button>
+
         {/* 5. 360° Drag Explore Curved Indicator below Model in Vertical Mode */}
         {(() => {
           const scrollSettled = Math.abs(virtualIndex - Math.round(virtualIndex)) < 0.08;
@@ -930,7 +909,7 @@ export default function Circular3DOrbitShowcase() {
 
           return (
             <div
-              className={`${styles.orbit360Prompt} ${show360Prompt ? styles.orbit360PromptVisible : styles.orbit360PromptHidden} ${isInvertedVisualTheme ? styles.orbit360PromptVisualActive : ''}`}
+              className={`${styles.orbit360Prompt} ${show360Prompt ? styles.orbit360PromptVisible : styles.orbit360PromptHidden}`}
               aria-hidden={!show360Prompt}
             >
               <svg
@@ -967,16 +946,16 @@ export default function Circular3DOrbitShowcase() {
               !isVerticalMode && hoveredIndex !== null
                 ? (PRODUCT_CODES[hoveredIndex] || 'Product No. 324')
                 : !hasClickedModel && hintToggle
-                ? 'Click on any model to view'
-                : 'Our Collection'
+                  ? 'Click on any model to view'
+                  : 'Our Collection'
             }
             triggerOnChange={true}
             triggerKey={
               isVerticalMode
                 ? 'vertical'
                 : hoveredIndex !== null
-                ? `hover_${hoveredIndex}`
-                : `idle_${hasClickedModel}_${hintToggle}`
+                  ? `hover_${hoveredIndex}`
+                  : `idle_${hasClickedModel}_${hintToggle}`
             }
             speed="fast"
           />

@@ -18,12 +18,18 @@ export default function BackgroundCircularImageReveal({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const activeImageSrcRef = useRef(imageSrc);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const activeMediaSrcRef = useRef(imageSrc);
   if (isActive && imageSrc) {
-    activeImageSrcRef.current = imageSrc;
+    activeMediaSrcRef.current = imageSrc;
   }
   const animTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  const isVideo =
+    activeMediaSrcRef.current?.endsWith('.mp4') ||
+    activeMediaSrcRef.current?.endsWith('.webm') ||
+    false;
 
   // Keyboard shortcut: Escape to close
   useEffect(() => {
@@ -40,10 +46,61 @@ export default function BackgroundCircularImageReveal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive, onToggle]);
 
+  // Handle seamless video loop fading and 30% slower speed (0.7x playback rate)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideo || !isActive) return;
+
+    video.playbackRate = 0.70;
+
+    let hasTriggeredFadeOut = false;
+
+    const handleTimeUpdate = () => {
+      if (!video.duration || Number.isNaN(video.duration)) return;
+      const timeLeft = video.duration - video.currentTime;
+      const fadeThreshold = 0.75; // seconds before end to begin fade-out
+
+      if (timeLeft <= fadeThreshold && !hasTriggeredFadeOut) {
+        hasTriggeredFadeOut = true;
+        gsap.to(video, {
+          opacity: 0,
+          duration: 0.52,
+          ease: 'power2.inOut',
+          overwrite: true,
+        });
+      } else if (video.currentTime < 0.45 && hasTriggeredFadeOut) {
+        hasTriggeredFadeOut = false;
+        video.playbackRate = 0.70; // ensure playback rate persists across loop cycles
+        gsap.to(video, {
+          opacity: 1,
+          duration: 0.68,
+          ease: 'power2.out',
+          overwrite: true,
+        });
+      }
+    };
+
+    const handlePlayRate = () => {
+      video.playbackRate = 0.70;
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('play', handlePlayRate);
+    video.addEventListener('loadedmetadata', handlePlayRate);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('play', handlePlayRate);
+      video.removeEventListener('loadedmetadata', handlePlayRate);
+    };
+  }, [isActive, isVideo]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     const image = imageRef.current;
+    const video = videoRef.current;
+    const mediaEl = isVideo ? video : image;
 
     if (!canvas || !container) return;
 
@@ -57,15 +114,22 @@ export default function BackgroundCircularImageReveal({
     if (isActive) {
       setIsVisible(true);
 
+      if (video) {
+        video.playbackRate = 0.70;
+        video.currentTime = 0;
+        gsap.set(video, { opacity: 1 });
+        video.play().catch(() => {});
+      }
+
       const width = (canvas.width = window.innerWidth);
       const height = (canvas.height = window.innerHeight);
 
-      // Start with solid white canvas covering the background image
+      // Start with solid white canvas covering the background media
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
 
-      if (image) {
-        gsap.set(image, { scale: 1.04, opacity: 1 });
+      if (mediaEl) {
+        gsap.set(mediaEl, { scale: 1.04, opacity: 1 });
       }
       gsap.set(container, { opacity: 1 });
 
@@ -224,10 +288,10 @@ export default function BackgroundCircularImageReveal({
         0.15
       );
 
-      // Subtle smooth camera settle on the image behind the 3D model
-      if (image) {
+      // Subtle smooth camera settle on the image/video behind the 3D model
+      if (mediaEl) {
         tl.to(
-          image,
+          mediaEl,
           {
             scale: 1.0,
             duration: 3.4,
@@ -242,6 +306,9 @@ export default function BackgroundCircularImageReveal({
         onComplete: () => {
           setIsVisible(false);
           ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (video) {
+            video.pause();
+          }
         },
       });
       animTimelineRef.current = tl;
@@ -258,7 +325,7 @@ export default function BackgroundCircularImageReveal({
         animTimelineRef.current.kill();
       }
     };
-  }, [isActive, imageSrc]);
+  }, [isActive, imageSrc, isVideo]);
 
   return (
     <div
@@ -270,15 +337,28 @@ export default function BackgroundCircularImageReveal({
       }}
       aria-hidden="true"
     >
-      {/* Landscape Image Behind 3D Model */}
+      {/* Media Behind 3D Model (Image or Video) */}
       <div className={styles.imageWrap}>
-        <img
-          ref={imageRef}
-          src={activeImageSrcRef.current || imageSrc}
-          alt="Visual Background Specimen"
-          className={styles.backgroundImage}
-          draggable={false}
-        />
+        {isVideo ? (
+          <video
+            ref={videoRef}
+            src={activeMediaSrcRef.current || imageSrc}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className={styles.backgroundImage}
+          />
+        ) : (
+          <img
+            ref={imageRef}
+            src={activeMediaSrcRef.current || imageSrc}
+            alt="Visual Background Specimen"
+            className={styles.backgroundImage}
+            draggable={false}
+          />
+        )}
         <div className={styles.ambientOverlay} />
       </div>
 

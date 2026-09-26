@@ -22,10 +22,15 @@ interface AssetDef {
 }
 
 const ASSETS: AssetDef[] = [
-  { url: '/fashion+model+3d+model-reduced (1).glb', type: 'glb', weight: 85 },
-  { url: '/nature_3dmodel.png', type: 'texture', weight: 5 },
-  { url: '/back2.png', type: 'texture', weight: 5 },
-  { url: '/whiteback.png', type: 'texture', weight: 5 },
+  { url: '/fashion+model+3d+model-reduced (1).glb', type: 'glb', weight: 25 },
+  { url: '/evening+dress+3d+model.glb', type: 'glb', weight: 25 },
+  { url: '/realone.glb', type: 'glb', weight: 25 },
+  { url: '/pink+sequin+dress+3d+model.glb', type: 'glb', weight: 25 },
+  { url: '/nature_3dmodel.png', type: 'texture', weight: 3 },
+  { url: '/back2.png', type: 'texture', weight: 3 },
+  { url: '/whiteback.png', type: 'texture', weight: 3 },
+  { url: '/sun.png', type: 'texture', weight: 3 },
+  { url: '/pinkbackground.png', type: 'texture', weight: 3 },
 ];
 
 export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigger }: SitePreloaderProps) {

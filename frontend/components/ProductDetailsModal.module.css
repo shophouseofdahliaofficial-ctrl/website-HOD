@@ -2423,21 +2423,17 @@
   max-height: 100vh;
   max-height: 100dvh;
   min-height: 0;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   background: #f2f1f6;
-  border-radius: 0cap 0 0 0px;
-  padding: 1.5rem 1.4rem 1.4rem;
+  border-radius: 0;
+  padding: 1.5rem 1.4rem 0 1.4rem;
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reviewsPopupPanel::-webkit-scrollbar {
-  display: none;
 }
 
 .reviewsPopupHeader {
@@ -2446,10 +2442,78 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .reviewsPopupScroll {
-  display: block;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.reviewsPopupScroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.reviewsPopupScroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.reviewsPopupStickyFooter {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #f2f1f6;
+  padding: 0.85rem 0 1.15rem 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.trustpilotBtn,
+.googleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.95rem;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 130px;
+  white-space: nowrap;
+}
+
+.trustpilotBtn:hover {
+  background: #f0fdf4;
+  border-color: #00b67a;
+  color: #047857;
+  box-shadow: 0 4px 12px rgba(0, 182, 122, 0.15);
+  transform: translateY(-1px);
+}
+
+.googleBtn:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
 }
 
 .reviewsPopupClose {

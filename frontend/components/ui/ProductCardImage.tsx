@@ -14,7 +14,7 @@ interface ProductCardImageProps {
   height?: number;
 }
 
-const PLACEHOLDER_LOGO = '/finallogo (1).png';
+const PLACEHOLDER_LOGO = '/finallogo.png';
 
 export default function ProductCardImage({
   src,
