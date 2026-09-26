@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -19,6 +19,33 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
 
   const formatWalletAmount = (amount: number) =>
     amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const getWalletTxPurpose = (tx: { type: 'credit' | 'debit'; source: string }) => {
+    const source = (tx.source || '').toLowerCase();
+    if (tx.type === 'credit') {
+      return 'Money added';
+    }
+    if (source.includes('subscription')) {
+      return 'Plan purchased';
+    }
+    if (source.includes('purchase')) {
+      return 'Item bought';
+    }
+    if (source.includes('order') || source.includes('product') || source.includes('milk')) {
+      return 'Order bought';
+    }
+    if (source.trim()) {
+      return `${tx.source} bought`;
+    }
+    return 'Purchase made';
+  };
+
+  const formatWalletTxDate = (createdAt?: string | null) => {
+    if (!createdAt) return '--.--.----';
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) return '--.--.----';
+    return date.toLocaleDateString('en-GB').replace(/\//g, '.');
+  };
 
   const loadRazorpayScript = (): Promise<void> => {
     if (typeof window !== 'undefined' && (window as unknown as { Razorpay?: unknown }).Razorpay) {
@@ -145,6 +172,7 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
     <div
       className={headerStyles.walletModalOverlay}
       role="presentation"
+      data-lenis-prevent
       onClick={() => {
         setWalletAddAmountOpen(false);
         onClose();
@@ -155,6 +183,7 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
         role="dialog"
         aria-modal="true"
         aria-labelledby="wallet-modal-title"
+        data-lenis-prevent
         onClick={(e) => e.stopPropagation()}
       >
         <div className={headerStyles.walletModalHeader}>
@@ -208,6 +237,7 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
           <div
             className={headerStyles.walletNestedOverlay}
             role="presentation"
+            data-lenis-prevent
             onClick={() => setWalletAddAmountOpen(false)}
           >
             <div
@@ -215,6 +245,7 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
               role="dialog"
               aria-modal="true"
               aria-labelledby="wallet-add-amount-title"
+              data-lenis-prevent
               onClick={(e) => e.stopPropagation()}
             >
               <h3 id="wallet-add-amount-title" className={headerStyles.walletNestedTitle}>
@@ -245,7 +276,7 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
         )}
 
         <div className={headerStyles.walletModalSectionLabel}>Transaction history</div>
-        <div className={headerStyles.walletModalTxList}>
+        <div className={headerStyles.walletModalTxList} data-lenis-prevent>
           {walletLoading ? (
             <p className={headerStyles.walletModalEmpty}>Loading…</p>
           ) : walletTx.length === 0 ? (
@@ -262,10 +293,30 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
           ) : (
             walletTx.map((t) => (
               <div key={t.id} className={headerStyles.walletModalTxRow}>
-                <span className={headerStyles.walletModalTxLeft}>{t.source}</span>
-                <span className={headerStyles.walletModalTxRight}>
-                  {t.type === 'credit' ? '+' : '-'}₹{formatWalletAmount(t.amount)}
-                </span>
+                <div className={headerStyles.walletModalTxLeft}>
+                  <span
+                    className={`${headerStyles.walletModalTxIcon} ${
+                      t.type === 'credit' ? headerStyles.walletModalTxIconCredit : headerStyles.walletModalTxIconDebit
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {t.type === 'credit' ? '↓' : '↑'}
+                  </span>
+                  <div className={headerStyles.walletModalTxMeta}>
+                    <span className={headerStyles.walletModalTxTitle}>{getWalletTxPurpose(t)}</span>
+                    <span className={headerStyles.walletModalTxSub}>Txn ID: {t.id}</span>
+                  </div>
+                </div>
+                <div className={headerStyles.walletModalTxRight}>
+                  <span
+                    className={`${headerStyles.walletModalTxAmount} ${
+                      t.type === 'credit' ? headerStyles.walletModalTxAmountCredit : headerStyles.walletModalTxAmountDebit
+                    }`}
+                  >
+                    {t.type === 'credit' ? '+' : '-'} ₹{formatWalletAmount(t.amount)}
+                  </span>
+                  <span className={headerStyles.walletModalTxDate}>{formatWalletTxDate(t.createdAt)}</span>
+                </div>
               </div>
             ))
           )}

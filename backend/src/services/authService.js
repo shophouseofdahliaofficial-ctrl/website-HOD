@@ -225,11 +225,12 @@ const login = async (email, password) => {
   let lifetimeSavings = 0;
   let resolvedName = name;
   let resolvedEmail = normalizedEmail;
+  let resolvedAvatarUrl = authData.user.user_metadata?.avatar_url || authData.user.user_metadata?.picture || undefined;
   
   try {
     console.log('[AUTH] Attempting to fetch role from database (source of truth)...');
     const profileResult = await Promise.race([
-      query('SELECT id, name, email, role, lifetime_savings FROM users WHERE id::text = $1::text OR LOWER(email) = LOWER($2::text) ORDER BY CASE WHEN id::text = $1::text THEN 0 ELSE 1 END LIMIT 1', [canonicalUserId, normalizedEmail]),
+      query('SELECT id, name, email, role, lifetime_savings, avatar_url FROM users WHERE id::text = $1::text OR LOWER(email) = LOWER($2::text) ORDER BY CASE WHEN id::text = $1::text THEN 0 ELSE 1 END LIMIT 1', [canonicalUserId, normalizedEmail]),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Query timeout')), 5000) // 5 second timeout
       )
@@ -241,6 +242,7 @@ const login = async (email, password) => {
       lifetimeSavings = row.lifetime_savings || 0;
       resolvedName = row.name || resolvedName;
       resolvedEmail = normalizeEmail(row.email || resolvedEmail);
+      resolvedAvatarUrl = row.avatar_url || resolvedAvatarUrl;
       roleSource = 'database';
       console.log('[AUTH] ✅ Role from database (source of truth):', role);
       
@@ -275,10 +277,10 @@ const login = async (email, password) => {
     setImmediate(async () => {
       try {
         await query(
-          `INSERT INTO users (id, name, email, role, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, NOW(), NOW())
-           ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, role = EXCLUDED.role, updated_at = NOW()`,
-          [canonicalUserId, name, normalizedEmail, role]
+          `INSERT INTO users (id, name, email, role, avatar_url, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+           ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, role = EXCLUDED.role, avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url), updated_at = NOW()`,
+          [canonicalUserId, name, normalizedEmail, role, resolvedAvatarUrl || null]
         );
         console.log('[AUTH] Background profile sync completed');
       } catch (bgError) {
@@ -302,6 +304,7 @@ const login = async (email, password) => {
     email: resolvedEmail,
     role,
     lifetimeSavings: Number(lifetimeSavings || 0),
+    avatarUrl: resolvedAvatarUrl,
     createdAt: authData.user.created_at || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

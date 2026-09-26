@@ -58,6 +58,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const currentUser = await authApi.getCurrentUser();
           const normalized = normalizeUserProfile(currentUser);
           if (normalized) {
+            if (!normalized.avatarUrl) {
+              try {
+                const { data } = await supabase.auth.getSession();
+                const sessionMeta = data.session?.user?.user_metadata;
+                const metaAvatar = sessionMeta?.avatar_url || sessionMeta?.picture || null;
+                if (metaAvatar) {
+                  normalized.avatarUrl = metaAvatar;
+                }
+              } catch (_) {}
+            }
             setUser(normalized);
             userStorage.set(normalized);
             console.log('[AUTH] User verified, role:', normalized.role);
@@ -265,6 +275,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const currentUser = await authApi.getCurrentUser();
       const normalized = normalizeUserProfile(currentUser);
       if (normalized) {
+        if (!normalized.avatarUrl) {
+          try {
+            const { data } = await supabase.auth.getSession();
+            const sessionMeta = data.session?.user?.user_metadata;
+            const metaAvatar = sessionMeta?.avatar_url || sessionMeta?.picture || null;
+            if (metaAvatar) {
+              normalized.avatarUrl = metaAvatar;
+            }
+          } catch (_) {}
+        }
         setUser(normalized);
         userStorage.set(normalized);
       }

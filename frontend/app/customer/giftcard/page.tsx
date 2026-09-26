@@ -6,18 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import CustomerSidebarLayout from '@/components/customer/CustomerSidebarLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { apiClient, walletApi } from '@/lib/api';
+import { apiClient, walletApi, giftCardApi, GiftCardItem } from '@/lib/api';
 import Logo from '@/components/Logo';
 import styles from './page.module.css';
-
-interface GiftCardHistoryItem {
-  id: string;
-  code: string;
-  amount: number;
-  type: 'created' | 'redeemed';
-  status: 'Created' | 'Redeemed';
-  date: string;
-}
 
 export default function GiftCardsPage() {
   const router = useRouter();
@@ -34,68 +25,57 @@ export default function GiftCardsPage() {
   const [redeemedValue, setRedeemedValue] = useState<number | null>(null);
 
   // History State
-  const [historyList, setHistoryList] = useState<GiftCardHistoryItem[]>([]);
+  const [historyList, setHistoryList] = useState<GiftCardItem[]>([]);
 
   // Create Tab State
-  const [creationType, setCreationType] = useState<'random' | 'custom'>('random');
-  const [customName, setCustomName] = useState('');
   const [createdGiftCode, setCreatedGiftCode] = useState<string | null>(null);
   const [step, setStep] = useState<'configure' | 'amount' | 'success'>('configure');
   const [giftCardAmount, setGiftCardAmount] = useState<string>('');
   const [selectedAmountOption, setSelectedAmountOption] = useState<'500' | '1000' | '2000' | 'custom' | null>(null);
 
+  const loadHistory = async () => {
+    try {
+      const data = await giftCardApi.getHistory();
+      if (Array.isArray(data) && data.length > 0) {
+        setHistoryList(data);
+        return;
+      }
+    } catch (e) {
+      // fallback
+    }
 
-
-  useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('milko_gift_card_history');
-      if (stored) {
+      const storedHistory = localStorage.getItem('hod_gift_card_history');
+      if (storedHistory) {
         try {
-          setHistoryList(JSON.parse(stored));
-        } catch (e) {
-          setHistoryList([]);
-        }
-      } else {
-        const defaultHistory: GiftCardHistoryItem[] = [
-          {
-            id: '1',
-            code: 'SCRB-WNJ8-92L2',
-            amount: 1000,
-            type: 'created',
-            status: 'Created',
-            date: new Date(Date.now() - 3600000 * 24).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-          },
-          {
-            id: '2',
-            code: 'SCRB-78KL-M90P',
-            amount: 500,
-            type: 'redeemed',
-            status: 'Redeemed',
-            date: new Date(Date.now() - 3600000 * 48).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-          }
-        ];
-        localStorage.setItem('milko_gift_card_history', JSON.stringify(defaultHistory));
-        setHistoryList(defaultHistory);
+          setHistoryList(JSON.parse(storedHistory));
+          return;
+        } catch {}
       }
     }
-  }, []);
-
-  const recordHistory = (code: string, amount: number, type: 'created' | 'redeemed') => {
-    if (typeof window === 'undefined') return;
-    const newItem: GiftCardHistoryItem = {
-      id: Date.now().toString(),
-      code,
-      amount,
-      type,
-      status: type === 'created' ? 'Created' : 'Redeemed',
-      date: new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    };
-    const stored = localStorage.getItem('milko_gift_card_history');
-    const existing: GiftCardHistoryItem[] = stored ? JSON.parse(stored) : [];
-    const updated = [newItem, ...existing];
-    localStorage.setItem('milko_gift_card_history', JSON.stringify(updated));
-    setHistoryList(updated);
+    setHistoryList([
+      {
+        id: '1',
+        code: 'HOD-WNJ8-92L2',
+        amount: 1000,
+        type: 'created',
+        status: 'Created',
+        date: new Date(Date.now() - 3600000 * 24).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      },
+      {
+        id: '2',
+        code: 'HOD-78KL-M90P',
+        amount: 500,
+        type: 'redeemed',
+        status: 'Redeemed',
+        date: new Date(Date.now() - 3600000 * 48).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
   };
+
+  useEffect(() => {
+    loadHistory();
+  }, [user]);
 
   // Synchronize Tab Changes
   const handleTabChange = (tab: string) => {
@@ -104,39 +84,28 @@ export default function GiftCardsPage() {
 
   const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!redeemCode.trim()) {
+    if (loading) return;
+
+    const rawCode = redeemCode.trim();
+    if (!rawCode) {
       showToast('Please enter a valid gift card code', 'error');
       return;
     }
 
+    const code = rawCode.toUpperCase();
     setLoading(true);
+
     try {
-      const code = redeemCode.trim().toUpperCase();
-      let valueToRedeem = 1000; // default/fallback amount if code was not created locally in this browser
-
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('milko_created_gift_cards');
-        const cardsMap = stored ? JSON.parse(stored) : {};
-        if (cardsMap[code]) {
-          valueToRedeem = Number(cardsMap[code]);
-          // Remove single-use card
-          delete cardsMap[code];
-          localStorage.setItem('milko_created_gift_cards', JSON.stringify(cardsMap));
-        }
-      }
-
-      // Call backend wallet api to credit user balance via real DB query!
-      await walletApi.createTopupOrder(valueToRedeem);
-
-      recordHistory(code, valueToRedeem, 'redeemed');
+      const res = await giftCardApi.redeem(code);
       setRedeemSuccess(true);
-      setRedeemedValue(valueToRedeem);
-      showToast(`Gift card successfully redeemed to wallet! Credited ₹${valueToRedeem}`, 'success');
+      setRedeemedValue(res.card.amount);
+      showToast(res.message || `Gift card successfully redeemed! Credited ₹${res.card.amount}`, 'success');
 
-      // Dispatch custom DOM event to trigger Header.tsx wallet update immediately
+      // Dispatch custom DOM event to trigger Header.tsx and wallet modal update immediately
       window.dispatchEvent(new Event('milko:wallet-updated'));
+      loadHistory();
     } catch (err: any) {
-      console.error('[REDEEM] Failed to credit wallet:', err);
+      console.error('[REDEEM] Failed to redeem gift card:', err);
       showToast(err?.message || 'Failed to redeem gift card. Please try again.', 'error');
     } finally {
       setLoading(false);
@@ -145,57 +114,31 @@ export default function GiftCardsPage() {
 
   const handleCreateGift = (e: React.FormEvent) => {
     e.preventDefault();
-    if (creationType === 'custom' && !customName.trim()) {
-      showToast('Please enter your name', 'error');
-      return;
-    }
-    setLoading(true);
-    // Simulate creation flow
-    setTimeout(() => {
-      setLoading(false);
-      let code = '';
-      if (creationType === 'custom') {
-        const sanitized = customName.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        if (!sanitized) {
-          showToast('Please enter a valid alphanumeric name', 'error');
-          setLoading(false);
-          return;
-        }
-        const suffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-        code = `${sanitized}-${suffix}`;
-      } else {
-        const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const part3 = Math.random().toString(36).substring(2, 6).toUpperCase();
-        code = `SCRB-${part1}-${part2}-${part3}`;
-      }
-      setCreatedGiftCode(code);
-      setStep('amount');
-    }, 1000);
+    setStep('amount');
   };
 
-  const handleConfirmAmount = (e: React.FormEvent) => {
+  const handleConfirmAmount = async (e: React.FormEvent) => {
     e.preventDefault();
     const amountNum = parseFloat(giftCardAmount);
     if (!giftCardAmount || isNaN(amountNum) || amountNum <= 0) {
       showToast('Please enter a valid amount greater than 0', 'error');
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-
-      // Save code and amount to localStorage registry
-      if (typeof window !== 'undefined' && createdGiftCode) {
-        const stored = localStorage.getItem('milko_created_gift_cards');
-        const cardsMap = stored ? JSON.parse(stored) : {};
-        cardsMap[createdGiftCode] = amountNum;
-        localStorage.setItem('milko_created_gift_cards', JSON.stringify(cardsMap));
-        recordHistory(createdGiftCode, amountNum, 'created');
-      }
-
+    try {
+      const res = await giftCardApi.create(amountNum);
+      const generatedCode = (res as any)?.data?.code || (res as any)?.code;
+      setCreatedGiftCode(generatedCode);
       setStep('success');
-    }, 1200);
+      showToast('Gift card created successfully in the system!', 'success');
+      loadHistory();
+    } catch (err: any) {
+      console.error('[CREATE] Failed to create gift card:', err);
+      showToast(err?.message || 'Failed to create gift card. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAmountOptionSelect = (option: '500' | '1000' | '2000' | 'custom') => {
@@ -301,33 +244,35 @@ export default function GiftCardsPage() {
           {activeTab === 'redeem' && (
             <div className={styles.cardContainer} style={{ maxWidth: '600px', margin: '0 auto' }}>
               <div className={styles.formSection}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '2rem' }}>
-                  <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: '#f5f5f7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: '#111' }}>
-                    <svg width="60" height="60" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                      <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                      <g id="SVGRepo_iconCarrier">
-                        <path d="M125.636 167.282C152.172 164.088 262.835 146.609 279.5 158.654C281.599 160.17 280.166 171.957 280.166 174.471C280.166 179.149 282.039 189.814 280.166 193.882C278.641 197.187 240.578 199.634 226.442 199.634" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                        <path d="M176.975 202.882C145.167 205.872 123.489 205.549 120.143 205.323C116.974 205.11 120.871 187.006 120.143 166.126" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                        <path d="M130.562 228.771C133.962 239.962 126.692 302.709 131.228 312.53C131.995 314.189 150.273 312.53 165.815 312.53C202.128 312.53 239.35 312.53 275.594 312.53" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                        <path d="M270.19 205.461C272.139 241.723 274.243 276.979 274.243 313.267" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                        <path opacity="0.498698" d="M179.679 171.954C185.26 216.522 180.157 271.997 182.011 310.354" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                        <path opacity="0.498698" d="M221.112 174.867C221.404 218.687 219.277 262.16 219.277 305.983" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                        <path opacity="0.498698" d="M189.52 156.742C173.291 151.062 142.054 106.007 161.574 90.2834C185.2 71.2555 196.917 120.945 196.173 135.304C195.402 150.203 192.455 162.165 192.847 161.745C199.688 154.398 199.455 114.605 218.131 104.576C254.204 85.2074 275.915 114.289 248.075 131.731C235.143 139.83 200.167 148.122 200.167 149.597C200.167 158.403 222.416 149.647 238.093 152.455" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
-                      </g>
-                    </svg>
-                  </div>
-                  <h2 className={styles.sectionTitle}>Add Gift Card to Wallet</h2>
-                  <p className={styles.sectionDesc} style={{ margin: 0 }}>Enter your 12-digit or alphanumeric Gift Card code to add the balance directly to your Scribble wallet credits.</p>
-                </div>
-
                 {redeemSuccess ? (
-                  <div className={styles.successBox}>
-                    <div className={styles.successIcon}>✓</div>
-                    <h3>Redeemed Successfully!</h3>
-                    <p>Gift card value of <strong>₹{redeemedValue}</strong> has been successfully credited to your wallet balance.</p>
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <div
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        background: '#e8f5e9',
+                        color: '#2e7d32',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.5rem auto',
+                      }}
+                    >
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem', color: '#111' }}>
+                      Redeemed Successfully!
+                    </h3>
+                    <p style={{ color: '#666', marginBottom: '2rem', fontSize: '1rem', lineHeight: '1.5' }}>
+                      Gift card value of <strong style={{ color: '#111' }}>₹{redeemedValue}</strong> has been successfully credited to your wallet balance.
+                    </p>
                     <button
+                      type="button"
                       className={styles.primaryButton}
+                      style={{ width: '100%', maxWidth: '320px', margin: '0 auto' }}
                       onClick={() => {
                         setRedeemSuccess(false);
                         setRedeemCode('');
@@ -337,22 +282,44 @@ export default function GiftCardsPage() {
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleRedeem} className={styles.form}>
-                    <div className={styles.inputGroup}>
-                      <label htmlFor="redeemCode" className={styles.label}>Gift Card Code</label>
-                      <input
-                        id="redeemCode"
-                        type="text"
-                        placeholder="e.g. SCRB-WNJ8-92L2"
-                        className={styles.input}
-                        value={redeemCode}
-                        onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-                      />
+                  <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '2rem' }}>
+                      <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: '#f5f5f7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: '#111' }}>
+                        <svg width="60" height="60" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                          <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+                          <g id="SVGRepo_iconCarrier">
+                            <path d="M125.636 167.282C152.172 164.088 262.835 146.609 279.5 158.654C281.599 160.17 280.166 171.957 280.166 174.471C280.166 179.149 282.039 189.814 280.166 193.882C278.641 197.187 240.578 199.634 226.442 199.634" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path d="M176.975 202.882C145.167 205.872 123.489 205.549 120.143 205.323C116.974 205.11 120.871 187.006 120.143 166.126" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path d="M130.562 228.771C133.962 239.962 126.692 302.709 131.228 312.53C131.995 314.189 150.273 312.53 165.815 312.53C202.128 312.53 239.35 312.53 275.594 312.53" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path d="M270.19 205.461C272.139 241.723 274.243 276.979 274.243 313.267" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path opacity="0.498698" d="M179.679 171.954C185.26 216.522 180.157 271.997 182.011 310.354" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path opacity="0.498698" d="M221.112 174.867C221.404 218.687 219.277 262.16 219.277 305.983" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            <path opacity="0.498698" d="M189.52 156.742C173.291 151.062 142.054 106.007 161.574 90.2834C185.2 71.2555 196.917 120.945 196.173 135.304C195.402 150.203 192.455 162.165 192.847 161.745C199.688 154.398 199.455 114.605 218.131 104.576C254.204 85.2074 275.915 114.289 248.075 131.731C235.143 139.83 200.167 148.122 200.167 149.597C200.167 158.403 222.416 149.647 238.093 152.455" stroke="#000000" strokeOpacity="0.9" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"></path>
+                          </g>
+                        </svg>
+                      </div>
+                      <h2 className={styles.sectionTitle}>Add Gift Card to Wallet</h2>
+                      <p className={styles.sectionDesc} style={{ margin: 0 }}>Enter your 12-digit or alphanumeric Gift Card code to add the balance directly to your House Of Dahlia wallet credits.</p>
                     </div>
-                    <button type="submit" className={styles.primaryButton}>
-                      Redeem to Wallet
-                    </button>
-                  </form>
+
+                    <form onSubmit={handleRedeem} className={styles.form}>
+                      <div className={styles.inputGroup}>
+                        <label htmlFor="redeemCode" className={styles.label}>Gift Card Code</label>
+                        <input
+                          id="redeemCode"
+                          type="text"
+                          placeholder="e.g. HOD-WNJ8-92L2"
+                          className={styles.input}
+                          value={redeemCode}
+                          onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
+                        />
+                      </div>
+                      <button type="submit" className={styles.primaryButton}>
+                        Redeem to Wallet
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
             </div>
@@ -397,7 +364,6 @@ export default function GiftCardsPage() {
                     style={{ width: '100%' }}
                     onClick={() => {
                       setCreatedGiftCode(null);
-                      setCustomName('');
                       setGiftCardAmount('');
                       setSelectedAmountOption(null);
                       setStep('configure');
@@ -423,16 +389,15 @@ export default function GiftCardsPage() {
                   <form onSubmit={handleConfirmAmount} className={styles.form}>
                     <div className={styles.inputGroup}>
                       <label htmlFor="giftCardAmount" className={styles.label}>Gift Card Amount (₹)</label>
-                      <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '1.1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#555', fontSize: '1.1rem' }}>₹</span>
+                      <div className={styles.amountInputWrap}>
+                        <span className={styles.currencySymbol}>₹</span>
                         <input
                           id="giftCardAmount"
                           type="text"
                           pattern="[0-9]*"
                           inputMode="numeric"
                           placeholder="Enter amount"
-                          className={styles.input}
-                          style={{ paddingLeft: '2.2rem', fontSize: '1.1rem', fontWeight: '600' }}
+                          className={styles.amountInput}
                           value={giftCardAmount}
                           onChange={(e) => handleAmountInputChange(e.target.value)}
                         />
@@ -506,69 +471,12 @@ export default function GiftCardsPage() {
                       </svg>
                     </div>
                     <h2 className={styles.sectionTitle}>Create a Gift Card</h2>
-                    <p className={styles.sectionDesc} style={{ margin: 0 }}>Configure and generate a unique gift card. Choose a random code structure or brand it with your custom name.</p>
+                    <p className={styles.sectionDesc} style={{ margin: 0 }}>Generate a unique random gift card code to share or load with credits.</p>
                   </div>
 
                   <form onSubmit={handleCreateGift} className={styles.form} style={{ gap: 0 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setCreationType('random')}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '1.25rem 0.5rem',
-                          borderRadius: '16px',
-                          border: creationType === 'random' ? '2px solid #f2f1f6' : '1px solid #e5e5ea',
-                          background: creationType === 'random' ? '#f5f5f7' : 'white',
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ fontSize: '1rem', fontWeight: '700', color: '#111', marginBottom: '0.25rem', whiteSpace: 'nowrap' }}>Random Code</span>
-                        <span style={{ fontSize: '0.75rem', color: '#666' }}>Generate random alphanumerics</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setCreationType('custom')}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '1.25rem 0.5rem',
-                          borderRadius: '16px',
-                          border: creationType === 'custom' ? '2px solid #f2f1f6' : '1px solid #e5e5ea',
-                          background: creationType === 'custom' ? '#f5f5f7' : 'white',
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ fontSize: '1rem', fontWeight: '700', color: '#111', marginBottom: '0.25rem', whiteSpace: 'nowrap' }}>Custom Name</span>
-                        <span style={{ fontSize: '0.75rem', color: '#666' }}>Include custom name or text</span>
-                      </button>
-                    </div>
-
-                    {creationType === 'custom' && (
-                      <div className={styles.inputGroup} style={{ marginBottom: '1.5rem' }}>
-                        <label htmlFor="customName" className={styles.label} style={{ whiteSpace: 'nowrap' }}>Your Name / Custom Text</label>
-                        <input
-                          id="customName"
-                          type="text"
-                          maxLength={15}
-                          placeholder="e.g. MODI"
-                          className={styles.input}
-                          value={customName}
-                          onChange={(e) => setCustomName(e.target.value)}
-                        />
-                      </div>
-                    )}
-
                     <button type="submit" className={styles.primaryButton} style={{ width: '100%' }}>
-                      Create Gift Card
+                      Generate Gift Card
                     </button>
                   </form>
                 </div>

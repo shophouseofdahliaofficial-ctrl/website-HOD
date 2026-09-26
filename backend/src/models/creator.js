@@ -14,6 +14,8 @@ const ensureCreatorTable = async () => {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  await query(`ALTER TABLE creators ADD COLUMN IF NOT EXISTS product_ids JSONB NOT NULL DEFAULT '[]'::jsonb;`);
+  await query(`ALTER TABLE creators ADD COLUMN IF NOT EXISTS products_title VARCHAR(255) DEFAULT 'Our Products';`);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS creator_slug VARCHAR(255);`);
   creatorSchemaEnsured = true;
 };

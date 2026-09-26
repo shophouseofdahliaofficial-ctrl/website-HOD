@@ -17,6 +17,8 @@ export { addressesApi } from './addresses';
 export type { CreateAddressInput, UpdateAddressInput } from './addresses';
 export { adminOrdersApi } from './adminOrders';
 export { walletApi } from './wallet';
+export { giftCardApi } from './giftCards';
+export type { GiftCardItem, CreateGiftCardResponse, RedeemGiftCardResponse } from './giftCards';
 export { apiClient } from './client';
 export { trackCartEvent } from './analytics';
 export { connectorsApi } from './connectors';

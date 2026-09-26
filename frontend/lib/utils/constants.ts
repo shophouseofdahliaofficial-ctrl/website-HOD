@@ -49,6 +49,11 @@ export const API_ENDPOINTS = {
     TOPUP: '/api/wallet/topup',
     VERIFY_TOPUP: '/api/wallet/verify-topup',
   },
+  GIFTCARDS: {
+    CREATE: '/api/giftcards/create',
+    REDEEM: '/api/giftcards/redeem',
+    HISTORY: '/api/giftcards/history',
+  },
   // Banners
   BANNERS: {
     LIST: '/api/banners',

@@ -2160,13 +2160,36 @@
 }
 
 .walletModalTxList {
-  flex: 1;
-  min-height: 80px;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 280px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0 16px 17px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.walletModalTxList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.walletModalTxList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.walletModalTxList::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+}
+
+.walletModalTxList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .walletModalTxRow {

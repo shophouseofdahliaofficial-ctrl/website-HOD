@@ -5,15 +5,18 @@ export const GA_MEASUREMENT_ID = (
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''
 ).trim();
 export const SITE_DESCRIPTION =
-  'House Of Dahlia — Fine Art Photo Prints, Custom Keepsakes, Photo Booth Strips & Floral Boutique.';
+  "House Of Dahlia — Women's Clothing Brand & Luxury Atelier.";
 
 export const DEFAULT_KEYWORDS = [
   'house of dahlia',
-  'photo prints',
-  'polaroids',
-  'photo booth',
-  'keepsakes',
-  'fine art photography',
+  "women's clothing brand",
+  "women's clothing",
+  "women's fashion",
+  'luxury atelier',
+  'custom wear',
+  'bespoke apparel',
+  'dresses',
+  'couture',
 ];
 
 export const PUBLIC_SITEMAP_ROUTES = [

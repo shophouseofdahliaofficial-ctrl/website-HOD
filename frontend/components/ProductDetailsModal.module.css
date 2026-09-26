@@ -2450,17 +2450,14 @@
   overflow-y: auto;
   min-height: 0;
   padding-bottom: 1rem;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .reviewsPopupScroll::-webkit-scrollbar {
-  width: 5px;
-}
-
-.reviewsPopupScroll::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .reviewsPopupStickyFooter {
@@ -2470,7 +2467,7 @@
   right: 0;
   background: #f2f1f6;
   padding: 0.85rem 0 1.15rem 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  border-top: 0px solid rgba(0, 0, 0, 0.07);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2504,16 +2501,14 @@
   background: #f0fdf4;
   border-color: #00b67a;
   color: #047857;
-  box-shadow: 0 4px 12px rgba(0, 182, 122, 0.15);
-  transform: translateY(-1px);
+
 }
 
 .googleBtn:hover {
   background: #f8fafc;
   border-color: #3b82f6;
   color: #1d4ed8;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-  transform: translateY(-1px);
+
 }
 
 .reviewsPopupClose {
@@ -2577,6 +2572,14 @@
   flex-direction: column;
   gap: 0.85rem;
   margin-top: 1rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.reviewsList::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .reviewItem {

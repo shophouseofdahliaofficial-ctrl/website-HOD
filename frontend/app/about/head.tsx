@@ -1,9 +1,9 @@
-﻿import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo';
+import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo';
 
 export default function Head() {
   const title = `About ${SITE_NAME}`;
   const description =
-    'Learn more about Scribble Studios and our creative mission.';
+    `Discover ${SITE_NAME} — A luxury women's clothing brand and atelier crafting timeless apparel and bespoke couture.`;
   const canonical = absoluteUrl('/about');
 
   return (
@@ -18,7 +18,7 @@ export default function Head() {
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="keywords" content={`${SITE_NAME}, design studio, creative agency, digital services`} />
+      <meta name="keywords" content={`${SITE_NAME}, women's clothing brand, luxury atelier, custom wear, couture`} />
       <meta name="application-name" content={SITE_NAME} />
       <meta name="subject" content={SITE_DESCRIPTION} />
     </>

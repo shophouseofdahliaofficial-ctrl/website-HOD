@@ -308,6 +308,7 @@ export default function DashboardPage() {
                 src={user.avatarUrl}
                 alt={user.name || 'User'}
                 className={styles.avatarImage}
+                referrerPolicy="no-referrer"
               />
             ) : (
               initial

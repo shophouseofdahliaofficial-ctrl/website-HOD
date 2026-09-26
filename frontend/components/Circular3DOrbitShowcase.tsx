@@ -770,12 +770,17 @@ export default function Circular3DOrbitShowcase() {
               const textOpacity = Math.max(0, Math.min(1, 1 - Math.pow(Math.abs(textD) / 0.62, 1.4)));
               const textBlur = Math.min(14, Math.pow(Math.abs(textD), 1.2) * 16);
 
+              const isMobile = windowWidth <= 768;
+              const textTransform = isMobile
+                ? `translate3d(0, ${textY.toFixed(2)}px, 0)`
+                : `translate3d(0, calc(-50% + ${textY.toFixed(2)}px), 0)`;
+
               return (
                 <div
                   key={item.id}
                   className={styles.textBlock}
                   style={{
-                    transform: `translate3d(0, ${textY.toFixed(2)}px, 0)`,
+                    transform: textTransform,
                     opacity: isTextVisible ? Number(textOpacity.toFixed(3)) : 0,
                     filter: textBlur > 0.08 ? `blur(${textBlur.toFixed(2)}px)` : 'none',
                     visibility: isTextVisible ? 'visible' : 'hidden',

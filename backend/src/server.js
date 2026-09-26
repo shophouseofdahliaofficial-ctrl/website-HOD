@@ -18,6 +18,7 @@ const addressRoutes = require('./routes/addresses');
 const orderRoutes = require('./routes/orders');
 const orderController = require('./controllers/orderController');
 const walletRoutes = require('./routes/wallet');
+const giftCardRoutes = require('./routes/giftCards');
 const connectorRoutes = require('./routes/connectors');
 const feedbackRoutes = require('./routes/feedback');
 const creatorRoutes = require('./routes/creators');
@@ -216,6 +217,7 @@ app.get('/api/orders/me/delivered-for-review', authenticate, orderController.get
 app.get('/api/orders/delivered-for-review', authenticate, orderController.getDeliveredForReview);
 app.use('/api/orders', orderRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/giftcards', giftCardRoutes);
 app.use('/api/admin', adminRoutes);
 // Do NOT use app.use('/api', …) — it intercepts every /api/* path (e.g. /api/coupons) if a
 // narrower route like /api/coupons is missing on an older deploy. Register explicit paths only.

@@ -31,7 +31,7 @@ export default function StoriesPage() {
         Stories & Editorials
       </h1>
       <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '3rem' }}>
-        Narratives on couture design, botanical aesthetics, craftsmanship, and timeless keepsakes.
+        Narratives on couture design, botanical aesthetics, craftsmanship, and timeless women's fashion.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>

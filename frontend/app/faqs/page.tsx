@@ -9,7 +9,7 @@ export default function FAQsPage() {
   const faqs = [
     {
       q: 'What is House Of Dahlia?',
-      a: 'House Of Dahlia is a contemporary luxury atelier creating couture fashion, bespoke memory keepsakes, and handcrafted stationery crafted with sustainable materials and exquisite detailing.',
+      a: "House Of Dahlia is a contemporary luxury women's clothing brand and atelier creating couture fashion, bespoke dresses, and artisanal apparel crafted with sustainable materials and exquisite detailing.",
     },
     {
       q: 'How long does shipping take?',
