@@ -21,6 +21,7 @@ interface ModelViewer3DProps {
   playAnimation?: boolean;
   initialRotation?: number; // radians offset for distinct starting angle
   sunToLeft?: boolean;
+  isVisible?: boolean; // Prop to pause WebGL rendering when inactive
   onInteractionStart?: () => void;
 }
 
@@ -31,10 +32,13 @@ export default function ModelViewer3D({
   playAnimation = false,
   initialRotation = 0,
   sunToLeft = false,
+  isVisible = true,
   onInteractionStart,
 }: ModelViewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const isVisibleRef = useRef(isVisible);
+  isVisibleRef.current = isVisible;
   const lightsRef = useRef<{
     ambient: THREE.AmbientLight;
     hemi: THREE.HemisphereLight;
@@ -172,18 +176,19 @@ export default function ModelViewer3D({
     scene.add(camera);
 
     // 3. Renderer setup
+    const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobileDevice, // Disable expensive MSAA on mobile devices
       alpha: true,
       powerPreference: 'high-performance',
-      precision: 'mediump',
+      precision: isMobileDevice ? 'lowp' : 'mediump',
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(isMobileDevice ? 1.0 : Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = !isMobileDevice;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     container.appendChild(renderer.domElement);
@@ -617,9 +622,27 @@ export default function ModelViewer3D({
     }
     updateSize();
 
-    // 10. Animation Loop
+    // 10. Viewport Intersection Detection
+    let isIntersectingViewport = true;
+    let intersectionObserver: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== 'undefined' && container) {
+      intersectionObserver = new IntersectionObserver(
+        (entries) => {
+          isIntersectingViewport = entries[0]?.isIntersecting ?? true;
+        },
+        { threshold: 0.01 }
+      );
+      intersectionObserver.observe(container);
+    }
+
+    // 11. Animation Loop with Selective Throttling
     const animate = () => {
       animId = requestAnimationFrame(animate);
+
+      // If model is explicitly set to not visible (e.g. offscreen in vertical carousel or inactive phase), skip rendering
+      if (!isVisibleRef.current || !isIntersectingViewport) {
+        return;
+      }
 
       const delta = clock.getDelta();
 
@@ -634,12 +657,15 @@ export default function ModelViewer3D({
 
     animate();
 
-    // 11. Clean-up on unmount
+    // 12. Clean-up on unmount
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', updateSize);
       if (resizeObserver) {
         resizeObserver.disconnect();
+      }
+      if (intersectionObserver) {
+        intersectionObserver.disconnect();
       }
 
       if (mixer) {

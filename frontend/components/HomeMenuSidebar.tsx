@@ -269,13 +269,15 @@ export default function HomeMenuSidebar({ isOpen, onClose, triggerRect }: HomeMe
     const startWidth = triggerRect?.width ?? 65;
     const startHeight = triggerRect?.height ?? 32;
 
-    // Target: Dynamic height panel 15px from top, right, and bottom (height = window.innerHeight - 30px)
-    const targetTop = 15;
-    const targetRight = 15;
-    const targetWidth = window.innerWidth <= 640
-      ? Math.max(280, window.innerWidth - 30)
-      : Math.min(window.innerWidth - 30, Math.max(340, window.innerWidth * 0.40));
-    const targetHeight = Math.max(300, window.innerHeight - 30);
+    // Target: 10px gap from all sides on mobile (<= 768px), 15px gap on desktop
+    const isMobile = window.innerWidth <= 768;
+    const gap = isMobile ? 10 : 15;
+    const targetTop = gap;
+    const targetRight = gap;
+    const targetWidth = isMobile
+      ? Math.max(260, window.innerWidth - gap * 2)
+      : Math.min(window.innerWidth - gap * 2, Math.max(340, window.innerWidth * 0.40));
+    const targetHeight = Math.max(300, window.innerHeight - gap * 2);
 
     gsap.killTweensOf([panel, innerContent, ...items]);
 
@@ -294,7 +296,7 @@ export default function HomeMenuSidebar({ isOpen, onClose, triggerRect }: HomeMe
 
     const tl = gsap.timeline();
 
-    // 1. Smoothly expand from small button coordinates to 15px-inset dynamic panel
+    // 1. Smoothly expand from small button coordinates to inset dynamic panel
     tl.to(panel, {
       top: targetTop,
       right: targetRight,
@@ -325,20 +327,22 @@ export default function HomeMenuSidebar({ isOpen, onClose, triggerRect }: HomeMe
     }
   }, [isOpen, mounted, triggerRect]);
 
-  // Keep 15px-inset dynamic height and responsive on window resize while menu is open
+  // Keep inset dynamic height and responsive on window resize while menu is open
   useEffect(() => {
     if (!isOpen || !mounted || isClosing) return;
 
     const handleResize = () => {
       const panel = panelRef.current;
       if (!panel) return;
-      const targetWidth = window.innerWidth <= 640
-        ? Math.max(280, window.innerWidth - 30)
-        : Math.min(window.innerWidth - 30, Math.max(340, window.innerWidth * 0.40));
-      const targetHeight = Math.max(300, window.innerHeight - 30);
+      const isMobile = window.innerWidth <= 768;
+      const gap = isMobile ? 10 : 15;
+      const targetWidth = isMobile
+        ? Math.max(260, window.innerWidth - gap * 2)
+        : Math.min(window.innerWidth - gap * 2, Math.max(340, window.innerWidth * 0.40));
+      const targetHeight = Math.max(300, window.innerHeight - gap * 2);
       gsap.to(panel, {
-        top: 15,
-        right: 15,
+        top: gap,
+        right: gap,
         width: targetWidth,
         height: targetHeight,
         duration: 0.2,

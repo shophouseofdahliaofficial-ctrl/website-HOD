@@ -178,6 +178,7 @@ export default function Circular3DOrbitShowcase() {
   const indicatorRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
   const shopBtnRef = useRef<HTMLButtonElement>(null);
+  const mobileArrowsRef = useRef<HTMLDivElement>(null);
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -197,6 +198,19 @@ export default function Circular3DOrbitShowcase() {
 
   // 360 Drag Prompt: permanently dismissed for session once user tries to drag a 3D model
   const [hasDismissed360Forever, setHasDismissed360Forever] = useState(false);
+  const [isSectionInView, setIsSectionInView] = useState(true);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined' || !containerRef.current) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        setIsSectionInView(entries[0]?.isIntersecting ?? true);
+      },
+      { threshold: 0.01 }
+    );
+    io.observe(containerRef.current);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     if (hasClickedModel) return;
@@ -272,6 +286,7 @@ export default function Circular3DOrbitShowcase() {
 
   useEffect(() => {
     const handleScrollIntro = () => {
+      if (isVerticalModeRef.current) return;
       const scrollY = window.scrollY || window.pageYOffset;
       const vh = window.innerHeight || 800;
 
@@ -332,12 +347,12 @@ export default function Circular3DOrbitShowcase() {
     }
   };
 
-  // Continuous scroll-driven vertical model navigation with stopping dwell time
+  // Continuous scroll-driven vertical model navigation with stopping dwell time (Desktop only)
   useEffect(() => {
     if (!isVerticalMode) return;
 
     const handleVerticalScroll = () => {
-      if (!containerRef.current || isTransitioningRef.current) return;
+      if (!containerRef.current || isTransitioningRef.current || windowWidth <= 768) return;
       const scrollY = window.scrollY || window.pageYOffset;
       const vh = window.innerHeight || 800;
       const phase2El = document.getElementById('phase-2-section');
@@ -374,7 +389,74 @@ export default function Circular3DOrbitShowcase() {
       window.removeEventListener('scroll', handleVerticalScroll);
       window.removeEventListener('resize', handleVerticalScroll);
     };
-  }, [isVerticalMode, totalItems]);
+  }, [isVerticalMode, totalItems, windowWidth]);
+
+  // Prevent vertical page scrolling on mobile when in vertical 3D mode (allows 3D rotation, navigation by arrow only)
+  useEffect(() => {
+    const isMobile = windowWidth <= 768;
+    if (isMobile && isVerticalMode && !isProduct2GalleryOpen) {
+      if ((window as any).lenis) {
+        (window as any).lenis.stop();
+      }
+
+      const preventTouchScroll = (e: TouchEvent) => {
+        const target = e.target as HTMLElement;
+        // Allow clicking buttons
+        if (target && (target.tagName === 'BUTTON' || target.closest('button'))) {
+          return;
+        }
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      };
+
+      window.addEventListener('touchmove', preventTouchScroll, { passive: false });
+
+      return () => {
+        if ((window as any).lenis) {
+          (window as any).lenis.start();
+        }
+        window.removeEventListener('touchmove', preventTouchScroll);
+      };
+    }
+  }, [isVerticalMode, windowWidth, isProduct2GalleryOpen]);
+
+  // Programmatic navigation to a specific model index (Mobile arrows & card clicks)
+  const goToModel = (targetIndex: number) => {
+    if (isTransitioningRef.current) return;
+    const clampedIndex = Math.max(0, Math.min(totalItems - 1, targetIndex));
+    if (clampedIndex === activeIndex) return;
+
+    setActiveIndex(clampedIndex);
+    isTransitioningRef.current = true;
+
+    const isMobile = windowWidth <= 768;
+    if (!isMobile) {
+      const vh = window.innerHeight || 800;
+      const phase2 = document.getElementById('phase-2-section');
+      const p2Top = phase2 ? phase2.offsetTop : vh;
+      const scrollableDistance = vh * 6.2;
+      const targetTop = p2Top + (clampedIndex / (totalItems - 1)) * scrollableDistance;
+
+      window.scrollTo({ top: targetTop, behavior: 'instant' as any });
+      if ((window as any).lenis) {
+        (window as any).lenis.scrollTo(targetTop, { immediate: true });
+      }
+    }
+
+    gsap.killTweensOf(animRef.current);
+    gsap.to(animRef.current, {
+      virtualIndex: clampedIndex,
+      duration: 0.65,
+      ease: 'power3.out',
+      onUpdate: () => {
+        setVirtualIndex(animRef.current.virtualIndex);
+      },
+      onComplete: () => {
+        isTransitioningRef.current = false;
+      },
+    });
+  };
 
   // Toggle handler: switches between horizontal lineup and vertical carousel with smooth reverse animation
   const toggleLayoutMode = () => {
@@ -435,9 +517,16 @@ export default function Circular3DOrbitShowcase() {
           0.85
         );
       }
-      if (toggleBtnRef.current) {
+      if (toggleBtnRef.current && shopBtnRef.current) {
         tl.to(
-          toggleBtnRef.current,
+          [toggleBtnRef.current, shopBtnRef.current],
+          { opacity: 1, duration: 0.45, ease: 'power2.out' },
+          0.85
+        );
+      }
+      if (mobileArrowsRef.current) {
+        tl.to(
+          mobileArrowsRef.current,
           { opacity: 1, duration: 0.45, ease: 'power2.out' },
           0.85
         );
@@ -488,7 +577,14 @@ export default function Circular3DOrbitShowcase() {
       if (toggleBtnRef.current && shopBtnRef.current) {
         tl.to(
           [toggleBtnRef.current, shopBtnRef.current],
-          { opacity: 0, duration: 0.35, ease: 'power2.in' },
+          { opacity: 0, duration: 0.25, ease: 'power2.in' },
+          0
+        );
+      }
+      if (mobileArrowsRef.current) {
+        tl.to(
+          mobileArrowsRef.current,
+          { opacity: 0, duration: 0.25, ease: 'power2.in' },
           0
         );
       }
@@ -531,19 +627,29 @@ export default function Circular3DOrbitShowcase() {
       if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
       if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
       if (shopBtnRef.current) gsap.set(shopBtnRef.current, { opacity: 0 });
+      if (mobileArrowsRef.current) gsap.set(mobileArrowsRef.current, { opacity: 0 });
 
       // Kill any running tweens
       gsap.killTweensOf(animRef.current);
+
+      animRef.current.introProgress = 1.0;
+      setIntroProgress(1.0);
+      if (quickIntroRef.current) {
+        quickIntroRef.current(1.0);
+      }
 
       const tl = gsap.timeline({
         onComplete: () => {
           setUiVisible(true);
 
+          const isMobile = windowWidth <= 768;
           const vh = window.innerHeight || 800;
           const phase2 = document.getElementById('phase-2-section');
           const p2Top = phase2 ? phase2.offsetTop : vh;
           const scrollableDistance = vh * 6.2;
-          const targetTop = p2Top + (clickedIndex / (totalItems - 1)) * scrollableDistance;
+          const targetTop = isMobile
+            ? p2Top + vh * 1.45
+            : p2Top + (clickedIndex / (totalItems - 1)) * scrollableDistance;
 
           window.scrollTo({ top: targetTop, behavior: 'instant' as any });
           if ((window as any).lenis) {
@@ -585,34 +691,17 @@ export default function Circular3DOrbitShowcase() {
           0.85
         );
       }
+      if (mobileArrowsRef.current) {
+        tl.to(
+          mobileArrowsRef.current,
+          { opacity: 1, duration: 0.45, ease: 'power2.out' },
+          0.85
+        );
+      }
     } else {
       // In vertical mode: clicking any other model centers it
       if (clickedIndex !== activeIndex) {
-        setActiveIndex(clickedIndex);
-        isTransitioningRef.current = true;
-
-        const vh = window.innerHeight || 800;
-        const phase2 = document.getElementById('phase-2-section');
-        const p2Top = phase2 ? phase2.offsetTop : vh;
-        const scrollableDistance = vh * 6.2;
-        const targetTop = p2Top + (clickedIndex / (totalItems - 1)) * scrollableDistance;
-
-        window.scrollTo({ top: targetTop, behavior: 'instant' as any });
-        if ((window as any).lenis) {
-          (window as any).lenis.scrollTo(targetTop, { immediate: true });
-        }
-
-        gsap.to(animRef.current, {
-          virtualIndex: clickedIndex,
-          duration: 0.75,
-          ease: 'power2.out',
-          onUpdate: () => {
-            setVirtualIndex(animRef.current.virtualIndex);
-          },
-          onComplete: () => {
-            isTransitioningRef.current = false;
-          },
-        });
+        goToModel(clickedIndex);
       }
     }
   };
@@ -787,26 +876,44 @@ export default function Circular3DOrbitShowcase() {
                 )}
 
                 {/* 3D Model Instance with Pixelated Cubic Transition and Individual Starting Angle */}
-                <div
-                  className={styles.modelContainerWrap}
-                  onPointerDown={() => setHasDismissed360Forever(true)}
-                  onTouchStart={() => setHasDismissed360Forever(true)}
-                  onMouseDown={() => setHasDismissed360Forever(true)}
-                >
-                  <PixelCubeModelTransition
-                    modelIndex={index}
-                    triggerEntry={hasEnteredPhase2}
-                  >
-                    <ModelViewer3D
-                      modelPath={item.modelPath}
-                      texturePath={item.texturePath}
-                      autoRotateSpeed={10.0}
-                      initialRotation={ROTATION_OFFSETS[index] || 0}
-                      sunToLeft={false}
-                      onInteractionStart={() => setHasDismissed360Forever(true)}
-                    />
-                  </PixelCubeModelTransition>
-                </div>
+                {(() => {
+                  let isModelActive = false;
+                  if (isSectionInView) {
+                    if (!isVerticalMode) {
+                      isModelActive = hasEnteredPhase2;
+                    } else {
+                      if (isMobile) {
+                        isModelActive = index === activeIndex || Math.abs(index - virtualIndex) < 0.85;
+                      } else {
+                        isModelActive = Math.abs(index - virtualIndex) < 1.8;
+                      }
+                    }
+                  }
+
+                  return (
+                    <div
+                      className={styles.modelContainerWrap}
+                      onPointerDown={() => setHasDismissed360Forever(true)}
+                      onTouchStart={() => setHasDismissed360Forever(true)}
+                      onMouseDown={() => setHasDismissed360Forever(true)}
+                    >
+                      <PixelCubeModelTransition
+                        modelIndex={index}
+                        triggerEntry={hasEnteredPhase2}
+                      >
+                        <ModelViewer3D
+                          modelPath={item.modelPath}
+                          texturePath={item.texturePath}
+                          autoRotateSpeed={10.0}
+                          initialRotation={ROTATION_OFFSETS[index] || 0}
+                          sunToLeft={false}
+                          isVisible={isModelActive}
+                          onInteractionStart={() => setHasDismissed360Forever(true)}
+                        />
+                      </PixelCubeModelTransition>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -833,6 +940,39 @@ export default function Circular3DOrbitShowcase() {
               }}
             />
           </div>
+        </div>
+
+        {/* 3.5 Mobile Left-Center Up / Down Arrow Navigation (Mobile vertical mode only) */}
+        <div
+          ref={mobileArrowsRef}
+          className={styles.mobileNavArrows}
+          style={{
+            pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => goToModel(activeIndex - 1)}
+            disabled={activeIndex === 0}
+            className={styles.mobileArrowBtn}
+            aria-label="Previous 3D model"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => goToModel(activeIndex + 1)}
+            disabled={activeIndex === totalItems - 1}
+            className={styles.mobileArrowBtn}
+            aria-label="Next 3D model"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
         </div>
 
         {/* 4. Mode Toggle Button at Bottom-Left (reveals smoothly in vertical mode) */}

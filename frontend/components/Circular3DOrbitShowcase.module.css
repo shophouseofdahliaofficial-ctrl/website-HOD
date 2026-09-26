@@ -445,7 +445,7 @@
 }
 
 .shopButton:hover {
-  background-color: #000000;
+  background-color: #800020;
   color: white;
 }
 
@@ -555,7 +555,65 @@
 
 
 
+/* Mobile Left-Center Up / Down Arrow Navigation */
+.mobileNavArrows {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 55;
+  display: none;
+  flex-direction: column;
+  gap: 0.8rem;
+  opacity: 0;
+  will-change: opacity;
+  user-select: none;
+}
+
+.mobileArrowBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #800020;
+  border: 1px solid #800020;
+  border-radius: 0 !important;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobileArrowBtn:hover:not(:disabled) {
+  background-color: #800020;
+  color: #ffffff;
+}
+
+.mobileArrowBtn:active:not(:disabled) {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.mobileArrowBtn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.mobileArrowBtn:disabled {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
+  .mobileNavArrows {
+    display: flex;
+  }
+
   .introStatementHeading {
     font-size: clamp(1.4rem, 5.5vw, 2.1rem);
     white-space: normal;
@@ -617,11 +675,11 @@
   }
 
   .orbit360Prompt {
-    bottom: 4.55rem;
+    bottom: 8.55rem;
   }
 
   .orbitArcSvg {
-    width: 170px;
+    width: 121px;
   }
 
   .orbitIndicator {

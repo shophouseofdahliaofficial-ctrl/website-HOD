@@ -161,6 +161,9 @@ export default function HomePage() {
       return x - Math.floor(x);
     };
 
+    let lastPixelState = -1; // 0: clear, 1: transitioning, 2: solid
+    let lastPhase3State = -1; // 0: clear, 1: transitioning, 2: solid
+
     const renderPixelTransition = () => {
       const canvas = pixelCanvasRef.current;
       if (!canvas) return;
@@ -170,27 +173,40 @@ export default function HomePage() {
       const scrollY = window.scrollY || window.pageYOffset;
       const vh = window.innerHeight || 800;
 
-      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-      const height = (canvas.height = canvas.offsetHeight || vh);
-
-      ctx.clearRect(0, 0, width, height);
-
       // When fully at top (0px scroll), completely clear
-      if (scrollY <= 0) return;
-
-      const PIXEL_SIZE = 14;
-      const cols = Math.ceil(width / PIXEL_SIZE);
-      const rows = Math.ceil(height / PIXEL_SIZE);
+      if (scrollY <= 0) {
+        if (lastPixelState !== 0) {
+          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+          const height = (canvas.height = canvas.offsetHeight || vh);
+          ctx.clearRect(0, 0, width, height);
+          lastPixelState = 0;
+        }
+        return;
+      }
 
       // Smooth progression: baseline ascends from the bottom (rows) all the way to top (0)
       const scrollRatio = Math.min(1.0, scrollY / (vh * 0.9));
       
       // If fully covered in white and already past transition threshold, fill solid once and return
       if (scrollRatio >= 1.0) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
+        if (lastPixelState !== 2) {
+          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+          const height = (canvas.height = canvas.offsetHeight || vh);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          lastPixelState = 2;
+        }
         return;
       }
+
+      lastPixelState = 1;
+      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+      const height = (canvas.height = canvas.offsetHeight || vh);
+      ctx.clearRect(0, 0, width, height);
+
+      const PIXEL_SIZE = 14;
+      const cols = Math.ceil(width / PIXEL_SIZE);
+      const rows = Math.ceil(height / PIXEL_SIZE);
 
       // Gradual emergence factor to guarantee 0 height at scrollY = 0 and smooth exit when scrolling back up
       const emergence = Math.min(1.0, scrollY / 180);
@@ -236,24 +252,46 @@ export default function HomePage() {
 
       const rect = phase3Section.getBoundingClientRect();
       const vh = window.innerHeight || 800;
-      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-      const height = (canvas.height = canvas.offsetHeight || vh);
-
-      ctx.clearRect(0, 0, width, height);
 
       // Only start pixel emergence as Phase 3 actually begins entering the viewport (rect.top < vh)
-      if (rect.top >= vh) return;
+      if (rect.top >= vh * 1.05) {
+        if (lastPhase3State !== 0) {
+          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+          const height = (canvas.height = canvas.offsetHeight || vh);
+          ctx.clearRect(0, 0, width, height);
+          lastPhase3State = 0;
+        }
+        return;
+      }
 
       const scrollRatio = Math.min(1.0, Math.max(0, (vh - rect.top) / (vh * 0.85)));
 
-      if (scrollRatio <= 0) return;
+      if (scrollRatio <= 0) {
+        if (lastPhase3State !== 0) {
+          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+          const height = (canvas.height = canvas.offsetHeight || vh);
+          ctx.clearRect(0, 0, width, height);
+          lastPhase3State = 0;
+        }
+        return;
+      }
 
       // If fully covered in Phase 3 (#530000), fill solid once and return
       if (scrollRatio >= 1.0) {
-        ctx.fillStyle = '#530000';
-        ctx.fillRect(0, 0, width, height);
+        if (lastPhase3State !== 2) {
+          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+          const height = (canvas.height = canvas.offsetHeight || vh);
+          ctx.fillStyle = '#530000';
+          ctx.fillRect(0, 0, width, height);
+          lastPhase3State = 2;
+        }
         return;
       }
+
+      lastPhase3State = 1;
+      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+      const height = (canvas.height = canvas.offsetHeight || vh);
+      ctx.clearRect(0, 0, width, height);
 
       const PIXEL_SIZE = 14;
       const cols = Math.ceil(width / PIXEL_SIZE);
@@ -292,6 +330,16 @@ export default function HomePage() {
       const scrollY = window.scrollY || window.pageYOffset;
       const vh = window.innerHeight || 800;
 
+      // Pause Hero video when scrolled down past Phase 1 to free mobile GPU/decoder
+      const video = videoRef.current;
+      if (video) {
+        if (scrollY > vh * 0.95) {
+          if (!video.paused) {
+            video.pause();
+          }
+        }
+      }
+
       // Smoothly bend and squeeze center title with strong 3D perspective
       if (titleRef.current) {
         const scrollRatio = Math.min(1, Math.max(0, scrollY / vh));
@@ -325,6 +373,8 @@ export default function HomePage() {
     };
 
     const handleResize = () => {
+      lastPixelState = -1;
+      lastPhase3State = -1;
       renderPixelTransition();
       renderPhase3PixelTransition();
     };

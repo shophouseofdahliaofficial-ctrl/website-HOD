@@ -209,10 +209,13 @@
 }
 
 @keyframes scrollArrowGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
     filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0));
   }
+
   50% {
     opacity: 1;
     filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
@@ -233,10 +236,13 @@
 }
 
 @keyframes scrollTextShimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
     text-shadow: 0 0 0px rgba(255, 255, 255, 0);
   }
+
   50% {
     opacity: 1;
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.75), 0 0 16px rgba(255, 255, 255, 0.35);
@@ -469,7 +475,7 @@
   }
 
   .scrollIndicator {
-    bottom: 1.75rem;
+    bottom: 4.75rem;
   }
 
   .phase3Section {
