@@ -2384,12 +2384,6 @@ export default function Header() {
                   {/* Invisible Natural Sizer ensuring navMenuAnchor has the exact natural width & height */}
                   <div className={styles.navMenuSizer} aria-hidden="true">
                     <span className={styles.navLink}>Collections</span>
-                    <span className={styles.othersButton}>
-                      Others
-                      <svg className={styles.dropdownArrow} viewBox="0 0 24 24" fill="none">
-                        <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
                   </div>
 
                   <nav
@@ -2404,23 +2398,6 @@ export default function Header() {
                       >
                         Collections
                       </Link>
-                      <div className={styles.othersDropdown}>
-                        <button
-                          type="button"
-                          onClick={() => handleDropdownToggle('others')}
-                          className={`${styles.othersButton} ${expandedDropdown === 'others' || isOthersNavActive(pathname) ? styles.navLinkActive : ''}`}
-                        >
-                          Others
-                          <svg
-                            className={`${styles.dropdownArrow} ${expandedDropdown === 'others' ? styles.dropdownArrowOpen : ''}`}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                      </div>
                     </div>
 
                     {/* In-Pill Infinite Marquee Sub-Menu Section */}
@@ -2828,78 +2805,6 @@ export default function Header() {
                           >
                             Size Guide
                           </Link>
-                          <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
-                            <button
-                              type="button"
-                              className={styles.mobileNavLink}
-                              onClick={() => setIsMobileOthersOpen(!isMobileOthersOpen)}
-                              style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '0', textAlign: 'left', cursor: 'pointer' }}
-                            >
-                              <span>Others</span>
-                              <svg
-                                className={`${styles.dropdownArrow} ${isMobileOthersOpen ? styles.dropdownArrowOpen : ''}`}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                                style={{ width: '16px', height: '16px' }}
-                              >
-                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </button>
-                            {isMobileOthersOpen && (
-                              <div className={styles.mobileSubMenu} style={{ paddingLeft: '1.5rem', paddingTop: '0.8rem', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                <Link
-                                  href="/calendars"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/calendars') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Calendars
-                                </Link>
-                                <Link
-                                  href="/notepads"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/notepads') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Notepads
-                                </Link>
-                                <Link
-                                  href="/posters"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/posters') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Posters
-                                </Link>
-                                <Link
-                                  href="/sketchbooks"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/sketchbooks') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Sketchbooks
-                                </Link>
-                                <Link
-                                  href="/planners"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/planners') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Planners
-                                </Link>
-                                <Link
-                                  href="/papers"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/papers') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Papers
-                                </Link>
-                                <Link
-                                  href="/cardstocks"
-                                  className={`${styles.mobileSubNavLink} ${isHeaderNavActive(pathname, '/cardstocks') ? styles.mobileSubNavLinkActive : ''}`}
-                                  onClick={closeMobileMenu}
-                                >
-                                  Card Stocks
-                                </Link>
-                              </div>
-                            )}
-                          </div>
 
                           {/* Help Submenu in Mobile Drawer */}
                           <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
