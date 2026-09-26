@@ -39,6 +39,7 @@ export async function middleware(request: NextRequest) {
   try {
     const res = await fetch(`${resolveApiBaseUrl({ hostname: hostOnly })}/api/content/coming_soon`, {
       headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) return NextResponse.next();
 
