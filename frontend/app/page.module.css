@@ -286,6 +286,10 @@
   z-index: 5;
   pointer-events: none;
   overflow: hidden;
+  contain: strict;
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .pixelTransitionCanvas {
@@ -297,6 +301,8 @@
   pointer-events: none;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transform: translateZ(0);
+  will-change: contents;
 }
 
 .whiteContentContainer {
@@ -334,6 +340,10 @@
   z-index: 11;
   pointer-events: none;
   overflow: hidden;
+  contain: strict;
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .phase3PixelCanvas {
@@ -345,6 +355,8 @@
   pointer-events: none;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transform: translateZ(0);
+  will-change: contents;
 }
 
 .phase3Content {

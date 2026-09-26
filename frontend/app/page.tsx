@@ -173,45 +173,103 @@ export default function HomePage() {
     };
   }, []);
 
+  // Precomputed deterministic noise table for ultra-fast procedural pixel lookups without Math.sin
+  const NOISE_TABLE = new Float32Array(512);
+  for (let i = 0; i < 512; i++) {
+    const x = Math.sin((i + 1) * 12.9898 + 78.233) * 43758.5453;
+    NOISE_TABLE[i] = x - Math.floor(x);
+  }
+
   // Track scroll for dynamic nav color inversion, center title squeeze, and procedural pixel square transition
   useEffect(() => {
-    // Fast pseudo-random generator
-    const pseudoRandom = (seed: number) => {
-      const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
-      return x - Math.floor(x);
-    };
-
     let lastPixelState = -1; // 0: clear, 1: transitioning, 2: solid
     let lastPhase3State = -1; // 0: clear, 1: transitioning, 2: solid
+    let lastInvertedVal = false;
 
-    const renderPixelTransition = () => {
+    let p1Width = 0;
+    let p1Height = 0;
+    let p3Width = 0;
+    let p3Height = 0;
+    let p1PixelSize = 16;
+    let p3PixelSize = 16;
+    let p1ColOffsets = new Float32Array(0);
+    let p3ColOffsets = new Float32Array(0);
+
+    let phase2OffsetTop = 0;
+    let phase3OffsetTop = 0;
+
+    const measureLayout = () => {
+      const vh = window.innerHeight || 800;
+      if (nextSectionRef.current) {
+        phase2OffsetTop = nextSectionRef.current.offsetTop || vh;
+      }
+      if (phase3SectionRef.current) {
+        phase3OffsetTop = phase3SectionRef.current.offsetTop || vh * 2;
+      }
+    };
+
+    const resizeCanvases = () => {
+      const isMobile = window.innerWidth <= 768;
+      p1PixelSize = isMobile ? 20 : 16;
+      p3PixelSize = isMobile ? 20 : 16;
+
+      const p1Canvas = pixelCanvasRef.current;
+      if (p1Canvas) {
+        p1Width = p1Canvas.width = p1Canvas.offsetWidth || window.innerWidth;
+        p1Height = p1Canvas.height = p1Canvas.offsetHeight || window.innerHeight || 800;
+        const cols = Math.ceil(p1Width / p1PixelSize);
+        p1ColOffsets = new Float32Array(cols);
+        for (let c = 0; c < cols; c++) {
+          const wave1 = Math.sin(c * 0.28) * 0.25;
+          const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
+          const randomSpike = (NOISE_TABLE[(c * 7 + 13) & 511] - 0.5) * 0.45;
+          p1ColOffsets[c] = wave1 + wave2 + randomSpike;
+        }
+      }
+
+      const p3Canvas = phase3PixelCanvasRef.current;
+      if (p3Canvas) {
+        p3Width = p3Canvas.width = p3Canvas.offsetWidth || window.innerWidth;
+        p3Height = p3Canvas.height = p3Canvas.offsetHeight || window.innerHeight || 800;
+        const cols = Math.ceil(p3Width / p3PixelSize);
+        p3ColOffsets = new Float32Array(cols);
+        for (let c = 0; c < cols; c++) {
+          const wave1 = Math.sin(c * 0.28) * 0.25;
+          const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
+          const randomSpike = (NOISE_TABLE[(c * 11 + 23) & 511] - 0.5) * 0.45;
+          p3ColOffsets[c] = wave1 + wave2 + randomSpike;
+        }
+      }
+
+      measureLayout();
+      lastPixelState = -1;
+      lastPhase3State = -1;
+    };
+
+    const renderPixelTransition = (scrollY: number, vh: number) => {
       const canvas = pixelCanvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const scrollY = window.scrollY || window.pageYOffset;
-      const vh = window.innerHeight || 800;
+      const width = p1Width || canvas.width || window.innerWidth;
+      const height = p1Height || canvas.height || vh;
 
-      // When fully at top (0px scroll), completely clear
+      // When fully at top (0px scroll), clear once and return
       if (scrollY <= 0) {
         if (lastPixelState !== 0) {
-          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-          const height = (canvas.height = canvas.offsetHeight || vh);
           ctx.clearRect(0, 0, width, height);
           lastPixelState = 0;
         }
         return;
       }
 
-      // Smooth progression: baseline ascends from the bottom (rows) all the way to top (0)
-      const scrollRatio = Math.min(1.0, scrollY / (vh * 0.9));
+      // Smooth progression: baseline ascends from bottom to top
+      const scrollRatio = Math.min(1.0, scrollY / (vh * 0.88));
       
-      // If fully covered in white and already past transition threshold, fill solid once and return
+      // If fully covered in white, fill solid once and return
       if (scrollRatio >= 1.0) {
         if (lastPixelState !== 2) {
-          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-          const height = (canvas.height = canvas.offsetHeight || vh);
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, width, height);
           lastPixelState = 2;
@@ -220,42 +278,32 @@ export default function HomePage() {
       }
 
       lastPixelState = 1;
-      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-      const height = (canvas.height = canvas.offsetHeight || vh);
       ctx.clearRect(0, 0, width, height);
 
-      const PIXEL_SIZE = 14;
-      const cols = Math.ceil(width / PIXEL_SIZE);
+      const PIXEL_SIZE = p1PixelSize;
+      const cols = Math.min(p1ColOffsets.length, Math.ceil(width / PIXEL_SIZE));
       const rows = Math.ceil(height / PIXEL_SIZE);
-
-      // Gradual emergence factor to guarantee 0 height at scrollY = 0 and smooth exit when scrolling back up
-      const emergence = Math.min(1.0, scrollY / 180);
+      const emergence = Math.min(1.0, scrollY / 160);
 
       ctx.fillStyle = '#ffffff';
 
       for (let c = 0; c < cols; c++) {
-        // Multi-frequency organic stepped noise curve matching reference image
-        const wave1 = Math.sin(c * 0.28) * 0.25;
-        const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
-        const randomSpike = (pseudoRandom(c * 7 + 13) - 0.5) * 0.45;
-        const colOffset = wave1 + wave2 + randomSpike;
-
-        // Base row calculation: starts exactly at rows (invisible) and ascends smoothly with scroll
-        const baselineRow = rows - Math.floor(scrollRatio * (rows + 15));
+        const colOffset = p1ColOffsets[c] || 0;
+        const baselineRow = rows - Math.floor(scrollRatio * (rows + 14));
         const jaggedOffset = Math.floor(colOffset * 10 * emergence);
         const startRow = Math.max(0, Math.min(rows, baselineRow - jaggedOffset));
 
-        // Draw solid column pixels down to the bottom
-        for (let r = startRow; r < rows; r++) {
-          ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+        // High-performance single batch draw call for entire solid column
+        if (startRow < rows) {
+          ctx.fillRect(c * PIXEL_SIZE, startRow * PIXEL_SIZE, PIXEL_SIZE, (rows - startRow) * PIXEL_SIZE);
         }
 
-        // Procedural floating pixel bits / dithered stair-steps above the boundary
+        // Procedural floating pixel bits above the boundary
         if (startRow < rows && emergence > 0.05) {
-          for (let r = Math.max(0, startRow - 4); r < startRow; r++) {
+          for (let r = Math.max(0, startRow - 2); r < startRow; r++) {
             const distanceAbove = startRow - r;
-            const spawnChance = Math.max(0, (0.6 - distanceAbove * 0.15) * emergence);
-            if (pseudoRandom(c * 43 + r * 67) < spawnChance) {
+            const spawnChance = Math.max(0, (0.55 - distanceAbove * 0.2) * emergence);
+            if (NOISE_TABLE[(c * 43 + r * 67) & 511] < spawnChance) {
               ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             }
           }
@@ -263,44 +311,38 @@ export default function HomePage() {
       }
     };
 
-    const renderPhase3PixelTransition = () => {
+    const renderPhase3PixelTransition = (scrollY: number, vh: number) => {
       const canvas = phase3PixelCanvasRef.current;
-      const phase3Section = phase3SectionRef.current;
-      if (!canvas || !phase3Section) return;
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const rect = phase3Section.getBoundingClientRect();
-      const vh = window.innerHeight || 800;
+      const phase3Top = phase3OffsetTop - scrollY;
+      const width = p3Width || canvas.width || window.innerWidth;
+      const height = p3Height || canvas.height || vh;
 
-      // Only start pixel emergence as Phase 3 actually begins entering the viewport (rect.top < vh)
-      if (rect.top >= vh * 1.05) {
+      // Only start pixel emergence as Phase 3 actually begins entering viewport
+      if (phase3Top >= vh * 1.05) {
         if (lastPhase3State !== 0) {
-          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-          const height = (canvas.height = canvas.offsetHeight || vh);
           ctx.clearRect(0, 0, width, height);
           lastPhase3State = 0;
         }
         return;
       }
 
-      const scrollRatio = Math.min(1.0, Math.max(0, (vh - rect.top) / (vh * 0.85)));
+      const scrollRatio = Math.min(1.0, Math.max(0, (vh - phase3Top) / (vh * 0.85)));
 
       if (scrollRatio <= 0) {
         if (lastPhase3State !== 0) {
-          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-          const height = (canvas.height = canvas.offsetHeight || vh);
           ctx.clearRect(0, 0, width, height);
           lastPhase3State = 0;
         }
         return;
       }
 
-      // If fully covered in Phase 3 (#530000), fill solid once and return
+      // If fully covered in Phase 3 (#530000), fill solid once
       if (scrollRatio >= 1.0) {
         if (lastPhase3State !== 2) {
-          const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-          const height = (canvas.height = canvas.offsetHeight || vh);
           ctx.fillStyle = '#530000';
           ctx.fillRect(0, 0, width, height);
           lastPhase3State = 2;
@@ -309,36 +351,31 @@ export default function HomePage() {
       }
 
       lastPhase3State = 1;
-      const width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-      const height = (canvas.height = canvas.offsetHeight || vh);
       ctx.clearRect(0, 0, width, height);
 
-      const PIXEL_SIZE = 14;
-      const cols = Math.ceil(width / PIXEL_SIZE);
+      const PIXEL_SIZE = p3PixelSize;
+      const cols = Math.min(p3ColOffsets.length, Math.ceil(width / PIXEL_SIZE));
       const rows = Math.ceil(height / PIXEL_SIZE);
       const emergence = Math.min(1.0, scrollRatio * 2.8);
 
       ctx.fillStyle = '#530000';
 
       for (let c = 0; c < cols; c++) {
-        const wave1 = Math.sin(c * 0.28) * 0.25;
-        const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
-        const randomSpike = (pseudoRandom(c * 11 + 23) - 0.5) * 0.45;
-        const colOffset = wave1 + wave2 + randomSpike;
-
-        const baselineRow = rows - Math.floor(scrollRatio * (rows + 15));
+        const colOffset = p3ColOffsets[c] || 0;
+        const baselineRow = rows - Math.floor(scrollRatio * (rows + 14));
         const jaggedOffset = Math.floor(colOffset * 10 * emergence);
         const startRow = Math.max(0, Math.min(rows, baselineRow - jaggedOffset));
 
-        for (let r = startRow; r < rows; r++) {
-          ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+        // High-performance single batch draw call for solid column
+        if (startRow < rows) {
+          ctx.fillRect(c * PIXEL_SIZE, startRow * PIXEL_SIZE, PIXEL_SIZE, (rows - startRow) * PIXEL_SIZE);
         }
 
         if (startRow < rows && emergence > 0.05) {
-          for (let r = Math.max(0, startRow - 4); r < startRow; r++) {
+          for (let r = Math.max(0, startRow - 2); r < startRow; r++) {
             const distanceAbove = startRow - r;
-            const spawnChance = Math.max(0, (0.6 - distanceAbove * 0.15) * emergence);
-            if (pseudoRandom(c * 47 + r * 71) < spawnChance) {
+            const spawnChance = Math.max(0, (0.55 - distanceAbove * 0.2) * emergence);
+            if (NOISE_TABLE[(c * 47 + r * 71) & 511] < spawnChance) {
               ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             }
           }
@@ -346,11 +383,13 @@ export default function HomePage() {
       }
     };
 
-    const handleScroll = () => {
+    let isTicking = false;
+
+    const updateVisuals = () => {
       const scrollY = window.scrollY || window.pageYOffset;
       const vh = window.innerHeight || 800;
 
-      // Pause Hero video when scrolled down past Phase 1 to free mobile GPU/decoder
+      // Pause Hero video when scrolled down past Phase 1 to free mobile GPU
       const video = videoRef.current;
       if (video) {
         if (scrollY > vh * 0.95) {
@@ -360,16 +399,16 @@ export default function HomePage() {
         }
       }
 
-      // Smoothly bend and squeeze center title with strong 3D perspective
+      // Smoothly bend and squeeze center title
       if (titleRef.current) {
         const scrollRatio = Math.min(1, Math.max(0, scrollY / vh));
         const scaleX = Math.max(0.2, 1 - scrollRatio * 0.8);
         const scaleY = Math.max(0.55, 1 - scrollRatio * 0.45);
-        const tiltX = scrollRatio * 62; // Deep 3D backward bend
+        const tiltX = scrollRatio * 62;
         titleRef.current.style.transform = `perspective(380px) rotateX(${tiltX.toFixed(2)}deg) scaleX(${scaleX.toFixed(4)}) scaleY(${scaleY.toFixed(4)})`;
       }
 
-      // Promptly disappear the "Scroll down" indicator as Phase 1 begins scrolling down
+      // Promptly disappear the "Scroll down" indicator
       if (scrollIndicatorRef.current) {
         const indicatorOpacity = Math.max(0, 1 - scrollY / 80);
         scrollIndicatorRef.current.style.opacity = indicatorOpacity.toFixed(3);
@@ -377,31 +416,42 @@ export default function HomePage() {
         scrollIndicatorRef.current.style.pointerEvents = indicatorOpacity < 0.05 ? 'none' : 'auto';
       }
 
-      if (nextSectionRef.current && phase3SectionRef.current) {
-        const nextRect = nextSectionRef.current.getBoundingClientRect();
-        const phase3Rect = phase3SectionRef.current.getBoundingClientRect();
-        // Invert nav colors only when over the white Phase 2 section
-        // Switch back to white text and hide center logo as Phase 3 (#530000) pixels emerge
-        setIsInverted(nextRect.top <= 80 && phase3Rect.top > vh * 0.7);
-      } else if (nextSectionRef.current) {
-        const rect = nextSectionRef.current.getBoundingClientRect();
-        setIsInverted(rect.top <= 80);
+      const phase2Top = phase2OffsetTop - scrollY;
+      const phase3Top = phase3OffsetTop - scrollY;
+      const shouldInvert = phase2Top <= 80 && phase3Top > vh * 0.7;
+      if (shouldInvert !== lastInvertedVal) {
+        lastInvertedVal = shouldInvert;
+        setIsInverted(shouldInvert);
       }
 
-      renderPixelTransition();
-      renderPhase3PixelTransition();
+      // Only invoke pixel rendering when within active viewport range
+      if (scrollY <= vh * 1.2 || lastPixelState !== 2) {
+        renderPixelTransition(scrollY, vh);
+      }
+      if (phase3Top <= vh * 1.2 || lastPhase3State !== 0) {
+        renderPhase3PixelTransition(scrollY, vh);
+      }
+    };
+
+    const handleScroll = () => {
+      if (!isTicking) {
+        isTicking = true;
+        requestAnimationFrame(() => {
+          updateVisuals();
+          isTicking = false;
+        });
+      }
     };
 
     const handleResize = () => {
-      lastPixelState = -1;
-      lastPhase3State = -1;
-      renderPixelTransition();
-      renderPhase3PixelTransition();
+      resizeCanvases();
+      updateVisuals();
     };
 
+    resizeCanvases();
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize);
-    handleScroll();
+    updateVisuals();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
