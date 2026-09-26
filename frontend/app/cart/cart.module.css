@@ -1376,6 +1376,9 @@
   .itemTitle {
     font-size: 0.95rem;
     line-height: 1.4;
+    font-family: 'Inter';
+    font-style: normal;
+    letter-spacing: 0;
   }
 
   .itemInfo {
@@ -1453,7 +1456,7 @@
     border-radius: 0;
     padding: 0.8rem 1.5rem;
     margin: 8px;
-    border-radius: 100px;
+    border-radius: 100px !important;
   }
 
 }

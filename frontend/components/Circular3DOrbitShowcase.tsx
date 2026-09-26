@@ -710,22 +710,26 @@ export default function Circular3DOrbitShowcase() {
   const centerIndexOffset = (totalItems - 1) / 2;
   const horizontalSpacing = Math.min(180, Math.max(120, (windowWidth * 0.86) / totalItems));
 
+  const isMobile = windowWidth <= 768;
+
   // Statement text animation values ("Wear what feels like yours")
   // 1. Easy & early fade in as user begins scrolling from Phase 1 (0.00 -> 0.07)
   const fadeIn = smoothstep(0.00, 0.07, introProgress);
-  // 2. Dissolve phase (0.68 -> 0.84): After dwelling cleanly in center together, softly fades out
-  const dissolveProgress = smoothstep(0.68, 0.84, introProgress);
+  // 2. Dissolve phase: On desktop, text dissolves before models arrive (0.68 -> 0.84); on mobile, text stays with models
+  const dissolveProgress = isMobile ? 0 : smoothstep(0.68, 0.84, introProgress);
 
-  // Opacity remains 1.0 through entrance and center dwell, then gently fades out
-  const textOpacity = fadeIn * (1.0 - dissolveProgress);
+  // Opacity remains visible together with models in mobile horizontal mode
+  const textOpacity = isMobile ? fadeIn : fadeIn * (1.0 - dissolveProgress);
   const statementOpacity = isVerticalMode ? 0 : Number(textOpacity.toFixed(3));
-  const statementBlur = dissolveProgress * 4.5;
+  const statementBlur = isMobile ? 0 : dissolveProgress * 4.5;
 
-  // 3D Models emergence: Arrives ONLY AFTER text has completely dissolved (0.84 -> 1.00)
-  const modelsIn = smoothstep(0.84, 1.00, introProgress);
+  // 3D Models emergence: on mobile, models emerge together with the statement text (0.00 -> 0.10)
+  const modelsIn = isMobile
+    ? smoothstep(0.00, 0.10, introProgress)
+    : smoothstep(0.84, 1.00, introProgress);
   const horizontalScale = 0.38; // Constant scale: no scale up/down distortion during scroll
-  const horizontalOpacity = Math.pow(modelsIn, 1.25);
-  const horizontalBlur = (1 - modelsIn) * 8;
+  const horizontalOpacity = isMobile ? modelsIn : Math.pow(modelsIn, 1.25);
+  const horizontalBlur = isMobile ? 0 : (1 - modelsIn) * 8;
 
   const hasEnteredPhase2 = modelsIn > 0.005 || isVerticalMode;
 
@@ -989,11 +993,11 @@ export default function Circular3DOrbitShowcase() {
           style={{
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
-          aria-label="Return to Horizontal 3D Showcase"
+          aria-label="Back"
         >
           <svg
-            width="9"
-            height="9"
+            width="12"
+            height="12"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -1002,11 +1006,9 @@ export default function Circular3DOrbitShowcase() {
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <rect x="2" y="6" width="5" height="12" rx="0.5" />
-            <rect x="9.5" y="6" width="5" height="12" rx="0.5" />
-            <rect x="17" y="6" width="5" height="12" rx="0.5" />
+            <polyline points="15 18 9 12 15 6" />
           </svg>
-          <ScrambleText text="Horizontal" />
+          <ScrambleText text="Back" />
         </button>
 
         {/* 5. Shop Button at Bottom-Right (Extreme Right) */}
@@ -1084,7 +1086,7 @@ export default function Circular3DOrbitShowcase() {
 
         {/* 6. Bottom Center "Our Collection" / Prompt / Product Scramble Indicator in Horizontal Mode */}
         <div
-          className={`${styles.bottomCenterIndicator} ${!isVerticalMode && modelsIn > 0.82 ? styles.bottomCenterIndicatorVisible : ''}`}
+          className={`${styles.bottomCenterIndicator} ${!isVerticalMode && (isMobile ? modelsIn > 0.05 : modelsIn > 0.82) ? styles.bottomCenterIndicatorVisible : ''}`}
         >
           <ScrambleText
             text={

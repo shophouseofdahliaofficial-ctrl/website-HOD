@@ -692,6 +692,9 @@ export default function ProductDetailsModal({
   }, [displayGalleryItems.length]);
 
   const handleWheelOnDetails = useCallback((e: WheelEvent) => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 968) {
+      return;
+    }
     if (isImageZoomOpen) {
       e.preventDefault();
       e.stopPropagation();

@@ -351,20 +351,22 @@
 }
 
 .viewOrdersButton {
-  background: #ff0054;
+  background: #ab6468;
   color: #fff;
+  box-shadow: inset 0px 0px 3px 0px #f9f9f9 !IMPORTANT;
+  border: 1px solid #ab6468;
 }
 
 .viewOrdersButton:hover {
-  background: #ff1563;
+  background: #752828;
   transform: translateY(0px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .continueShoppingButton {
   background: transparent;
-  color: #ff0054;
-  border: 1.5px solid #ff0054;
+  color: #ab6468;
+  border: 1.5px solid #ab6468;
 }
 
 .continueShoppingButton:hover {
@@ -400,4 +402,6 @@
   .deliveryContent {
     padding-left: 0;
   }
+
+
 }

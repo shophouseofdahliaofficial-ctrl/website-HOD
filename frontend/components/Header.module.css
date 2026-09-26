@@ -251,7 +251,7 @@
   }
 
   img.logoImg {
-    filter: brightness(0);
+    filter: none;
     max-height: 30px;
     width: auto;
   }
@@ -564,13 +564,13 @@
 
 .headerSpacer {
   width: 100%;
-  height: 90px;
+  height: 79.58px;
   transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (max-width: 767px) {
   .headerSpacer {
-    height: 110px;
+    height: 79.58px;
   }
 }
 
@@ -3656,6 +3656,51 @@
   background: #ff005c;
   color: #ffffff;
   -webkit-text-fill-color: #ffffff;
+}
+
+/* Bottom Center Horizontal Links in Mobile Drawer (0.52rem) */
+.mobileHorizontalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.55rem;
+  margin-top: auto;
+  padding-top: 1.2rem;
+  width: 100%;
+  font-size: 0.52rem !important;
+  user-select: none;
+  z-index: 15;
+}
+
+.mobileLinkItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.52rem !important;
+}
+
+.mobileBottomLink {
+  font-family: inherit;
+  font-size: 0.52rem !important;
+  font-weight: 400;
+  color: #292929;
+  opacity: 0.7;
+  text-decoration: none;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.mobileBottomLink:hover {
+  opacity: 1;
+  color: #000000;
+}
+
+.mobileDot {
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 0.52rem !important;
+  user-select: none;
 }
 
 .mobileSubNavLink {

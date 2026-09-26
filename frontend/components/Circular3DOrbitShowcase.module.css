@@ -12,7 +12,7 @@
 
 /* Statement Entrance Text: "Wear what feels like yours" */
 .introStatementWrap {
-  position: fixed;
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate3d(-50%, -50%, 0);
@@ -23,7 +23,7 @@
   justify-content: center;
   pointer-events: none;
   z-index: 8;
-  will-change: transform, opacity, filter;
+  will-change: opacity, filter;
   text-align: center;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -615,6 +615,13 @@
     display: flex;
   }
 
+  .introStatementWrap {
+    top: 21% !important;
+    transform: translate3d(-50%, -50%, 0) !important;
+    width: 90vw !important;
+    max-width: 380px !important;
+  }
+
   .introStatementHeading {
     font-size: clamp(1.4rem, 5.5vw, 2.1rem);
     white-space: normal;
@@ -671,7 +678,7 @@
   }
 
   .bottomCenterIndicator {
-    bottom: 2.2rem;
+    bottom: 5.6rem;
     font-size: 1.05rem;
   }
 

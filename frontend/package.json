@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev -p 4000",
-        "dev:clean": "node -e \"var f=require('fs');['.next','node_modules/.cache'].forEach(function(p){try{f.rmSync(p,{recursive:true,force:true})}catch(e){}})\" && next dev",
+        "dev:clean": "node -e \"var f=require('fs');['.next','node_modules/.cache'].forEach(function(p){try{f.rmSync(p,{recursive:true,force:true})}catch(e){}})\" && next dev -p 4000",
         "build": "next build",
         "pages:build": "node scripts/cf-build.js",
         "cf:build": "node scripts/cf-build.js",

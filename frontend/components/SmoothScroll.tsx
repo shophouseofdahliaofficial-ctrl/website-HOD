@@ -8,6 +8,58 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
 
+  // Enforce manual scroll restoration and scroll to top on every route transition & fresh load
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    const resetToTop = () => {
+      // If there is an intentional target hash in URL, let browser/handler navigate to it
+      if (window.location.hash) {
+        const hashEl = document.querySelector(window.location.hash);
+        if (hashEl) return;
+      }
+
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+
+      if ((window as any).lenis) {
+        try {
+          (window as any).lenis.scrollTo(0, { immediate: true, force: true });
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    // Immediate scroll reset
+    resetToTop();
+
+    // Next frame pass
+    const rId = requestAnimationFrame(resetToTop);
+
+    // After microtask / hydration settling
+    const t1 = setTimeout(resetToTop, 30);
+    const t2 = setTimeout(resetToTop, 120);
+
+    const handlePageShow = () => {
+      resetToTop();
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      cancelAnimationFrame(rId);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [pathname]);
+
   useEffect(() => {
     // Disable virtual smooth scroll hijacking completely in the Admin Panel
     if (isAdmin) {
@@ -60,3 +112,4 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
   return <>{children}</>;
 }
+

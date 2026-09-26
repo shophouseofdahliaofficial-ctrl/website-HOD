@@ -2799,12 +2799,13 @@ export default function Header() {
                           </Link>
 
                           <Link
-                            href="/size-guide"
-                            className={`${styles.mobileNavLink} ${styles.mobileNavLinkHighlight} ${isHeaderNavActive(pathname, '/size-guide') ? styles.mobileNavLinkActive : ''}`}
+                            href="/returns"
+                            className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/returns') ? styles.mobileNavLinkActive : ''}`}
                             onClick={closeMobileMenu}
                           >
-                            Size Guide
+                            Returns &amp; Exchanges
                           </Link>
+
 
                           {/* Help Submenu in Mobile Drawer */}
                           <div className={styles.mobileOthersDropdown} style={{ width: '100%' }}>
@@ -2868,6 +2869,64 @@ export default function Header() {
                               </div>
                             )}
                           </div>
+
+                          {/* Bottom Center Horizontal Links with 0.52rem Font Size */}
+                          <nav className={styles.mobileHorizontalLinks} aria-label="Footer links">
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/faqs" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                FAQs
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/stories" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                Stories
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/contact" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                Contact Us
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/privacy" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                Privacy
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/terms" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                Terms
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/dashboard" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                My Account
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/cart" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                Cart
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/returns" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                Returns &amp; Exchanges
+                              </Link>
+                            </span>
+                          </nav>
                         </nav>
 
                         {/* Bottom Linear Gradient Scroll Fade (Transparent to White) */}
@@ -3165,7 +3224,7 @@ export default function Header() {
       {!isAuthPage ? (
         <div
           className={styles.headerSpacer}
-          style={headerHeight > 0 ? { height: headerHeight + 20 } : undefined}
+          style={{ height: '79.58px' }}
           aria-hidden="true"
         />
       ) : null}

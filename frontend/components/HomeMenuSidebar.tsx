@@ -418,6 +418,64 @@ export default function HomeMenuSidebar({ isOpen, onClose, triggerRect }: HomeMe
               />
             ))}
           </nav>
+
+          {/* Bottom Center Horizontal Links with 0.52rem Font Size */}
+          <nav className={styles.menuHorizontalLinks} aria-label="Footer links">
+            <span className={styles.menuLinkItem}>
+              <Link href="/faqs" className={styles.menuBottomLink} onClick={handleClose}>
+                FAQs
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/stories" className={styles.menuBottomLink} onClick={handleClose}>
+                Stories
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/contact" className={styles.menuBottomLink} onClick={handleClose}>
+                Contact Us
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/privacy" className={styles.menuBottomLink} onClick={handleClose}>
+                Privacy
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/terms" className={styles.menuBottomLink} onClick={handleClose}>
+                Terms
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/dashboard" className={styles.menuBottomLink} onClick={handleClose}>
+                My Account
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/cart" className={styles.menuBottomLink} onClick={handleClose}>
+                Cart
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
+              <Link href="/returns" className={styles.menuBottomLink} onClick={handleClose}>
+                Returns &amp; Exchanges
+              </Link>
+            </span>
+          </nav>
         </div>
       </div>
     </div>

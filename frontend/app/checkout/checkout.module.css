@@ -1213,7 +1213,7 @@
 .summaryButtonBelow {
   flex: 1;
   padding: 1rem 1.25rem;
-  background: #ff0054;
+  background: #ab6468;
   color: #fff;
   border: none;
   border-radius: 80px;
@@ -1224,7 +1224,7 @@
 }
 
 .summaryButtonBelow:hover:not(:disabled) {
-  background: #d60a6a;
+  background: #68383a;
 }
 
 .summaryButtonBelow:disabled {
@@ -1344,6 +1344,9 @@
     margin: 0;
     padding: 20px 4px;
     border-radius: 44px;
+    background: #ab6468;
+    border: 1px solid #ab6468;
+    box-shadow: inset 0px 0px 3px 0px #f9f9f9 !IMPORTANT;
   }
 
 }

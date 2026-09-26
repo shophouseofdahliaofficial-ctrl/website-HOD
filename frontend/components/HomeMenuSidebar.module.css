@@ -188,3 +188,49 @@
     font-size: clamp(1.9rem, 7vw, 2.4rem);
   }
 }
+
+/* Bottom Center Horizontal Links Lineup (0.52rem) */
+.menuHorizontalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.55rem;
+  margin-top: auto;
+  padding-top: 1.2rem;
+  width: 100%;
+  font-size: 0.52rem !important;
+  user-select: none;
+  z-index: 5;
+}
+
+.menuLinkItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.52rem !important;
+}
+
+.menuBottomLink {
+  font-family: inherit;
+  font-size: 0.72rem !important;
+  font-weight: 400;
+  color: #800020;
+  opacity: 0.75;
+  text-decoration: none;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.menuBottomLink:hover {
+  opacity: 1;
+  color: #550116;
+}
+
+.menuDot {
+  color: #800020;
+  opacity: 0.35;
+  font-size: 0.52rem !important;
+  user-select: none;
+}

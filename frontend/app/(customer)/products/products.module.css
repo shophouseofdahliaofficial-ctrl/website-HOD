@@ -24,9 +24,11 @@
     filter: blur(14px);
     transform: translateY(30px) scale(0.96);
   }
+
   60% {
     filter: blur(3px);
   }
+
   100% {
     opacity: 1;
     filter: blur(0);
@@ -34,31 +36,90 @@
   }
 }
 
-.productsGrid > .productCard {
+.productsGrid>.productCard {
   animation: blurInFromBottom 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: opacity, filter, transform;
 }
 
-.productsGrid > .productCard:nth-child(1) { animation-delay: 0.02s; }
-.productsGrid > .productCard:nth-child(2) { animation-delay: 0.05s; }
-.productsGrid > .productCard:nth-child(3) { animation-delay: 0.08s; }
-.productsGrid > .productCard:nth-child(4) { animation-delay: 0.11s; }
-.productsGrid > .productCard:nth-child(5) { animation-delay: 0.14s; }
-.productsGrid > .productCard:nth-child(6) { animation-delay: 0.17s; }
-.productsGrid > .productCard:nth-child(7) { animation-delay: 0.20s; }
-.productsGrid > .productCard:nth-child(8) { animation-delay: 0.23s; }
-.productsGrid > .productCard:nth-child(9) { animation-delay: 0.26s; }
-.productsGrid > .productCard:nth-child(10) { animation-delay: 0.29s; }
-.productsGrid > .productCard:nth-child(11) { animation-delay: 0.32s; }
-.productsGrid > .productCard:nth-child(12) { animation-delay: 0.35s; }
-.productsGrid > .productCard:nth-child(13) { animation-delay: 0.38s; }
-.productsGrid > .productCard:nth-child(14) { animation-delay: 0.41s; }
-.productsGrid > .productCard:nth-child(15) { animation-delay: 0.44s; }
-.productsGrid > .productCard:nth-child(16) { animation-delay: 0.47s; }
-.productsGrid > .productCard:nth-child(17) { animation-delay: 0.50s; }
-.productsGrid > .productCard:nth-child(18) { animation-delay: 0.53s; }
-.productsGrid > .productCard:nth-child(19) { animation-delay: 0.56s; }
-.productsGrid > .productCard:nth-child(20) { animation-delay: 0.59s; }
+.productsGrid>.productCard:nth-child(1) {
+  animation-delay: 0.02s;
+}
+
+.productsGrid>.productCard:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.productsGrid>.productCard:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.productsGrid>.productCard:nth-child(4) {
+  animation-delay: 0.11s;
+}
+
+.productsGrid>.productCard:nth-child(5) {
+  animation-delay: 0.14s;
+}
+
+.productsGrid>.productCard:nth-child(6) {
+  animation-delay: 0.17s;
+}
+
+.productsGrid>.productCard:nth-child(7) {
+  animation-delay: 0.20s;
+}
+
+.productsGrid>.productCard:nth-child(8) {
+  animation-delay: 0.23s;
+}
+
+.productsGrid>.productCard:nth-child(9) {
+  animation-delay: 0.26s;
+}
+
+.productsGrid>.productCard:nth-child(10) {
+  animation-delay: 0.29s;
+}
+
+.productsGrid>.productCard:nth-child(11) {
+  animation-delay: 0.32s;
+}
+
+.productsGrid>.productCard:nth-child(12) {
+  animation-delay: 0.35s;
+}
+
+.productsGrid>.productCard:nth-child(13) {
+  animation-delay: 0.38s;
+}
+
+.productsGrid>.productCard:nth-child(14) {
+  animation-delay: 0.41s;
+}
+
+.productsGrid>.productCard:nth-child(15) {
+  animation-delay: 0.44s;
+}
+
+.productsGrid>.productCard:nth-child(16) {
+  animation-delay: 0.47s;
+}
+
+.productsGrid>.productCard:nth-child(17) {
+  animation-delay: 0.50s;
+}
+
+.productsGrid>.productCard:nth-child(18) {
+  animation-delay: 0.53s;
+}
+
+.productsGrid>.productCard:nth-child(19) {
+  animation-delay: 0.56s;
+}
+
+.productsGrid>.productCard:nth-child(20) {
+  animation-delay: 0.59s;
+}
 
 .productCard {
   border: 1px solid #e0e0e0;
@@ -143,24 +204,31 @@
 
 @media (max-width: 968px) {
   .productsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.7rem;
   }
 }
 
 @media (max-width: 640px) {
   .container {
-    padding: 1rem;
+    padding: 0 0.7rem;
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1rem;
     margin-bottom: 1.5rem;
+    letter-spacing: -0.5px;
+    font-weight: 600;
+    display: flex;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
   }
 
+
   .productsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.55rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
   }
 }
 

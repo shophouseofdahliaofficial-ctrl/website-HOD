@@ -16,6 +16,11 @@ export default function ConditionalFooter() {
   const isAuthRoute = pathname?.startsWith('/auth');
   const isAdminRoute = pathname?.startsWith('/admin');
   const isComingSoon = pathname === '/coming-soon';
+  const isCartOrCheckoutRoute =
+    pathname === '/cart' ||
+    pathname?.startsWith('/cart') ||
+    pathname === '/checkout' ||
+    pathname?.startsWith('/checkout');
 
   useEffect(() => {
     const check = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth <= 768);
@@ -24,7 +29,13 @@ export default function ConditionalFooter() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  if (pathname === '/' || isAuthRoute || isAdminRoute || isComingSoon) {
+  if (
+    pathname === '/' ||
+    isAuthRoute ||
+    isAdminRoute ||
+    isComingSoon ||
+    (isCartOrCheckoutRoute && isMobile)
+  ) {
     return null;
   }
 

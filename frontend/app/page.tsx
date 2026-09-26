@@ -183,35 +183,25 @@ export default function HomePage() {
   // Track scroll for dynamic nav color inversion, center title squeeze, and procedural pixel square transition
   useEffect(() => {
     let lastPixelState = -1; // 0: clear, 1: transitioning, 2: solid
-    let lastPhase3State = -1; // 0: clear, 1: transitioning, 2: solid
     let lastInvertedVal = false;
 
     let p1Width = 0;
     let p1Height = 0;
-    let p3Width = 0;
-    let p3Height = 0;
     let p1PixelSize = 16;
-    let p3PixelSize = 16;
     let p1ColOffsets = new Float32Array(0);
-    let p3ColOffsets = new Float32Array(0);
 
     let phase2OffsetTop = 0;
-    let phase3OffsetTop = 0;
 
     const measureLayout = () => {
       const vh = window.innerHeight || 800;
       if (nextSectionRef.current) {
         phase2OffsetTop = nextSectionRef.current.offsetTop || vh;
       }
-      if (phase3SectionRef.current) {
-        phase3OffsetTop = phase3SectionRef.current.offsetTop || vh * 2;
-      }
     };
 
     const resizeCanvases = () => {
       const isMobile = window.innerWidth <= 768;
       p1PixelSize = isMobile ? 20 : 16;
-      p3PixelSize = isMobile ? 20 : 16;
 
       const p1Canvas = pixelCanvasRef.current;
       if (p1Canvas) {
@@ -227,23 +217,8 @@ export default function HomePage() {
         }
       }
 
-      const p3Canvas = phase3PixelCanvasRef.current;
-      if (p3Canvas) {
-        p3Width = p3Canvas.width = p3Canvas.offsetWidth || window.innerWidth;
-        p3Height = p3Canvas.height = p3Canvas.offsetHeight || window.innerHeight || 800;
-        const cols = Math.ceil(p3Width / p3PixelSize);
-        p3ColOffsets = new Float32Array(cols);
-        for (let c = 0; c < cols; c++) {
-          const wave1 = Math.sin(c * 0.28) * 0.25;
-          const wave2 = Math.sin(c * 0.08 + 1.8) * 0.38;
-          const randomSpike = (NOISE_TABLE[(c * 11 + 23) & 511] - 0.5) * 0.45;
-          p3ColOffsets[c] = wave1 + wave2 + randomSpike;
-        }
-      }
-
       measureLayout();
       lastPixelState = -1;
-      lastPhase3State = -1;
     };
 
     const renderPixelTransition = (scrollY: number, vh: number) => {
@@ -311,78 +286,6 @@ export default function HomePage() {
       }
     };
 
-    const renderPhase3PixelTransition = (scrollY: number, vh: number) => {
-      const canvas = phase3PixelCanvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      const phase3Top = phase3OffsetTop - scrollY;
-      const width = p3Width || canvas.width || window.innerWidth;
-      const height = p3Height || canvas.height || vh;
-
-      // Only start pixel emergence as Phase 3 actually begins entering viewport
-      if (phase3Top >= vh * 1.05) {
-        if (lastPhase3State !== 0) {
-          ctx.clearRect(0, 0, width, height);
-          lastPhase3State = 0;
-        }
-        return;
-      }
-
-      const scrollRatio = Math.min(1.0, Math.max(0, (vh - phase3Top) / (vh * 0.85)));
-
-      if (scrollRatio <= 0) {
-        if (lastPhase3State !== 0) {
-          ctx.clearRect(0, 0, width, height);
-          lastPhase3State = 0;
-        }
-        return;
-      }
-
-      // If fully covered in Phase 3 (#530000), fill solid once
-      if (scrollRatio >= 1.0) {
-        if (lastPhase3State !== 2) {
-          ctx.fillStyle = '#530000';
-          ctx.fillRect(0, 0, width, height);
-          lastPhase3State = 2;
-        }
-        return;
-      }
-
-      lastPhase3State = 1;
-      ctx.clearRect(0, 0, width, height);
-
-      const PIXEL_SIZE = p3PixelSize;
-      const cols = Math.min(p3ColOffsets.length, Math.ceil(width / PIXEL_SIZE));
-      const rows = Math.ceil(height / PIXEL_SIZE);
-      const emergence = Math.min(1.0, scrollRatio * 2.8);
-
-      ctx.fillStyle = '#530000';
-
-      for (let c = 0; c < cols; c++) {
-        const colOffset = p3ColOffsets[c] || 0;
-        const baselineRow = rows - Math.floor(scrollRatio * (rows + 14));
-        const jaggedOffset = Math.floor(colOffset * 10 * emergence);
-        const startRow = Math.max(0, Math.min(rows, baselineRow - jaggedOffset));
-
-        // High-performance single batch draw call for solid column
-        if (startRow < rows) {
-          ctx.fillRect(c * PIXEL_SIZE, startRow * PIXEL_SIZE, PIXEL_SIZE, (rows - startRow) * PIXEL_SIZE);
-        }
-
-        if (startRow < rows && emergence > 0.05) {
-          for (let r = Math.max(0, startRow - 2); r < startRow; r++) {
-            const distanceAbove = startRow - r;
-            const spawnChance = Math.max(0, (0.55 - distanceAbove * 0.2) * emergence);
-            if (NOISE_TABLE[(c * 47 + r * 71) & 511] < spawnChance) {
-              ctx.fillRect(c * PIXEL_SIZE, r * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-            }
-          }
-        }
-      }
-    };
-
     let isTicking = false;
 
     const updateVisuals = () => {
@@ -417,8 +320,7 @@ export default function HomePage() {
       }
 
       const phase2Top = phase2OffsetTop - scrollY;
-      const phase3Top = phase3OffsetTop - scrollY;
-      const shouldInvert = phase2Top <= 80 && phase3Top > vh * 0.7;
+      const shouldInvert = phase2Top <= 80;
       if (shouldInvert !== lastInvertedVal) {
         lastInvertedVal = shouldInvert;
         setIsInverted(shouldInvert);
@@ -427,9 +329,6 @@ export default function HomePage() {
       // Only invoke pixel rendering when within active viewport range
       if (scrollY <= vh * 1.2 || lastPixelState !== 2) {
         renderPixelTransition(scrollY, vh);
-      }
-      if (phase3Top <= vh * 1.2 || lastPhase3State !== 0) {
-        renderPhase3PixelTransition(scrollY, vh);
       }
     };
 
@@ -593,104 +492,64 @@ export default function HomePage() {
         <div className={styles.whiteContentContainer}>
           <Circular3DOrbitShowcase />
         </div>
-      </section>
 
-      {/* Leading Procedural Phase 3 #530000 Pixel Square Crest */}
-      <div className={styles.phase3PixelTransitionContainer}>
-        <canvas ref={phase3PixelCanvasRef} className={styles.phase3PixelCanvas} />
-      </div>
+        {/* Bottom Center Horizontal Links in Phase 2 for Desktop (0.52rem) */}
+        <nav className={styles.phase3HorizontalLinks} aria-label="Footer links">
+          <span className={styles.phase3LinkItem}>
+            <Link href="/faqs" className={styles.phase3Link}>
+              FAQs
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-      {/* 3. Phase 3 Fullscreen Footer Section (#530000) */}
-      <section id="phase-3-section" ref={phase3SectionRef} className={styles.phase3Section}>
-        <div className={styles.phase3Content}>
-          {/* Centered Large Brand Heading */}
-          <div className={styles.phase3TopHero}>
-            <h2 className={styles.phase3BrandHeading}>
-              House Of Dahlia
-            </h2>
-          </div>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/stories" className={styles.phase3Link}>
+              Stories
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-          {/* Horizontal Dot-Separated Links Lineup (as in Image 2) */}
-          <nav className={styles.phase3HorizontalLinks} aria-label="Footer links">
-            <span className={styles.phase3LinkItem}>
-              <Link href="/size-guide" className={styles.phase3Link}>
-                Size Guide
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/contact" className={styles.phase3Link}>
+              Contact Us
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-            <span className={styles.phase3LinkItem}>
-              <Link href="/faqs" className={styles.phase3Link}>
-                FAQs
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/privacy" className={styles.phase3Link}>
+              Privacy
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-            <span className={styles.phase3LinkItem}>
-              <Link href="/stories" className={styles.phase3Link}>
-                Stories
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/terms" className={styles.phase3Link}>
+              Terms
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-            <span className={styles.phase3LinkItem}>
-              <Link href="/contact" className={styles.phase3Link}>
-                Contact Us
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/dashboard" className={styles.phase3Link}>
+              My Account
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-            <span className={styles.phase3LinkItem}>
-              <Link href="/privacy" className={styles.phase3Link}>
-                Privacy
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/cart" className={styles.phase3Link}>
+              Cart
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
 
-            <span className={styles.phase3LinkItem}>
-              <Link href="/terms" className={styles.phase3Link}>
-                Terms
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
-
-            <span className={styles.phase3LinkItem}>
-              <Link href="/dashboard" className={styles.phase3Link}>
-                My Account
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
-
-            <span className={styles.phase3LinkItem}>
-              <Link href="/cart" className={styles.phase3Link}>
-                Cart
-              </Link>
-              <span className={styles.phase3Dot} aria-hidden="true">•</span>
-            </span>
-
-            <span className={styles.phase3LinkItem}>
-              <Link href="/returns" className={styles.phase3Link}>
-                Returns & Exchanges
-              </Link>
-            </span>
-          </nav>
-
-          {/* Bottom Bar */}
-          <div className={styles.phase3BottomBar}>
-            <span>© 2026 House Of Dahlia. All rights reserved.</span>
-            <button
-              type="button"
-              className={styles.phase3BackToTop}
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
-              Back to top
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="12" y1="19" x2="12" y2="5" />
-                <polyline points="5 12 12 5 19 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
+          <span className={styles.phase3LinkItem}>
+            <Link href="/returns" className={styles.phase3Link}>
+              Returns &amp; Exchanges
+            </Link>
+          </span>
+        </nav>
       </section>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import styles from './Footer.module.css';
@@ -10,7 +11,6 @@ const FOOTER_LINKS = [
   { label: 'My Account', href: '/account' },
   { label: 'Cart', href: '/cart' },
   { label: 'Returns & Exchanges', href: '/returns' },
-  { label: 'Size Guide', href: '/size-guide' },
   { label: 'FAQs', href: '/faqs' },
   { label: 'Stories', href: '/stories' },
   { label: 'Contact Us', href: '/contact' },
@@ -19,6 +19,12 @@ const FOOTER_LINKS = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isCartOrCheckout =
+    pathname === '/cart' ||
+    pathname?.startsWith('/cart') ||
+    pathname === '/checkout' ||
+    pathname?.startsWith('/checkout');
   const marqueeTrackRef = useRef<HTMLDivElement>(null);
 
   // GSAP Mouse Wheel & Scroll-Accelerated Infinite Marquee
@@ -114,7 +120,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ${isCartOrCheckout ? styles.cartFooter : ''}`}>
       {/* Infinite Moving Single-Line Links with Dots & Fast Scroll */}
       <div className={styles.footerContent}>
         <div ref={marqueeTrackRef} className={styles.marqueeTrack}>

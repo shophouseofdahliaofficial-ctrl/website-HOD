@@ -149,8 +149,8 @@
 
 @media (max-width: 768px) {
   .footer {
-    padding: 36px 0 max(1.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
-    margin: 3.5rem 10px 10px 10px;
+    padding: 5px 0 max(1.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
+    margin: 0.6rem 10px 10px 10px;
     width: calc(100% - 20px);
     max-width: calc(100% - 20px);
     border-radius: 24px;
@@ -168,6 +168,7 @@
     left: 1rem;
     bottom: 0.5rem;
     font-size: 0.68rem;
+    display: none;
   }
 
   .simpleLogoText {
@@ -177,5 +178,9 @@
 
   .footerLink {
     font-size: 0.95rem;
+  }
+
+  .footer.cartFooter {
+    display: none !important;
   }
 }
