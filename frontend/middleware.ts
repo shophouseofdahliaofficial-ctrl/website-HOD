@@ -20,8 +20,8 @@ export async function middleware(request: NextRequest) {
   const isLocalDevelopment =
     hostname.includes('localhost') || hostname.startsWith('127.0.0.1');
 
-  // Always allow these paths (admin, auth, coming-soon page itself)
-  const alwaysAllowed = ['/admin', '/auth', '/coming-soon'];
+  // Always allow these paths (admin, auth, coming-soon page itself, and product routes for diagnostic)
+  const alwaysAllowed = ['/admin', '/auth', '/coming-soon', '/product'];
   const isAlwaysAllowed = alwaysAllowed.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
