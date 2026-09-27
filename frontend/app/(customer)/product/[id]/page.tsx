@@ -1,16 +1,8 @@
-import { Suspense } from 'react';
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 import ProductClientPage from './ProductClientPage';
 
-export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  return [];
-}
-
 export default function ProductDeepLinkPage() {
-  return (
-    <Suspense fallback={null}>
-      <ProductClientPage />
-    </Suspense>
-  );
+  return <ProductClientPage />;
 }
