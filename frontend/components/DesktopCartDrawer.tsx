@@ -1501,7 +1501,7 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
                               )}
                             </div>
                             <div className={styles.itemDetails}>
-                              <h3 className={styles.itemTitle}>{photobooth ? 'Photobooth Print' : photobook ? `${p?.name || 'Photobook'} (${photobook.projectName || 'My Project'})` : p ? p.name : 'Loading...'}</h3>
+                              <h3 className={styles.itemTitle}>{photobooth ? 'Photobooth Print' : photobook ? `${p?.name || 'Photobook'} (${photobook.projectName || 'My Project'})` : p ? p.name : 'Just a moment...'}</h3>
                               {photobook && (
                                 <div className={styles.itemInfo}>
                                   <span>{photobook.pageCount} pages</span>

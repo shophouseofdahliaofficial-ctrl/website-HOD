@@ -1,0 +1,54 @@
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12rem 2rem;
+  text-align: left;
+}
+
+.title {
+  font-family: var(--font-instrument-serif), "ITC Fenice", Georgia, serif;
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 400;
+  color: #111111;
+  line-height: 1.2;
+  margin: 0 0 2rem;
+  letter-spacing: -0.01em;
+  text-align: left;
+}
+
+.shopButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #af5d6a;
+  border: 1px solid #af5d6a;
+  box-shadow: inset 0px 0px 3px 0px #f9f9f9 !important;
+  color: #ffffff;
+  padding: 0.65rem 0.99rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+}
+
+.shopButton:hover {
+  background: #af5d6a;
+  color: #ffffff;
+
+}
+
+.shopButton:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 12.5rem 1.25rem;
+  }
+
+  .title {
+    margin-bottom: 1.5rem;
+  }
+}

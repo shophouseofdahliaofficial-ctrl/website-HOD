@@ -422,7 +422,7 @@ export default function SearchPage() {
   return (
     <Suspense fallback={
       <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#666', letterSpacing: '-1px' }}>Loading...</p>
+        <p style={{ color: '#666', letterSpacing: '-1px' }}>Just a moment...</p>
       </div>
     }>
       <SearchContent />

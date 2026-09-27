@@ -36,7 +36,7 @@ export default function AboutPage() {
         minHeight: '50vh',
         padding: '2rem'
       }}>
-        <LoadingSpinnerWithText text="Loading..." />
+        <LoadingSpinnerWithText text="Just a moment..." />
       </div>
     );
   }

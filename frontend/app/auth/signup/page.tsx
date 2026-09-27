@@ -65,7 +65,13 @@ function SignUpForm() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectPath = safeRedirect || getPostLoginRedirect(user.role);
+      const isPhoneDevice =
+        typeof window !== 'undefined' &&
+        (window.innerWidth <= 768 ||
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      const userRole = user.role?.toLowerCase() || 'customer';
+      const redirectPath =
+        safeRedirect || (isPhoneDevice ? '/account' : getPostLoginRedirect(userRole));
       if (redirectPath.startsWith('http')) {
         window.location.href = redirectPath;
       } else {
@@ -92,8 +98,13 @@ function SignUpForm() {
 
     try {
       const response = await signup(email, password, name.trim() || '');
+      const isPhoneDevice =
+        typeof window !== 'undefined' &&
+        (window.innerWidth <= 768 ||
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
       const userRole = response?.user?.role?.toLowerCase() || 'customer';
-      const redirectPath = safeRedirect || getPostLoginRedirect(userRole as any);
+      const redirectPath =
+        safeRedirect || (isPhoneDevice ? '/account' : getPostLoginRedirect(userRole as any));
 
       if (redirectPath.startsWith('http')) {
         window.location.href = redirectPath;
@@ -247,7 +258,7 @@ export default function SignUpPage() {
           <div className={styles.topIconWrapper}>
             <Logo imageClassName={styles.authLogoImage} />
           </div>
-          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <p style={{ color: '#6b7280' }}>Just a moment...</p>
         </div>
       }
     >

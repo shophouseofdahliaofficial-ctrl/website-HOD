@@ -22,7 +22,7 @@ interface HomeMenuSidebarProps {
 }
 
 const MENU_ITEMS = [
-  { label: 'My Account', href: '/dashboard' },
+  { label: 'My Account', href: '/account' },
   { label: 'Orders', href: '/orders' },
   { label: 'Favorites', href: '/favorites' },
   { label: 'Wallet', href: '/dashboard' },
@@ -457,7 +457,7 @@ export default function HomeMenuSidebar({ isOpen, onClose, triggerRect }: HomeMe
             </span>
 
             <span className={styles.menuLinkItem}>
-              <Link href="/dashboard" className={styles.menuBottomLink} onClick={handleClose}>
+              <Link href="/account" className={styles.menuBottomLink} onClick={handleClose}>
                 My Account
               </Link>
               <span className={styles.menuDot} aria-hidden="true">•</span>

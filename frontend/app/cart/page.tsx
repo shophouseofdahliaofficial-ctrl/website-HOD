@@ -836,7 +836,7 @@ export default function CartPage() {
                         ? 'Photobooth Print'
                         : photobook
                           ? `${p?.name || 'Photobook'} (${photobook.projectName || 'My Project'})`
-                          : (p ? p.name : 'Loading...')}
+                          : (p ? p.name : 'Just a moment...')}
                     </h3>
                     {photobook ? (
                       <div className={styles.itemInfo}>

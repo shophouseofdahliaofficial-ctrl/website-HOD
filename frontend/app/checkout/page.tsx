@@ -1112,7 +1112,7 @@ export default function CheckoutPage() {
   if (loading || authLoading || (items.length === 0 && !subscriptionCartItem)) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Loading...</div>
+        <div className={styles.loading}>Just a moment...</div>
       </div>
     );
   }

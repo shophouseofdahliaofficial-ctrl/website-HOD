@@ -631,7 +631,7 @@ export default function SubscribePage() {
             strokeLinecap="round"
           />
         </svg>
-        <span>Loading...</span>
+        <span>Just a moment...</span>
       </div>
     );
   }

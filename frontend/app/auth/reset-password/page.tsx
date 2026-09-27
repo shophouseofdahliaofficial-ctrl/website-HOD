@@ -199,7 +199,7 @@ export default function ResetPasswordPage() {
           <div className={styles.topIconWrapper}>
             <Logo imageClassName={styles.authLogoImage} />
           </div>
-          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <p style={{ color: '#6b7280' }}>Just a moment...</p>
         </div>
       }
     >

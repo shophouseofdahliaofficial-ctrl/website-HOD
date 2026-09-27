@@ -81,7 +81,7 @@ export default function CustomerAuthWrapper({ children }: { children: ReactNode 
             strokeLinecap="round"
           />
         </svg>
-        <span>Loading...</span>
+        <span>Just a moment...</span>
       </div>
     );
   }

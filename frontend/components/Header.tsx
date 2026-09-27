@@ -2354,12 +2354,17 @@ export default function Header() {
         <div className={`${styles.headerRow} ${isScrolled ? styles.headerRowScrolled : ''}`}>
           {isLoading ? (
             <>
-              {/* Column 1 (Left): Logo Skeleton */}
+              {/* Column 1 (Left): Mobile Search Skeleton */}
+              <div className={styles.mobileLeftSlot}>
+                <div className={`${styles.buttonShimmer} ${styles.shimmer}`}></div>
+              </div>
+
+              {/* Column 2 (Center): Logo Skeleton */}
               <div className={styles.logoContainer}>
                 <div className={`${styles.logoShimmer} ${styles.shimmer}`}></div>
               </div>
 
-              {/* Column 2 (Right): 2 Icon Skeletons on Mobile, 3 on Desktop */}
+              {/* Column 3 (Right): 2 Icon Skeletons on Mobile, 3 on Desktop */}
               <div className={styles.rightButtonsShimmer}>
                 <div className={`${styles.buttonShimmer} ${styles.shimmer}`}></div>
                 <div className={`${styles.buttonShimmer} ${styles.shimmer}`}></div>
@@ -2368,11 +2373,36 @@ export default function Header() {
             </>
           ) : (
             <>
-              {/* Container for Back Button and Logo/DeliveryAtLogo (at very left on mobile) */}
+              {/* Mobile Left Search Button Slot */}
+              {!isAuthPage && (
+                <div className={styles.mobileLeftSlot}>
+                  <button
+                    type="button"
+                    className={`${styles.iconButton} ${styles.mobileSearchButton}`}
+                    aria-label="Search"
+                    onClick={() => {
+                      ensureProducts();
+                      setIsSearchOverlayOpen(true);
+                    }}
+                  >
+                    <svg viewBox="0 -0.5 25 25" fill="none" className={styles.buttonIcon} xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path d="M15.989 15.4905L19.5 19.0015" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path>
+                    </svg>
+                  </button>
+                </div>
+              )}
+
+              {/* Container for Logo (centered on mobile & desktop) */}
               <div className={styles.logoContainer}>
                 <Link
                   href="/"
                   className={`${styles.logo} ${pathname === '/' ? styles.logoOnHomepage : ''}`}
+                  onClick={() => {
+                    if (pathname === '/') {
+                      window.dispatchEvent(new CustomEvent('hod:reset-phase-1'));
+                    }
+                  }}
                 >
                   <Logo textClassName={styles.logoText} imageClassName={styles.logoImg} />
                 </Link>
@@ -2735,7 +2765,7 @@ export default function Header() {
                               />
                             ) : (
                               <Link
-                                href="/auth/login"
+                                href="/auth/login?redirect=/account"
                                 className={`${styles.iconButton} ${styles.mobileMenuHeaderButton}`}
                                 aria-label="Login"
                                 onClick={closeMobileMenu}
@@ -2908,7 +2938,7 @@ export default function Header() {
                             </span>
 
                             <span className={styles.mobileLinkItem}>
-                              <Link href="/dashboard" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                              <Link href="/account" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
                                 My Account
                               </Link>
                               <span className={styles.mobileDot} aria-hidden="true">•</span>
@@ -3150,7 +3180,7 @@ export default function Header() {
           </div>
           <div className={styles.searchOverlayResults} data-lenis-prevent>
             {isSearchProductsLoading ? (
-              <p className={styles.searchOverlayStatus}>Loading...</p>
+              <p className={styles.searchOverlayStatus}>Just a moment...</p>
             ) : searchQuery.trim() ? (
               searchResults.length > 0 ? (
                 <>

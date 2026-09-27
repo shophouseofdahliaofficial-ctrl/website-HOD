@@ -39,7 +39,7 @@ export default function RefundsPage() {
           padding: '2rem',
         }}
       >
-        <LoadingSpinnerWithText text="Loading..." />
+        <LoadingSpinnerWithText text="Just a moment..." />
       </div>
     );
   }

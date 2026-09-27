@@ -69,7 +69,7 @@ export default function AdminLayout({
         minHeight: '100vh',
         background: '#f5f5f5'
       }}>
-        <LoadingSpinnerWithText text="Loading..." />
+        <LoadingSpinnerWithText text="Just a moment..." />
       </div>
     );
   }

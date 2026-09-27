@@ -2,7 +2,7 @@
   width: 100%;
   min-height: 100vh;
   position: relative;
-  background-color: #530000;
+  background-color: #800020;
   overflow-x: clip;
   overflow-y: visible;
   scrollbar-width: none;
@@ -53,7 +53,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(83, 0, 0, 0.5) 0%, rgba(83, 0, 0, 0.85) 45%, #530000 100%);
+  background: linear-gradient(to bottom, #80002094 0%, #800020cc 45%, #800020 100%);
   z-index: 2;
   pointer-events: none;
 }

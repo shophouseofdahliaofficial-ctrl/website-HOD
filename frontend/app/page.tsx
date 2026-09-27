@@ -387,7 +387,14 @@ export default function HomePage() {
             href="/"
             onClick={(e) => {
               e.preventDefault();
+              window.dispatchEvent(new CustomEvent('hod:reset-phase-1'));
+              if ((window as any).lenis) {
+                (window as any).lenis.start();
+                (window as any).lenis.scrollTo(0, { immediate: false });
+              }
               window.scrollTo({ top: 0, behavior: 'smooth' });
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
             }}
             className={`${styles.centerLogo} ${isInverted ? styles.visibleLogo : ''}`}
             aria-label="House Of Dahlia Home"

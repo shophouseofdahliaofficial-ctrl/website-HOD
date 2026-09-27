@@ -391,7 +391,78 @@ export default function Circular3DOrbitShowcase() {
     };
   }, [isVerticalMode, totalItems, windowWidth]);
 
-  // Prevent vertical page scrolling on mobile when in vertical 3D mode (allows 3D rotation, navigation by arrow only)
+  // Listen for reset to Phase 1 (e.g. clicking top center logo or home navigation)
+  useEffect(() => {
+    const handleResetPhase1 = () => {
+      setIsVerticalMode(false);
+      setHoveredIndex(null);
+      setUiVisible(false);
+      isTransitioningRef.current = false;
+      gsap.killTweensOf([
+        animRef.current,
+        cardInfoRef.current,
+        indicatorRef.current,
+        mobileArrowsRef.current,
+        toggleBtnRef.current,
+        shopBtnRef.current,
+      ].filter(Boolean));
+
+      if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
+      if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
+      if (mobileArrowsRef.current) gsap.set(mobileArrowsRef.current, { opacity: 0 });
+      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
+      if (shopBtnRef.current) gsap.set(shopBtnRef.current, { opacity: 0 });
+
+      animRef.current.layout = 0;
+      animRef.current.virtualIndex = 0;
+      setLayoutProgress(0);
+      setVirtualIndex(0);
+      if ((window as any).lenis) {
+        (window as any).lenis.start();
+      }
+    };
+
+    window.addEventListener('hod:reset-phase-1', handleResetPhase1);
+    return () => window.removeEventListener('hod:reset-phase-1', handleResetPhase1);
+  }, []);
+
+  // If user is scrolled to Phase 1 (top of homepage), automatically reset vertical mode
+  useEffect(() => {
+    const handleScrollCheck = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      if (scrollY < 60 && isVerticalModeRef.current) {
+        setIsVerticalMode(false);
+        setHoveredIndex(null);
+        setUiVisible(false);
+        isTransitioningRef.current = false;
+        gsap.killTweensOf([
+          animRef.current,
+          cardInfoRef.current,
+          indicatorRef.current,
+          mobileArrowsRef.current,
+          toggleBtnRef.current,
+          shopBtnRef.current,
+        ].filter(Boolean));
+
+        if (cardInfoRef.current) gsap.set(cardInfoRef.current, { opacity: 0 });
+        if (indicatorRef.current) gsap.set(indicatorRef.current, { opacity: 0 });
+        if (mobileArrowsRef.current) gsap.set(mobileArrowsRef.current, { opacity: 0 });
+        if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { opacity: 0 });
+        if (shopBtnRef.current) gsap.set(shopBtnRef.current, { opacity: 0 });
+
+        animRef.current.layout = 0;
+        setLayoutProgress(0);
+        if ((window as any).lenis) {
+          (window as any).lenis.start();
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollCheck, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollCheck);
+  }, []);
+
+  // Prevent vertical page scrolling on mobile ONLY within the 3D showcase container in vertical mode (allows 3D rotation without page scroll)
   useEffect(() => {
     const isMobile = windowWidth <= 768;
     if (isMobile && isVerticalMode && !isProduct2GalleryOpen) {
@@ -401,10 +472,23 @@ export default function Circular3DOrbitShowcase() {
 
       const preventTouchScroll = (e: TouchEvent) => {
         const target = e.target as HTMLElement;
-        // Allow clicking buttons
-        if (target && (target.tagName === 'BUTTON' || target.closest('button'))) {
+        if (!target) return;
+
+        // Allow clicking buttons, links, header, menu sidebar, modals
+        if (
+          target.tagName === 'BUTTON' ||
+          target.closest('button') ||
+          target.tagName === 'A' ||
+          target.closest('a') ||
+          target.closest('header') ||
+          target.closest('nav') ||
+          !containerRef.current ||
+          !containerRef.current.contains(target)
+        ) {
           return;
         }
+
+        // Only prevent scrolling if touch is directly on the 3D model / showcase container in Phase 2
         if (e.cancelable) {
           e.preventDefault();
         }
@@ -418,6 +502,10 @@ export default function Circular3DOrbitShowcase() {
         }
         window.removeEventListener('touchmove', preventTouchScroll);
       };
+    } else {
+      if ((window as any).lenis) {
+        (window as any).lenis.start();
+      }
     }
   }, [isVerticalMode, windowWidth, isProduct2GalleryOpen]);
 
@@ -762,6 +850,7 @@ export default function Circular3DOrbitShowcase() {
           ref={cardInfoRef}
           className={styles.cardInfo}
           style={{
+            visibility: isVerticalMode ? 'visible' : 'hidden',
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
         >
@@ -933,6 +1022,7 @@ export default function Circular3DOrbitShowcase() {
           ref={indicatorRef}
           className={styles.orbitIndicator}
           style={{
+            visibility: isVerticalMode ? 'visible' : 'hidden',
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
         >
@@ -956,6 +1046,7 @@ export default function Circular3DOrbitShowcase() {
           ref={mobileArrowsRef}
           className={styles.mobileNavArrows}
           style={{
+            visibility: isVerticalMode ? 'visible' : 'hidden',
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
         >
@@ -991,6 +1082,7 @@ export default function Circular3DOrbitShowcase() {
           onClick={toggleLayoutMode}
           className={styles.toggleModeBtn}
           style={{
+            visibility: isVerticalMode ? 'visible' : 'hidden',
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
           aria-label="Back"
@@ -1027,6 +1119,7 @@ export default function Circular3DOrbitShowcase() {
           }}
           className={styles.shopButton}
           style={{
+            visibility: isVerticalMode ? 'visible' : 'hidden',
             pointerEvents: isVerticalMode && uiVisible ? 'auto' : 'none',
           }}
           aria-label="Shop product"

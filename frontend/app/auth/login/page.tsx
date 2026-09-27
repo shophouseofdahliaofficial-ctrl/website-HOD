@@ -65,8 +65,13 @@ function LoginForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
+      const isPhoneDevice =
+        typeof window !== 'undefined' &&
+        (window.innerWidth <= 768 ||
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
       const userRole = user.role?.toLowerCase() || 'customer';
-      const redirectPath = safeRedirect || getPostLoginRedirect(userRole);
+      const redirectPath =
+        safeRedirect || (isPhoneDevice ? '/account' : getPostLoginRedirect(userRole));
       if (redirectPath.startsWith('http')) {
         window.location.href = redirectPath;
       } else {
@@ -88,8 +93,13 @@ function LoginForm() {
 
     try {
       const response = await login(email, password);
+      const isPhoneDevice =
+        typeof window !== 'undefined' &&
+        (window.innerWidth <= 768 ||
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
       const userRole = response?.user?.role?.toLowerCase() || 'customer';
-      const redirectPath = safeRedirect || getPostLoginRedirect(userRole as any);
+      const redirectPath =
+        safeRedirect || (isPhoneDevice ? '/account' : getPostLoginRedirect(userRole as any));
 
       if (redirectPath.startsWith('http')) {
         window.location.href = redirectPath;
@@ -214,7 +224,12 @@ function LoginForm() {
         <button
           type="button"
           onClick={() => {
-            if (safeRedirect) localStorage.setItem('milko_return_after_auth', safeRedirect);
+            const isPhoneDevice =
+              typeof window !== 'undefined' &&
+              (window.innerWidth <= 768 ||
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+            const returnTarget = safeRedirect || (isPhoneDevice ? '/account' : '/account');
+            localStorage.setItem('milko_return_after_auth', returnTarget);
             loginWithGoogle();
           }}
           className={styles.socialPillButton}
@@ -235,7 +250,7 @@ export default function LoginPage() {
           <div className={styles.topIconWrapper}>
             <Logo imageClassName={styles.authLogoImage} />
           </div>
-          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <p style={{ color: '#6b7280' }}>Just a moment...</p>
         </div>
       }
     >

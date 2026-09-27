@@ -14,6 +14,7 @@ const CONTENT_TYPES = [
   { type: 'about', label: 'About Us', path: '/about' },
   { type: 'contact', label: 'Contact Details', path: '/contact' },
   { type: 'reviews', label: 'Reviews Settings', path: '/admin/content/reviews' },
+  { type: 'faqs', label: 'FAQs', path: '/admin/faqs' },
 ];
 
 const OTHER_OPTIONS = [
@@ -80,6 +81,14 @@ function Icon({ name }: { name: string }) {
       return (
         <svg viewBox="0 0 24 24" {...common}>
           <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27Z" />
+        </svg>
+      );
+    case 'faqs':
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
       );
     case 'subscription_delivery':

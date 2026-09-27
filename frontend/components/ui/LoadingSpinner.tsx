@@ -43,7 +43,7 @@ export default function LoadingSpinner({
  * Loading Spinner with Text
  */
 export function LoadingSpinnerWithText({ 
-  text = 'Loading...', 
+  text = 'Just a moment...', 
   size = 'medium',
   className = '' 
 }: { 

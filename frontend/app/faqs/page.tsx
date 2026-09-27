@@ -1,75 +1,148 @@
 'use client';
 
-import { useState } from 'react';
-import styles from '../terms/page.module.css';
+import { useEffect, useState } from 'react';
+import { contentApi } from '@/lib/api';
+import { LoadingSpinnerWithText } from '@/components/ui/LoadingSpinner';
+import styles from './faqs.module.css';
+
+interface FAQItem {
+  id?: string;
+  question: string;
+  answer: string;
+}
+
+const DEFAULT_FAQS: FAQItem[] = [
+  {
+    id: '1',
+    question: 'What is House Of Dahlia?',
+    answer: "House Of Dahlia is a contemporary luxury women's clothing brand and atelier creating couture fashion, bespoke dresses, and artisanal apparel crafted with sustainable materials and exquisite detailing.",
+  },
+  {
+    id: '2',
+    question: 'How long does shipping take?',
+    answer: 'Standard nationwide shipping typically takes 3 to 6 business days. Express shipping options are available at checkout.',
+  },
+  {
+    id: '3',
+    question: 'Do you offer international shipping?',
+    answer: 'Yes, we ship globally! International delivery timelines vary between 7 to 14 business days depending on customs and location.',
+  },
+  {
+    id: '4',
+    question: 'How can I track my order?',
+    answer: 'Once your package has been dispatched, you will receive a tracking link via email and SMS. You can also view real-time updates in your Account under Orders.',
+  },
+  {
+    id: '5',
+    question: 'What payment methods are accepted?',
+    answer: 'We accept UPI, all major Credit/Debit Cards, Net Banking, and Dahlia Wallet balance.',
+  },
+];
 
 export default function FAQsPage() {
+  const [faqs, setFaqs] = useState<FAQItem[]>(DEFAULT_FAQS);
+  const [loading, setLoading] = useState(true);
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
-  const faqs = [
-    {
-      q: 'What is House Of Dahlia?',
-      a: "House Of Dahlia is a contemporary luxury women's clothing brand and atelier creating couture fashion, bespoke dresses, and artisanal apparel crafted with sustainable materials and exquisite detailing.",
-    },
-    {
-      q: 'How long does shipping take?',
-      a: 'Standard nationwide shipping typically takes 3 to 6 business days. Express shipping options are available at checkout.',
-    },
-    {
-      q: 'Do you offer international shipping?',
-      a: 'Yes, we ship globally! International delivery timelines vary between 7 to 14 business days depending on customs and location.',
-    },
-    {
-      q: 'How can I track my order?',
-      a: 'Once your package has been dispatched, you will receive a tracking link via email and SMS. You can also view real-time updates in your Account under Orders.',
-    },
-    {
-      q: 'What payment methods are accepted?',
-      a: 'We accept UPI, all major Credit/Debit Cards, Net Banking, and Dahlia Wallet balance.',
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFAQs() {
+      try {
+        const data = await contentApi.getByType('faqs', true);
+        if (!isMounted) return;
+
+        if (
+          data &&
+          data.metadata &&
+          Array.isArray(data.metadata.faqs) &&
+          data.metadata.faqs.length > 0
+        ) {
+          setFaqs(data.metadata.faqs);
+        }
+      } catch (error) {
+        console.warn('Could not load dynamic FAQs, using defaults:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadFAQs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          padding: '2rem',
+        }}
+      >
+        <LoadingSpinnerWithText text="Just a moment..." />
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.container} style={{ maxWidth: '840px', margin: '0 auto', padding: '5rem 1.5rem 4rem' }}>
-      <h1 className={styles.title} style={{ fontFamily: 'var(--font-instrument-serif), Georgia, serif', fontSize: '3rem', fontWeight: 400, color: '#111', marginBottom: '1.5rem' }}>
-        Frequently Asked Questions
-      </h1>
-      <div className={styles.content}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
+    <main className={styles.container}>
+      <h1 className={styles.title}>Frequently Asked Questions</h1>
+      <p className={styles.subtitle}>
+        Find quick answers to common questions about our couture collections, bespoke tailoring, shipping, and services.
+      </p>
+
+      {faqs.length === 0 ? (
+        <div className={styles.emptyBox}>
+          <p>No questions have been published yet.</p>
+        </div>
+      ) : (
+        <div className={styles.accordionList}>
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx;
             return (
               <div
-                key={idx}
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #eaeaea',
-                  borderRadius: '16px',
-                  padding: '1.25rem 1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: isOpen ? '0 4px 20px rgba(0,0,0,0.04)' : 'none',
-                }}
+                key={faq.id || idx}
+                className={`${styles.faqItem} ${isOpen ? styles.faqItemOpen : ''}`}
                 onClick={() => setOpenIdx(isOpen ? null : idx)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOpenIdx(isOpen ? null : idx);
+                  }
+                }}
+                aria-expanded={isOpen}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: '#111' }}>
-                    {faq.q}
-                  </h3>
-                  <span style={{ fontSize: '1.5rem', color: '#AF5D6A', transform: isOpen ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s ease', display: 'inline-block' }}>
+                <div className={styles.questionRow}>
+                  <h3 className={styles.questionText}>{faq.question}</h3>
+                  <span
+                    className={`${styles.toggleIcon} ${
+                      isOpen ? styles.toggleIconRotated : ''
+                    }`}
+                    aria-hidden="true"
+                  >
                     +
                   </span>
                 </div>
                 {isOpen && (
-                  <p style={{ margin: '1rem 0 0', color: '#555', lineHeight: 1.7, fontSize: '1rem' }}>
-                    {faq.a}
-                  </p>
+                  <div className={styles.answerContent}>
+                    <p style={{ margin: 0 }}>{faq.answer}</p>
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
-      </div>
-    </div>
+      )}
+    </main>
   );
 }

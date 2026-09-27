@@ -264,7 +264,7 @@ export default function OrderSuccessPage() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Loading...</div>
+        <div className={styles.loading}>Just a moment...</div>
       </div>
     );
   }

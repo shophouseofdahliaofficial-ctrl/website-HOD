@@ -71,6 +71,11 @@ export default function AuthCallbackPage() {
           tokenStorage.set(session.access_token);
         }
 
+        const isPhoneDevice =
+          typeof window !== 'undefined' &&
+          (window.innerWidth <= 768 ||
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+
         const returnTo = typeof window !== 'undefined'
           ? localStorage.getItem(RETURN_TO_KEY)
           : null;
@@ -78,7 +83,7 @@ export default function AuthCallbackPage() {
           localStorage.removeItem(RETURN_TO_KEY);
         }
 
-        const path = (returnTo && returnTo.startsWith('/')) ? returnTo : '/';
+        const path = (returnTo && returnTo.startsWith('/')) ? returnTo : (isPhoneDevice ? '/account' : '/account');
         // Wait 2 seconds for the loader animation to play before redirecting
         setTimeout(() => {
           if (mounted) {

@@ -37,7 +37,7 @@ export default function LoadingSpinner({ fullHeight = false }: { fullHeight?: bo
           strokeLinecap="round"
         />
       </svg>
-      <span style={{ fontSize: 'calc(1rem - 3px)', fontWeight: 500, letterSpacing: '-0.5px' }}>Loading...</span>
+      <span style={{ fontSize: 'calc(1rem - 3px)', fontWeight: 500, letterSpacing: '-0.5px' }}>Just a moment...</span>
       <style>{`
         @keyframes spin {
           100% { transform: rotate(360deg); }

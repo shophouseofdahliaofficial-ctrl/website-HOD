@@ -58,11 +58,11 @@
   justify-content: center;
   padding: 0.05em 0.25em;
   background: linear-gradient(110deg,
-      rgba(83, 0, 0, 0.65) 0%,
-      #530000 35%,
-      #915f5f 50%,
-      #530000 65%,
-      rgba(83, 0, 0, 0.65) 100%);
+      rgba(128, 0, 32, 0.842) 0%,
+      #800020 35%,
+      #800020 50%,
+      #800020a1 65%,
+      #800020 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -93,7 +93,7 @@
   font-size: clamp(0.75rem, 1.2vw, 0.88rem);
   letter-spacing: 0.0em;
   text-transform: capitalize;
-  color: rgba(83, 0, 0);
+  color: #800020;
   margin: 0;
   font-weight: 500;
   font-style: normal;

@@ -144,7 +144,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, width, height);
           if (blinkState.alpha > 0.01) {
-            ctx.fillStyle = `rgba(83, 0, 0, ${blinkState.alpha.toFixed(3)})`;
+            ctx.fillStyle = `rgba(128, 0, 32, ${blinkState.alpha.toFixed(3)})`;
             ctx.fillRect(dotPx, dotPy, dotSize, dotSize);
           }
         };
@@ -232,7 +232,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                     const cubeSize = PIXEL_SIZE * cubeScale;
                     const pOffset = (PIXEL_SIZE - cubeSize) / 2;
 
-                    ctx.fillStyle = `rgba(83, 0, 0, ${cubeAlpha.toFixed(3)})`;
+                    ctx.fillStyle = `rgba(128, 0, 32, ${cubeAlpha.toFixed(3)})`;
                     ctx.fillRect(px + pOffset, py + pOffset, cubeSize, cubeSize);
 
                     if (cubeScale > 0.55 && pseudoRandom(c * 47 + r * 73) < 0.5) {
@@ -243,7 +243,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                   }
                 } else if (delta < crestWidth) {
                   // Active boundary pixel crest: full size solid burgundy pixel squares with crisp alphanumeric glyphs
-                  ctx.fillStyle = '#530000';
+                  ctx.fillStyle = '#800020';
                   ctx.fillRect(px, py, tileSize, tileSize);
 
                   if (pseudoRandom(c * 23 + r * 41) < 0.6) {
@@ -262,7 +262,7 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
                     const cubeSize = PIXEL_SIZE * shrinkScale;
                     const pOffset = (PIXEL_SIZE - cubeSize) / 2;
 
-                    ctx.fillStyle = `rgba(83, 0, 0, ${fadeAlpha.toFixed(3)})`;
+                    ctx.fillStyle = `rgba(128, 0, 32, ${fadeAlpha.toFixed(3)})`;
                     ctx.fillRect(px + pOffset, py + pOffset, cubeSize, cubeSize);
 
                     if (shrinkScale > 0.48 && pseudoRandom(c * 31 + r * 53) < 0.5) {

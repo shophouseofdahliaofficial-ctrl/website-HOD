@@ -64,8 +64,18 @@ export const getPostLoginRedirect = (role: 'admin' | 'customer' | string): strin
     return '/admin';
   }
   
-  // Default: redirect customers to dashboard
-  return '/dashboard';
+  // Check if device is phone / mobile screen
+  const isPhoneDevice =
+    typeof window !== 'undefined' &&
+    (window.innerWidth <= 768 ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+
+  if (isPhoneDevice) {
+    return '/account';
+  }
+
+  // Default: redirect customers to account page
+  return '/account';
 };
 
 /**

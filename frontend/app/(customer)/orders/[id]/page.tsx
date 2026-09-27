@@ -1,7 +1,7 @@
 'use client';
 
 export const runtime = 'edge';
-
+export const dynamic = 'force-dynamic';
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -9,7 +9,6 @@ import { apiClient, productsApi, contentApi } from '@/lib/api';
 import { Product } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
 import { useCart } from '@/contexts/CartContext';
-import ProductDetailsModal from '@/components/ProductDetailsModal';
 import HowWasItModal from '@/components/HowWasItModal';
 import styles from './page.module.css';
 import Link from 'next/link';

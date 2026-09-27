@@ -38,6 +38,12 @@ export default function Footer() {
     let isHovered = false;
 
     const setupMarquee = () => {
+      if (window.innerWidth <= 768) {
+        if (tween) tween.kill();
+        gsap.set(track, { clearProps: 'all' });
+        return;
+      }
+
       const group = track.querySelector(`.${styles.marqueeGroup}`) as HTMLElement | null;
       const groupWidth = group ? group.getBoundingClientRect().width : 0;
       if (!groupWidth) return;

@@ -1,0 +1,118 @@
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 6rem;
+}
+
+.title {
+  font-family: var(--font-instrument-serif), 'ITC Fenice', Georgia, serif;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 400;
+  color: #111111;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.subtitle {
+  color: #666666;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+}
+
+.accordionList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.faqItem {
+  background: #ffffff;
+  border: 0px solid #eae6ea;
+  border-radius: 22px;
+  padding: 1.35rem 1.65rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.faqItem:hover {
+  border-color: #d8ced8;
+
+}
+
+.faqItemOpen {
+  border-color: #e2cad0;
+  box-shadow: 0 8px 25px rgba(175, 93, 106, 0.07);
+}
+
+.questionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.questionText {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.toggleIcon {
+  font-size: 1.9rem;
+  font-weight: 300;
+  color: #af5d6a;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease;
+}
+
+.toggleIconRotated {
+  transform: rotate(45deg);
+  color: #964f5b;
+}
+
+.answerContent {
+  margin: 1.1rem 0 0.25rem;
+  color: #4b5563;
+  line-height: 1.75;
+  font-size: 1rem;
+  white-space: pre-line;
+  border-top: 0px solid #f3eff2;
+  padding-top: 1rem;
+}
+
+.emptyBox {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  background: #ffffff;
+  border: 1px dashed #d1d5db;
+  border-radius: 18px;
+  color: #666;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 3.5rem 1.25rem 4rem;
+  }
+
+  .faqItem {
+    padding: 1.1rem 1.25rem;
+    border-radius: 14px;
+  }
+
+  .questionText {
+    font-size: 1.02rem;
+  }
+}
