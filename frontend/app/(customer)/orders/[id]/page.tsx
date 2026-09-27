@@ -9,9 +9,13 @@ import { apiClient, productsApi, contentApi } from '@/lib/api';
 import { Product } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
 import { useCart } from '@/contexts/CartContext';
-import HowWasItModal from '@/components/HowWasItModal';
+import dynamicImport from 'next/dynamic';
 import styles from './page.module.css';
 import Link from 'next/link';
+
+const HowWasItModal = dynamicImport(() => import('@/components/HowWasItModal'), {
+  ssr: false,
+});
 import { formatDdMmYyIST, formatFullDateIST, formatTimelineStepIST } from '@/lib/utils/datetime';
 import { getCardPriceDisplay } from '@/lib/utils/productCardPricing';
 import { getPrimaryProductImageUrl } from '@/lib/utils/productImages';

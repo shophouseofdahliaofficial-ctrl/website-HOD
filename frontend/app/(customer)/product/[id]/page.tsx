@@ -5,10 +5,14 @@ export const dynamic = 'force-dynamic';
 
 
 import { useEffect, useState, Suspense } from 'react';
+import dynamicImport from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import ProductDetailsModal from '@/components/ProductDetailsModal';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
+
+const ProductDetailsModal = dynamicImport(() => import('@/components/ProductDetailsModal'), {
+  ssr: false,
+});
 
 /**
  * Deep link / refresh target for product modal: /product/[id]
