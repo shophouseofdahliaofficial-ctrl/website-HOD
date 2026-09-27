@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react';
 import dynamicImport from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
 
 const ProductDetailsModal = dynamicImport(() => import('@/components/ProductDetailsModal'), {
@@ -49,6 +48,7 @@ function ProductDeepLinkContent() {
     let cancelled = false;
     (async () => {
       try {
+        const { productsApi } = await import('@/lib/api/products');
         const p = await productsApi.getById(id, true);
         if (!cancelled) {
           if (p) {
