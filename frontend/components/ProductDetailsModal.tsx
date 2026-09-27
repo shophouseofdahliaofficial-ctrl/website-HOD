@@ -27,15 +27,22 @@ import { getUploadsVariationHint, isUploadsVariationActive, resolveUploadFlags }
 import { getOrderedProductImageUrls, getPrimaryProductImageUrl } from '@/lib/utils/productImages';
 import { getAverageProductRating, getProductReviewCount, formatShortReviewCount } from '@/lib/utils/productReviewStats';
 import { getFirstVariationForCard, getCardDiscountOff, getCardPriceDisplay, getProductDisplayUnitLabel } from '@/lib/utils/productCardPricing';
+import dynamicImport from 'next/dynamic';
 import { useCategoryMap } from '@/hooks/useCategoryMap';
-import ProductPrintUploadModal, {
-  type PrintUploadMode,
-  type UploadedPrintItem,
+import type {
+  PrintUploadMode,
+  UploadedPrintItem,
 } from '@/components/product/ProductPrintUploadModal';
 import ProductDetailBanners from '@/components/product/ProductDetailBanners';
-import ProductDigitalFlipbook from '@/components/product/ProductDigitalFlipbook';
 import ProductCardImage from '@/components/ui/ProductCardImage';
 import Logo from '@/components/Logo';
+
+const ProductPrintUploadModal = dynamicImport(() => import('@/components/product/ProductPrintUploadModal'), {
+  ssr: false,
+});
+const ProductDigitalFlipbook = dynamicImport(() => import('@/components/product/ProductDigitalFlipbook'), {
+  ssr: false,
+});
 
 function UploadImagesButtonIcon({ className }: { className?: string }) {
   return (
