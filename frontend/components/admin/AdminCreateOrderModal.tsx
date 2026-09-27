@@ -2,17 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { adminProductsApi } from '@/lib/api';
-import { apiClient } from '@/lib/api';
+import { adminProductsApi, apiClient } from '@/lib/api';
 import { contentApi, type SiteContent } from '@/lib/api/content';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
-import type { Product, ProductVariation } from '@/types';
-import AdminOrderMapLocationModal from '@/components/admin/AdminOrderMapLocationModal';
+import type { Product } from '@/types';
 import styles from '@/app/admin/products/page.module.css';
 
-type LiveLocationChoice = '' | 'yes' | 'no';
-
 type Line = { productId: string; variationId: string; quantity: number };
+
+type VariationOption = {
+  id: string;
+  size: string;
+  price: number;
+};
 
 function productIdKey(id: string | number | null | undefined): string {
   return id != null && id !== '' ? String(id) : '';
@@ -22,9 +24,205 @@ function emptyLine(): Line {
   return { productId: '', variationId: '', quantity: 1 };
 }
 
-function getAvailableVariations(detail: Product | undefined): ProductVariation[] {
-  if (!detail?.variations?.length) return [];
-  return detail.variations.filter((v) => v.isAvailable !== false);
+function getProductVariations(detail: Product | undefined): VariationOption[] {
+  if (!detail) return [];
+  const basePrice =
+    detail.sellingPrice !== null && detail.sellingPrice !== undefined
+      ? Number(detail.sellingPrice)
+      : Number(detail.pricePerLitre || 0);
+
+  const results: VariationOption[] = [];
+  const seenKeys = new Set<string>();
+
+  // 1. Check customization options & combinations
+  const rawCustomizationOptions = Array.isArray(detail.customizationOptions)
+    ? detail.customizationOptions
+    : typeof detail.customizationOptions === 'string'
+      ? (() => {
+          try {
+            const p = JSON.parse(detail.customizationOptions);
+            return Array.isArray(p) ? p : [];
+          } catch {
+            return [];
+          }
+        })()
+      : [];
+
+  const eligibleGroups = rawCustomizationOptions.filter((g: any) => {
+    if (!g || g.type === 'text_input' || g.type === 'uploads') return false;
+    return Array.isArray(g.values) && g.values.length > 0;
+  });
+
+  const rawCombinations = Array.isArray(detail.customizationCombinations)
+    ? detail.customizationCombinations
+    : typeof detail.customizationCombinations === 'string'
+      ? (() => {
+          try {
+            const p = JSON.parse(detail.customizationCombinations);
+            return Array.isArray(p) ? p : [];
+          } catch {
+            return [];
+          }
+        })()
+      : [];
+
+  const findValueName = (groupId: string, valId: string): string => {
+    const grp = eligibleGroups.find((g: any) => String(g.id) === String(groupId));
+    if (!grp) return String(valId);
+    const val = grp.values.find((v: any) => String(v.id) === String(valId));
+    return val?.name || val?.title || val?.label || String(valId);
+  };
+
+  const findValueAddon = (groupId: string, valId: string): number => {
+    const grp = eligibleGroups.find((g: any) => String(g.id) === String(groupId));
+    if (!grp) return 0;
+    const val = grp.values.find((v: any) => String(v.id) === String(valId));
+    return typeof val?.price === 'number' && Number.isFinite(val.price) ? Number(val.price) : 0;
+  };
+
+  // If explicit combinations exist
+  const activeCombinations = rawCombinations.filter((c: any) => c.isActive !== false);
+  if (activeCombinations.length > 0) {
+    for (const combo of activeCombinations) {
+      const keys = combo.combinationKeys || {};
+      const parts: string[] = [];
+      let calculatedAddon = 0;
+
+      for (const [gId, vId] of Object.entries(keys)) {
+        const vName = findValueName(gId, String(vId));
+        parts.push(vName);
+        calculatedAddon += findValueAddon(gId, String(vId));
+      }
+
+      const comboPrice =
+        combo.price !== null && combo.price !== undefined && Number.isFinite(Number(combo.price))
+          ? Number(combo.price)
+          : basePrice + calculatedAddon;
+
+      const comboLabel = parts.length > 0 ? parts.join(' / ') : combo.name || `Option #${combo.id}`;
+      const key = `combo_${combo.id || parts.join('_')}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        results.push({
+          id: String(combo.id || key),
+          size: comboLabel,
+          price: Math.round(comboPrice * 100) / 100,
+        });
+      }
+    }
+  }
+
+  // If no explicit combinations or we have eligible groups:
+  if (results.length === 0 && eligibleGroups.length > 0) {
+    if (eligibleGroups.length === 1) {
+      // Single group (e.g. Size: XS, S, M, L, XL)
+      const grp = eligibleGroups[0];
+      const vals = grp.values.filter((v: any) => v.isActive !== false);
+      for (const val of vals) {
+        const valName = val.name || val.title || val.label || 'Option';
+        const addon = typeof val.price === 'number' && Number.isFinite(val.price) ? Number(val.price) : 0;
+        const key = `val_${val.id || valName}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          results.push({
+            id: String(val.id),
+            size: valName,
+            price: Math.round((basePrice + addon) * 100) / 100,
+          });
+        }
+      }
+    } else {
+      // Multiple groups (e.g. Size + Color): generate Cartesian combinations
+      const activeValuesPerGroup = eligibleGroups
+        .map((grp: any) => ({
+          groupId: grp.id,
+          groupTitle: grp.title || 'Option',
+          values: (grp.values || []).filter((v: any) => v.isActive !== false),
+        }))
+        .filter((g: any) => g.values.length > 0);
+
+      if (activeValuesPerGroup.length > 0) {
+        let combinations: Array<{ ids: string[]; names: string[]; addonSum: number }> = [
+          { ids: [], names: [], addonSum: 0 },
+        ];
+        for (const grp of activeValuesPerGroup) {
+          const nextCombos: Array<{ ids: string[]; names: string[]; addonSum: number }> = [];
+          for (const existing of combinations) {
+            for (const val of grp.values) {
+              const valName = val.name || val.title || val.label || 'Option';
+              const addon = typeof val.price === 'number' && Number.isFinite(val.price) ? Number(val.price) : 0;
+              nextCombos.push({
+                ids: [...existing.ids, String(val.id)],
+                names: [...existing.names, valName],
+                addonSum: existing.addonSum + addon,
+              });
+            }
+          }
+          combinations = nextCombos;
+          if (combinations.length > 100) break;
+        }
+
+        if (combinations.length > 0 && combinations.length <= 100) {
+          for (const c of combinations) {
+            const label = c.names.join(' / ');
+            const id = c.ids.join('__');
+            if (!seenKeys.has(id)) {
+              seenKeys.add(id);
+              results.push({
+                id,
+                size: label,
+                price: Math.round((basePrice + c.addonSum) * 100) / 100,
+              });
+            }
+          }
+        } else {
+          // If combinations are too large, list all group values with group title prefix
+          for (const grp of activeValuesPerGroup) {
+            for (const val of grp.values) {
+              const valName = val.name || val.title || val.label || 'Option';
+              const addon = typeof val.price === 'number' && Number.isFinite(val.price) ? Number(val.price) : 0;
+              const label = `${grp.groupTitle}: ${valName}`;
+              const key = `val_${val.id}`;
+              if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                results.push({
+                  id: String(val.id),
+                  size: label,
+                  price: Math.round((basePrice + addon) * 100) / 100,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Check detail.variations (from product_variations table)
+  const realVariations = (detail.variations || []).filter((v) => v.isAvailable !== false);
+  const meaningfulVariations = realVariations.filter((v) => {
+    const s = String(v.size || '').trim().toLowerCase();
+    if (results.length > 0 && (!s || s === 'size')) return false;
+    return true;
+  });
+
+  if (meaningfulVariations.length > 0) {
+    for (const v of meaningfulVariations) {
+      const mult = v.priceMultiplier !== null && v.priceMultiplier !== undefined ? Number(v.priceMultiplier) : 1;
+      const price = v.price !== null && v.price !== undefined ? Number(v.price) : basePrice * mult;
+      const key = `pv_${v.id}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        results.push({
+          id: String(v.id),
+          size: v.size || `Size #${v.id}`,
+          price: Math.round(price * 100) / 100,
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 function resolveProductDetail(
@@ -49,27 +247,21 @@ function lineUnitPrice(product: Product, variationId: string | null): number {
   const basePrice =
     product.sellingPrice !== null && product.sellingPrice !== undefined
       ? Number(product.sellingPrice)
-      : Number(product.pricePerLitre);
-  const variations = (product.variations || []).filter((v) => v.isAvailable !== false);
-  const variation = variationId ? variations.find((v) => String(v.id) === String(variationId)) : null;
-  const mult =
-    variation?.priceMultiplier !== null && variation?.priceMultiplier !== undefined
-      ? Number(variation.priceMultiplier)
-      : 1;
-  if (variation?.price !== null && variation?.price !== undefined) {
-    return Number(variation.price);
+      : Number(product.pricePerLitre || 0);
+  const vars = getProductVariations(product);
+  if (vars.length > 0 && variationId) {
+    const match = vars.find((v) => v.id === String(variationId));
+    if (match) return match.price;
   }
-  return basePrice * mult;
+  return basePrice;
 }
 
 function lineIsComplete(line: Line, detail: Product | undefined): boolean {
   if (!line.productId || !detail) return false;
-  const allVariations = detail.variations || [];
-  const availableVariations = getAvailableVariations(detail);
-  if (allVariations.length > 0) {
-    if (availableVariations.length === 0) return false;
+  const vars = getProductVariations(detail);
+  if (vars.length > 0) {
     if (!line.variationId) return false;
-    if (!availableVariations.some((v) => String(v.id) === String(line.variationId))) return false;
+    if (!vars.some((v) => v.id === String(line.variationId))) return false;
   }
   const q = Number(line.quantity);
   return Number.isFinite(q) && q >= 1;
@@ -102,9 +294,6 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
   const [stateVal, setStateVal] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  const [liveLocationChoice, setLiveLocationChoice] = useState<LiveLocationChoice>('');
-  const [liveLocation, setLiveLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [mapLocationOpen, setMapLocationOpen] = useState(false);
   const [emailLookup, setEmailLookup] = useState<EmailLookup>('idle');
   const [paymentKind, setPaymentKind] = useState<'prepaid' | 'cod'>('cod');
   const [deliveryChargesStr, setDeliveryChargesStr] = useState('0');
@@ -135,10 +324,25 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     };
   }, [open]);
 
+  // Pre-seed cache with activeProducts
+  useEffect(() => {
+    if (activeProducts.length > 0) {
+      setDetailsByProductId((prev) => {
+        const next = { ...prev };
+        for (const p of activeProducts) {
+          const k = productIdKey(p.id);
+          if (k && !next[k]) {
+            next[k] = p;
+          }
+        }
+        return next;
+      });
+    }
+  }, [activeProducts]);
+
   useEffect(() => {
     if (!open) return;
     setLines([emptyLine()]);
-    setDetailsByProductId({});
     setCustomerName('');
     setPhone('');
     setStreet('');
@@ -146,9 +350,6 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     setStateVal('');
     setPostalCode('');
     setCustomerEmail('');
-    setLiveLocationChoice('');
-    setLiveLocation(null);
-    setMapLocationOpen(false);
     setEmailLookup('idle');
     setPaymentKind('cod');
     setDeliveryChargesStr('0');
@@ -165,7 +366,9 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     if (loadingProductIdsRef.current.has(key)) return null;
 
     const cached = detailsByProductIdRef.current[key];
-    if (cached) return cached;
+    if (cached && (cached.variations !== undefined || cached.customizationOptions !== undefined)) {
+      return cached;
+    }
 
     loadingProductIdsRef.current.add(key);
     setLoadingProductIds((prev) => new Set(prev).add(key));
@@ -270,13 +473,10 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
       city.trim() &&
       stateVal.trim() &&
       /^\d{6}$/.test(postalCode.replace(/\D/g, '')) &&
-      customerEmail.trim();
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
     if (!filledAddr) return false;
-    if (emailLookup !== 'registered') return false;
     if (!Number.isFinite(deliveryChargesNum)) return false;
     if (completedLines.length < 1) return false;
-    if (loadingProductIds.size > 0) return false;
-    if (liveLocationChoice === 'yes' && !liveLocation) return false;
     return true;
   }, [
     customerName,
@@ -286,27 +486,18 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     stateVal,
     postalCode,
     customerEmail,
-    emailLookup,
     deliveryChargesNum,
     completedLines.length,
-    loadingProductIds.size,
-    liveLocationChoice,
-    liveLocation,
   ]);
 
   const submitBlockReason = useMemo(() => {
     if (submitting) return null;
-    if (loadingProductIds.size > 0) return 'Loading product details…';
     if (completedLines.length < 1) {
       const pending = lines.find((line) => line.productId);
       if (!pending) return 'Add at least one product.';
-      const key = productIdKey(pending.productId);
-      if (key && productLoadErrors[key]) return productLoadErrors[key];
       const det = resolveProductDetail(pending.productId, detailsByProductId);
       if (!det) return 'Loading product details…';
-      const available = getAvailableVariations(det);
-      const allCount = det.variations?.length ?? 0;
-      if (allCount > 0 && available.length === 0) return 'No available sizes for the selected product.';
+      const available = getProductVariations(det);
       if (available.length > 0 && !pending.variationId) return 'Select a size/variation for the product.';
       return 'Complete product quantity (at least 1).';
     }
@@ -321,18 +512,13 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
       return 'Fill in all delivery address fields (6-digit postal code).';
     }
     if (!customerEmail.trim()) return 'Enter the customer email.';
-    if (emailLookup === 'loading') return 'Checking customer email…';
-    if (emailLookup === 'unregistered') return 'Customer must have a registered account for this email.';
-    if (emailLookup !== 'registered') return 'Enter a valid registered customer email.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) return 'Enter a valid customer email.';
     if (!Number.isFinite(deliveryChargesNum)) return 'Enter valid delivery charges (0 or more).';
-    if (liveLocationChoice === 'yes' && !liveLocation) return 'Set delivery location on the map.';
     return null;
   }, [
     submitting,
-    loadingProductIds.size,
     completedLines.length,
     lines,
-    productLoadErrors,
     detailsByProductId,
     customerName,
     phone,
@@ -341,32 +527,44 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     stateVal,
     postalCode,
     customerEmail,
-    emailLookup,
     deliveryChargesNum,
-    liveLocationChoice,
-    liveLocation,
   ]);
 
   const onProductChange = async (index: number, productId: string) => {
     const key = productIdKey(productId);
+    const initialDetail = activeProducts.find((p) => String(p.id) === key);
+    if (initialDetail) {
+      setDetailsByProductId((prev) => ({ ...prev, [key]: initialDetail }));
+    }
+
+    const available = getProductVariations(initialDetail);
+    const autoVariationId = available.length === 1 ? available[0].id : '';
+
     setLines((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], productId: key, variationId: '', quantity: Math.max(1, next[index].quantity) };
+      next[index] = {
+        ...next[index],
+        productId: key,
+        variationId: autoVariationId,
+        quantity: Math.max(1, next[index].quantity),
+      };
       return next;
     });
+
     if (!key) return;
-    const detail = await loadProductDetail(key);
-    if (!detail) return;
-    const available = getAvailableVariations(detail);
-    if (available.length !== 1) return;
-    const onlyId = String(available[0].id);
-    setLines((prev) => {
-      const line = prev[index];
-      if (!line || String(line.variationId) === onlyId) return prev;
-      const next = [...prev];
-      next[index] = { ...line, variationId: onlyId };
-      return next;
-    });
+    const fullDetail = await loadProductDetail(key);
+    if (fullDetail) {
+      const updatedVars = getProductVariations(fullDetail);
+      if (updatedVars.length === 1) {
+        setLines((prev) => {
+          const line = prev[index];
+          if (!line || line.variationId === updatedVars[0].id) return prev;
+          const next = [...prev];
+          next[index] = { ...line, variationId: updatedVars[0].id };
+          return next;
+        });
+      }
+    }
   };
 
   const onVariationChange = (index: number, variationId: string) => {
@@ -400,11 +598,21 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     setSubmitError('');
     try {
       const postal = postalCode.replace(/\D/g, '').slice(0, 6);
-      const items = completedLines.map((l) => ({
+      const items = completedLines.map((l) => {
+        const isNumericVar = l.variationId && /^\d+$/.test(l.variationId);
+        const detail = resolveProductDetail(l.productId, detailsByProductId);
+        const vars = getProductVariations(detail);
+        const selectedVar = vars.find((v) => v.id === l.variationId);
+        const unitPrice = detail ? lineUnitPrice(detail, l.variationId || null) : 0;
+        return {
           productId: Number.parseInt(l.productId, 10),
-          variationId: l.variationId ? Number.parseInt(l.variationId, 10) : null,
+          variationId: isNumericVar ? Number.parseInt(l.variationId, 10) : null,
+          variationSize: selectedVar ? selectedVar.size : null,
+          unitPrice,
           quantity: Number.parseInt(String(l.quantity), 10),
-        }));
+        };
+      });
+
       await apiClient.post(API_ENDPOINTS.ADMIN.ORDERS.MANUAL_CREATE, {
         customerName: customerName.trim(),
         phone: phone.trim(),
@@ -416,14 +624,16 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
         paymentKind,
         deliveryCharges: deliveryChargesNum,
         items,
-        ...(liveLocationChoice === 'yes' && liveLocation
-          ? { latitude: liveLocation.latitude, longitude: liveLocation.longitude }
-          : {}),
       });
+
       onCreated?.();
       onClose();
     } catch (e: unknown) {
-      setSubmitError(typeof e === 'object' && e && 'message' in e ? String((e as { message: string }).message) : 'Failed to create order');
+      setSubmitError(
+        typeof e === 'object' && e && 'message' in e
+          ? String((e as { message: string }).message)
+          : 'Failed to create order',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -448,19 +658,18 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
           Create order
         </h2>
         <p className={styles.createOrderHint}>
-          Order is placed for the customer account matching email. Address is stored on this order only (not saved to
-          their address book).
+          Order is placed directly for the customer. Address is stored on this order.
         </p>
 
         <section className={styles.createOrderSection}>
           <h3 className={styles.createOrderSectionTitle}>Products</h3>
           {lines.map((line, index) => {
             const detail = resolveProductDetail(line.productId, detailsByProductId);
-            const variations = getAvailableVariations(detail);
+            const variations = getProductVariations(detail);
             const lineKey = productIdKey(line.productId);
             const isLoadingLine = lineKey ? loadingProductIds.has(lineKey) : false;
             const lineLoadError = lineKey ? productLoadErrors[lineKey] : undefined;
-            const hasVariationsInCatalog = (detail?.variations?.length ?? 0) > 0;
+
             return (
               <div key={index} className={styles.createOrderLine}>
                 <div className={styles.createOrderLineFields}>
@@ -479,11 +688,11 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
                       ))}
                     </select>
                   </label>
-                  {line.productId && isLoadingLine ? (
+                  {line.productId && isLoadingLine && variations.length === 0 ? (
                     <p className={styles.createOrderEmailMeta}>Loading product…</p>
                   ) : null}
                   {lineLoadError ? <p className={styles.createOrderEmailBad}>{lineLoadError}</p> : null}
-                  {line.productId && !isLoadingLine && variations.length > 0 ? (
+                  {line.productId && variations.length > 0 ? (
                     <label className={styles.createOrderLabel}>
                       Variation
                       <select
@@ -491,17 +700,14 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
                         value={line.variationId}
                         onChange={(e) => onVariationChange(index, e.target.value)}
                       >
-                        <option value="">— Size —</option>
+                        <option value="">— Size / Option —</option>
                         {variations.map((v) => (
                           <option key={v.id} value={String(v.id)}>
-                            {v.size}
+                            {v.size} {v.price ? `(₹${v.price})` : ''}
                           </option>
                         ))}
                       </select>
                     </label>
-                  ) : null}
-                  {line.productId && !isLoadingLine && hasVariationsInCatalog && variations.length === 0 ? (
-                    <p className={styles.createOrderEmailBad}>No available sizes for this product.</p>
                   ) : null}
                   <label className={styles.createOrderLabel}>
                     Qty
@@ -525,27 +731,52 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
         </section>
 
         <section className={styles.createOrderSection}>
-          <h3 className={styles.createOrderSectionTitle}>Delivery (order only)</h3>
+          <h3 className={styles.createOrderSectionTitle}>Delivery Address</h3>
           <div className={styles.createOrderGrid}>
             <label className={styles.createOrderLabel}>
               Customer name
-              <input className={styles.createOrderInput} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              <input
+                className={styles.createOrderInput}
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Full Name"
+              />
             </label>
             <label className={styles.createOrderLabel}>
               Phone
-              <input className={styles.createOrderInput} value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <input
+                className={styles.createOrderInput}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Phone number"
+              />
             </label>
             <label className={`${styles.createOrderLabel} ${styles.createOrderFull}`}>
               Street
-              <input className={styles.createOrderInput} value={street} onChange={(e) => setStreet(e.target.value)} />
+              <input
+                className={styles.createOrderInput}
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                placeholder="Street address, house no."
+              />
             </label>
             <label className={styles.createOrderLabel}>
               City
-              <input className={styles.createOrderInput} value={city} onChange={(e) => setCity(e.target.value)} />
+              <input
+                className={styles.createOrderInput}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="City"
+              />
             </label>
             <label className={styles.createOrderLabel}>
               State
-              <input className={styles.createOrderInput} value={stateVal} onChange={(e) => setStateVal(e.target.value)} />
+              <input
+                className={styles.createOrderInput}
+                value={stateVal}
+                onChange={(e) => setStateVal(e.target.value)}
+                placeholder="State"
+              />
             </label>
             <label className={styles.createOrderLabel}>
               Postal code
@@ -553,8 +784,9 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
                 className={styles.createOrderInput}
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value)}
+                placeholder="6-digit PIN"
                 inputMode="numeric"
-                maxLength={8}
+                maxLength={6}
               />
             </label>
           </div>
@@ -562,95 +794,48 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
 
         <section className={styles.createOrderSection}>
           <label className={styles.createOrderLabel}>
-            Add Live location
-            <select
-              className={styles.createOrderInput}
-              value={liveLocationChoice}
-              onChange={(e) => {
-                const v = e.target.value as LiveLocationChoice;
-                setLiveLocationChoice(v);
-                if (v !== 'yes') {
-                  setLiveLocation(null);
-                  setMapLocationOpen(false);
-                }
-              }}
-            >
-              <option value="">— Select —</option>
-              <option value="yes">Yes (Inside Gwalior)</option>
-              <option value="no">No (Outside Gwalior)</option>
-            </select>
-          </label>
-          {liveLocationChoice === 'yes' ? (
-            <div className={styles.createOrderLocationRow}>
-              {liveLocation ? (
-                <>
-                  <span className={styles.createOrderLocationSet}>
-                    Location set [{liveLocation.latitude.toFixed(6)}, {liveLocation.longitude.toFixed(6)}]
-                  </span>
-                  <button
-                    type="button"
-                    className={styles.createOrderLocationEdit}
-                    aria-label="Change location"
-                    onClick={() => setMapLocationOpen(true)}
-                  >
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden>
-                      <path
-                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </>
-              ) : (
-                <button type="button" className={styles.createOrderSetLocationBtn} onClick={() => setMapLocationOpen(true)}>
-                  Set location
-                </button>
-              )}
-            </div>
-          ) : null}
-        </section>
-
-        <section className={styles.createOrderSection}>
-          <label className={styles.createOrderLabel}>
-            Customer email (must be registered)
+            Customer email
             <input
               type="email"
               className={`${styles.createOrderInput} ${
                 emailLookup === 'registered'
                   ? styles.createOrderInputOk
-                  : emailLookup === 'unregistered'
-                    ? styles.createOrderInputBad
-                    : ''
+                  : ''
               }`}
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
+              placeholder="customer@example.com"
               autoComplete="off"
             />
           </label>
-          {emailLookup === 'loading' ? <p className={styles.createOrderEmailMeta}>Checking…</p> : null}
-          {emailLookup === 'registered' ? <p className={styles.createOrderEmailOk}>Account found</p> : null}
-          {emailLookup === 'unregistered' ? <p className={styles.createOrderEmailBad}>No account for this email</p> : null}
+          {emailLookup === 'loading' ? <p className={styles.createOrderEmailMeta}>Checking customer email…</p> : null}
+          {emailLookup === 'registered' ? <p className={styles.createOrderEmailOk}>✓ Registered account found (will link to customer account)</p> : null}
+          {emailLookup === 'unregistered' ? (
+            <p className={styles.createOrderEmailMeta} style={{ color: '#0369a1' }}>
+              ℹ Guest order (no existing account required, order will be created)
+            </p>
+          ) : null}
         </section>
 
         <section className={styles.createOrderSection}>
           <h3 className={styles.createOrderSectionTitle}>Payment</h3>
           <div className={styles.createOrderPayRow}>
             <label className={styles.createOrderRadio}>
-              <input type="radio" name="pay" checked={paymentKind === 'prepaid'} onChange={() => setPaymentKind('prepaid')} />
+              <input
+                type="radio"
+                name="pay"
+                checked={paymentKind === 'prepaid'}
+                onChange={() => setPaymentKind('prepaid')}
+              />
               Prepaid
             </label>
             <label className={styles.createOrderRadio}>
-              <input type="radio" name="pay" checked={paymentKind === 'cod'} onChange={() => setPaymentKind('cod')} />
+              <input
+                type="radio"
+                name="pay"
+                checked={paymentKind === 'cod'}
+                onChange={() => setPaymentKind('cod')}
+              />
               COD
             </label>
           </div>
@@ -661,6 +846,7 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
               value={deliveryChargesStr}
               onChange={(e) => setDeliveryChargesStr(e.target.value)}
               inputMode="decimal"
+              placeholder="0"
             />
           </label>
         </section>
@@ -704,16 +890,5 @@ export default function AdminCreateOrderModal({ open, onClose, activeProducts, o
     </div>
   );
 
-  return (
-    <>
-      {createPortal(portal, document.body)}
-      <AdminOrderMapLocationModal
-        open={mapLocationOpen}
-        onClose={() => setMapLocationOpen(false)}
-        initialLatitude={liveLocation?.latitude}
-        initialLongitude={liveLocation?.longitude}
-        onConfirm={(coords) => setLiveLocation(coords)}
-      />
-    </>
-  );
+  return createPortal(portal, document.body);
 }

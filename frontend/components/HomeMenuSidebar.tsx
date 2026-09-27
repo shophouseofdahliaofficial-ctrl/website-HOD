@@ -422,6 +422,13 @@ export default function HomeMenuSidebar({ isOpen, onClose, triggerRect }: HomeMe
           {/* Bottom Center Horizontal Links with 0.52rem Font Size */}
           <nav className={styles.menuHorizontalLinks} aria-label="Footer links">
             <span className={styles.menuLinkItem}>
+              <Link href="/about" className={styles.menuBottomLink} onClick={handleClose}>
+                About Us
+              </Link>
+              <span className={styles.menuDot} aria-hidden="true">•</span>
+            </span>
+
+            <span className={styles.menuLinkItem}>
               <Link href="/faqs" className={styles.menuBottomLink} onClick={handleClose}>
                 FAQs
               </Link>

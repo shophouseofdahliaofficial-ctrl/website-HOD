@@ -266,14 +266,8 @@ export default function OrdersPage() {
       <h1 className={styles.pageTitle}>My Orders</h1>
 
       <div className={styles.ordersList}>
-        {monthGroups.map(({ key, label, orderGroups: monthOrderGroups, itemCount }) => (
+        {monthGroups.map(({ key, orderGroups: monthOrderGroups }) => (
           <div key={key} className={styles.monthGroup}>
-            <div className={styles.monthGroupHeader}>
-              <span className={styles.monthGroupLabel}>{label}</span>
-              <span className={styles.monthGroupCount}>
-                {itemCount} item{itemCount !== 1 ? 's' : ''} ordered
-              </span>
-            </div>
             <div className={styles.monthGroupRows}>
               {monthOrderGroups.map(({ order, lines }) => {
                 const preview = lines[0];

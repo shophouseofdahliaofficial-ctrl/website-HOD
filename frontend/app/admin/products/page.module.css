@@ -862,29 +862,54 @@ align-items: flex-start;
 
 .createOrderInput {
   min-width: 0;
-  padding: 0.5rem 0.65rem;
+  padding: 0.65rem 0.85rem;
   font-size: 0.9rem;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
+  outline: none;
+  box-shadow: none;
+}
+
+.createOrderInput:hover {
+  box-shadow: none;
+}
+
+.createOrderInput:focus {
+  border-color: #94a3b8;
+  outline: none;
+  box-shadow: none;
 }
 
 .createOrderInputOk {
   border-color: #16a34a;
-  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
+  box-shadow: none;
 }
 
 .createOrderInputBad {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.2);
+  border-color: #cbd5e1;
+  box-shadow: none;
 }
 
 .createOrderQty {
-  width: 4.5rem;
-  padding: 0.5rem 0.5rem;
+  width: 5rem;
+  padding: 0.65rem 0.75rem;
   font-size: 0.9rem;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: #fff;
+  outline: none;
+  box-shadow: none;
+}
+
+.createOrderQty:hover {
+  box-shadow: none;
+}
+
+.createOrderQty:focus {
+  border-color: #94a3b8;
+  outline: none;
+  box-shadow: none;
 }
 
 .createOrderRemoveLine {

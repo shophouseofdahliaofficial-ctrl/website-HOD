@@ -760,9 +760,12 @@
 .summaryCard {
   background: #ffffff00;
   border-radius: 12px;
+}
 
-
-
+@media (max-width: 968px) {
+  .summaryCardStepAddress {
+    display: none !important;
+  }
 }
 
 .summaryTitle {

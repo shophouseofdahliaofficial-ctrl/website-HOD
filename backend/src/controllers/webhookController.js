@@ -465,8 +465,76 @@ const handleDelhiveryWebhook = async (req, res, next) => {
       updateQuery += ` AND status != 'delivered' AND status != 'cancelled' AND status != 'refunded'`;
     }
 
-    await query(updateQuery, values);
+    const updateResult = await query(updateQuery, values);
     console.log(`[Delhivery Webhook] Processed update (Waybill: ${waybill || 'N/A'}, Order: ${orderNumber || 'N/A'}, Status: ${newStatus || rawStatus})`);
+
+    if (updateResult.rowCount === 0 && (orderNumber || waybill)) {
+      try {
+        const crypto = require('crypto');
+        const userModel = require('../models/user');
+        const newOrderId = crypto.randomUUID();
+        const finalOrderNumber = String(orderNumber || `DLV-${waybill}`);
+        const guestId = crypto.randomUUID();
+
+        const recipientName = shipment.name || shipment.recipientName || 'Delhivery Customer';
+        const phone = shipment.phone || shipment.mobile || '9999999999';
+        const address = shipment.add || shipment.address || 'Address';
+        const pin = String(shipment.pin || shipment.pincode || '700001').replace(/[^\d]/g, '').slice(0, 6) || '700001';
+        const city = shipment.city || 'Kolkata';
+        const state = shipment.state || 'West Bengal';
+        const totalAmount = Number(shipment.total_amount || shipment.cod_amount || 0);
+
+        const guestEmail = `delhivery-${finalOrderNumber.toLowerCase()}@houseofdahlia.com`;
+        let user = await userModel.findByEmail(guestEmail);
+        if (!user) {
+          user = await userModel.createUser({
+            id: guestId,
+            name: recipientName,
+            email: guestEmail,
+            phone: phone,
+            role: 'customer',
+          }).catch(() => null);
+        }
+
+        await orderModel.createOrder({
+          id: newOrderId,
+          userId: user?.id || guestId,
+          orderNumber: finalOrderNumber,
+          status: newStatus || 'shipped',
+          paymentMethod: rawStatus.includes('COD') || shipment.payment_mode === 'COD' ? 'cod' : 'online',
+          paymentStatus: rawStatus.includes('COD') || shipment.payment_mode === 'COD' ? 'cod' : 'paid',
+          currency: 'INR',
+          subtotal: totalAmount,
+          discount: 0,
+          platformFee: 0,
+          deliveryCharges: 0,
+          total: totalAmount,
+          deliveryAddress: {
+            name: recipientName,
+            phone,
+            street: address,
+            city,
+            state,
+            postalCode: pin,
+            country: 'India',
+          },
+          items: [],
+        });
+
+        await query(
+          `UPDATE orders 
+           SET delhivery_waybill = $1, 
+               delhivery_status = $2, 
+               delhivery_tracking_url = $3,
+               shipped_at = COALESCE(shipped_at, NOW())
+           WHERE id = $4`,
+          [waybill || null, rawStatus || newStatus || 'Manifested', waybill ? `https://www.delhivery.com/track/package/${waybill}` : null, newOrderId]
+        );
+        console.log(`[Delhivery Webhook] Auto-created order #${finalOrderNumber} (AWB: ${waybill}) in admin panel orders.`);
+      } catch (insertErr) {
+        console.warn('[Delhivery Webhook] Auto-create order notice:', insertErr.message);
+      }
+    }
 
     return res.status(200).json({ success: true });
   } catch (error) {

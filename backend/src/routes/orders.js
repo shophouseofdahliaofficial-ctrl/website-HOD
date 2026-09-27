@@ -12,6 +12,7 @@ router.use(authenticate);
 
 router.get('/', orderController.getMyOrders);
 router.get('/:id', orderController.getOrderById);
+router.post('/:id/cancel', orderController.cancelOrder);
 router.get('/:id/invoice', orderController.getOrderInvoice);
 router.post('/:id/feedback', orderController.submitFeedback);
 router.post('/:id/detailed-feedback', orderController.submitDetailedFeedback);

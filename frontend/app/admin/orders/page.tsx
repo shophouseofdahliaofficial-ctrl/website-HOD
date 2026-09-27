@@ -43,6 +43,7 @@ type AdminOrder = {
   deliveryStatus: 'pending' | 'package_prepared' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'refunded' | string;
   fulfilledAt?: string | null;
   isNationwideDelivery?: boolean;
+  isSelfCreated?: boolean;
 };
 
 type OrderDetails = {
@@ -54,6 +55,7 @@ type OrderDetails = {
   currency: string;
   subtotal: number;
   discount: number;
+  platformFee?: number;
   deliveryCharges: number;
   total: number;
   deliveryAddress: {
@@ -74,6 +76,7 @@ type OrderDetails = {
   };
   items: OrderItem[];
   isNationwideDelivery?: boolean;
+  isSelfCreated?: boolean;
   delhiveryWaybill?: string | null;
 };
 
@@ -740,13 +743,14 @@ export default function AdminOrdersPage() {
           </thead>
           <tbody>
             {filtered.map((o) => {
-              const isFulfilled = o.deliveryStatus === 'delivered' && o.fulfilledAt;
+              const isCancelled = String(o.deliveryStatus || '').toLowerCase() === 'cancelled' || String(o.paymentStatus || '').toLowerCase() === 'cancelled';
+              const isDelivered = String(o.deliveryStatus || '').toLowerCase() === 'delivered';
               return (
                 <tr
                   key={o.orderId}
                   role="button"
                   tabIndex={0}
-                  className={`${styles.row} ${isFulfilled ? styles.rowFulfilled : ''}`}
+                  className={`${styles.row} ${isCancelled ? styles.rowCancelled : isDelivered ? styles.rowDelivered : ''}`}
                   onClick={() => handleOrderClick(o.orderId)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -761,9 +765,9 @@ export default function AdminOrdersPage() {
                         <span className={styles.orderNum}>#{o.orderNumber}</span>
                         <CopyOrderNumberButton orderNumber={o.orderNumber} showToast={showToast} />
                       </span>
-                      {o.isNationwideDelivery && (
-                        <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.35rem', backgroundColor: 'rgb(67, 56, 202)', color: 'white', borderRadius: '4px', border: '1px solid rgb(67, 56, 202)', whiteSpace: 'nowrap' }}>
-                          Nation-wide Delivery
+                      {o.isSelfCreated && (
+                        <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.35rem', backgroundColor: '#dc2626', color: 'white', borderRadius: '4px', border: '1px solid #dc2626', whiteSpace: 'nowrap' }}>
+                          Self-created order
                         </span>
                       )}
                     </div>
@@ -807,13 +811,14 @@ export default function AdminOrdersPage() {
           </div>
         ) : (
           filtered.map((o) => {
-            const isFulfilled = o.deliveryStatus === 'delivered' && o.fulfilledAt;
+            const isCancelled = String(o.deliveryStatus || '').toLowerCase() === 'cancelled' || String(o.paymentStatus || '').toLowerCase() === 'cancelled';
+            const isDelivered = String(o.deliveryStatus || '').toLowerCase() === 'delivered';
             return (
               <div
                 key={o.orderId}
                 role="button"
                 tabIndex={0}
-                className={`${styles.card} ${isFulfilled ? styles.cardFulfilled : ''}`}
+                className={`${styles.card} ${isCancelled ? styles.cardCancelled : isDelivered ? styles.cardDelivered : ''}`}
                 onClick={() => handleOrderClick(o.orderId)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -830,9 +835,9 @@ export default function AdminOrdersPage() {
                         <span className={styles.cardTitle}>#{o.orderNumber}</span>
                         <CopyOrderNumberButton orderNumber={o.orderNumber} showToast={showToast} />
                       </div>
-                      {o.isNationwideDelivery && (
-                        <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.35rem', backgroundColor: 'rgb(67, 56, 202)', color: 'white', borderRadius: '4px', border: '1px solid rgb(67, 56, 202)', whiteSpace: 'nowrap' }}>
-                          Nation-wide Delivery
+                      {o.isSelfCreated && (
+                        <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.35rem', backgroundColor: '#dc2626', color: 'white', borderRadius: '4px', border: '1px solid #dc2626', whiteSpace: 'nowrap' }}>
+                          Self-created order
                         </span>
                       )}
                     </div>
@@ -1042,6 +1047,17 @@ export default function AdminOrdersPage() {
                           <span>-₹{selectedOrder.discount.toFixed(2)}</span>
                         </div>
                       ) : null}
+                      {(() => {
+                        const fee = selectedOrder.platformFee != null && selectedOrder.platformFee > 0
+                          ? selectedOrder.platformFee
+                          : Math.max(0, Number((selectedOrder.total - (selectedOrder.subtotal - selectedOrder.discount + selectedOrder.deliveryCharges)).toFixed(2)));
+                        return fee > 0 ? (
+                          <div className={styles.summaryRow}>
+                            <span>Platform fees:</span>
+                            <span>₹{fee.toFixed(2)}</span>
+                          </div>
+                        ) : null;
+                      })()}
                       <div className={styles.summaryRow}>
                         <span>Delivery Charges:</span>
                         <span>{selectedOrder.deliveryCharges === 0 ? 'FREE' : `₹${selectedOrder.deliveryCharges.toFixed(2)}`}</span>

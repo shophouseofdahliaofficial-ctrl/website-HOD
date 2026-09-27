@@ -118,7 +118,7 @@
   border: 1px solid #fde68a;
   border-radius: 999px;
   padding: 0.28rem 0.65rem;
-  display:none;
+  display: none;
 }
 
 .pageTitle {
@@ -128,6 +128,7 @@
   margin: 0;
   flex: 1;
   letter-spacing: -1.1px;
+
 }
 
 .statusBadge {
@@ -445,15 +446,16 @@
 
 .dayCell {
   min-height: 32px;
-    border-radius: 8px;
-    border: 1px solid #f3f3f3;
-    font-size: .78rem;
-    color: #222;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f3f3f3;
+  border-radius: 8px;
+  border: 1px solid #f3f3f3;
+  font-size: .78rem;
+  color: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f3f3;
 }
+
 .dayMuted {
   opacity: 0.38;
   background: #fafafa !important;
@@ -464,9 +466,9 @@
 /* In-month but outside subscription start–end */
 .dayOutOfRange {
   background: #ffffff;
-    border-color: #f3f4f600;
-    color: #e0e0e0;
-    font-weight: 500;
+  border-color: #f3f4f600;
+  color: #e0e0e0;
+  font-weight: 500;
 }
 
 .dayDelivered {

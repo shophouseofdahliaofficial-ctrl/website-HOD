@@ -342,12 +342,22 @@
   background: #f9fafb;
 }
 
-.rowFulfilled {
-  background: #e5e7eb;
+.rowFulfilled,
+.rowDelivered {
+  background: #f0fdf4;
 }
 
-.rowFulfilled:hover {
-  background: #d1d5db;
+.rowFulfilled:hover,
+.rowDelivered:hover {
+  background: #dcfce7;
+}
+
+.rowCancelled {
+  background: #fef2f2;
+}
+
+.rowCancelled:hover {
+  background: #fee2e2;
 }
 
 .td {
@@ -492,12 +502,24 @@
   box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.25);
 }
 
-.cardFulfilled {
-  background: #e5e7eb;
+.cardFulfilled,
+.cardDelivered {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
 }
 
-.cardFulfilled:hover {
-  background: #d1d5db;
+.cardFulfilled:hover,
+.cardDelivered:hover {
+  background: #dcfce7;
+}
+
+.cardCancelled {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.cardCancelled:hover {
+  background: #fee2e2;
 }
 
 .cardTop {

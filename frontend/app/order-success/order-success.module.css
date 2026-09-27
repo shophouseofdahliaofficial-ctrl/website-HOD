@@ -129,11 +129,11 @@
 
 .orderItem {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 1rem;
   padding: 1rem;
   background: #f1f1f1ad;
-  border-radius: 8px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
@@ -143,15 +143,29 @@
 }
 
 .itemImage {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
+  width: 90px;
+  min-width: 90px;
+  height: auto;
+  min-height: 90px;
+  align-self: stretch;
+  border-radius: 10px;
   overflow: hidden;
   background: #f0f0f0;
   flex-shrink: 0;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.itemImage img,
+.itemImage :global(img) {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 
 .itemImagePlaceholder {
@@ -166,6 +180,8 @@
 .itemDetails {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .itemName {
@@ -217,6 +233,15 @@
   margin: 0.2rem 0 0.35rem 0;
 }
 
+.itemMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  padding-top: 0.2rem;
+}
+
 .itemQuantity {
   font-size: 0.875rem;
   color: #666;
@@ -224,10 +249,11 @@
 }
 
 .itemPrice {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #000;
   font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  margin: 0;
 }
 
 /* Price Breakdown */
@@ -293,7 +319,7 @@
 }
 
 .deliveryAddress {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .deliveryAddress p {
@@ -301,32 +327,6 @@
   color: #333;
   font-size: 0.95rem;
   line-height: 1.5;
-}
-
-.shippingMethod {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-top: 1.2rem;
-  border-top: 1px solid #e5e5e5;
-}
-
-.truckIcon {
-  width: 20px;
-  height: 20px;
-  color: #666;
-}
-
-.shippingMethod span:first-of-type {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.shippingMethodValue {
-  margin-left: auto;
-  font-size: 0.95rem;
-  color: #333;
-  font-weight: 600;
 }
 
 /* Action Buttons */
@@ -403,5 +403,9 @@
     padding-left: 0;
   }
 
-
+  .itemImage {
+    width: 80px;
+    min-width: 80px;
+    min-height: 80px;
+  }
 }

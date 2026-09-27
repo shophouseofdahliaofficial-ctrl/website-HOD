@@ -157,7 +157,7 @@ async function calculateCheckoutFees({ userId, items, deliveryAddress, paymentMe
 
       // Query database for product
       const productRes = await query(
-        `SELECT is_nationwide_delivery, delivery_pincodes, weight, selling_price, price_per_litre FROM products WHERE id = $1`,
+        `SELECT is_nationwide_delivery, delivery_pincodes, weight, selling_price, price_per_litre, is_customizable, customization_options, customization_combinations FROM products WHERE id = $1`,
         [productId]
       );
       if (productRes.rows.length > 0) {
@@ -185,31 +185,74 @@ async function calculateCheckoutFees({ userId, items, deliveryAddress, paymentMe
             ? parseFloat(p.selling_price)
             : parseFloat(p.price_per_litre || 0);
 
-          let mult = 1;
+          let custOpts = p.customization_options;
+          if (typeof custOpts === 'string') {
+            try { custOpts = JSON.parse(custOpts); } catch {}
+          }
+          if (!Array.isArray(custOpts)) custOpts = [];
 
-          if (variationId) {
-            const varRes = await query(
-              `SELECT weight, price, price_multiplier FROM product_variations WHERE id = $1 AND product_id = $2`,
-              [variationId, productId]
-            );
-            if (varRes.rows.length > 0) {
-              const v = varRes.rows[0];
-              if (v.weight != null) {
-                weight = parseFloat(v.weight);
+          let custCombos = p.customization_combinations;
+          if (typeof custCombos === 'string') {
+            try { custCombos = JSON.parse(custCombos); } catch {}
+          }
+          if (!Array.isArray(custCombos)) custCombos = [];
+
+          const isCustomizable = p.is_customizable || custOpts.length > 0 || custCombos.length > 0;
+
+          if (isCustomizable) {
+            const rawVarId = item.variationId ? String(item.variationId) : null;
+            const combo = rawVarId ? custCombos.find((c) => String(c.id) === rawVarId) : null;
+            if (combo && combo.price !== undefined && combo.price !== null && Number.isFinite(Number(combo.price))) {
+              unitPrice = Number(combo.price);
+            } else {
+              let sellingSum = basePrice;
+              if (combo && combo.combinationKeys) {
+                Object.keys(combo.combinationKeys).forEach((groupId) => {
+                  const valId = combo.combinationKeys[groupId];
+                  const group = custOpts.find((g) => String(g.id) === String(groupId));
+                  const val = group && Array.isArray(group.values) ? group.values.find((v) => String(v.id) === String(valId)) : null;
+                  if (val && typeof val.price === 'number' && Number.isFinite(val.price)) sellingSum += val.price;
+                });
+              } else {
+                const cust = item.customizations || {};
+                const selectedOpts = cust.selectedOptions || cust.customizationOptions || cust.options || {};
+                if (typeof selectedOpts === 'object' && selectedOpts !== null) {
+                  Object.keys(selectedOpts).forEach((groupId) => {
+                    const valId = selectedOpts[groupId];
+                    const group = custOpts.find((g) => String(g.id) === String(groupId));
+                    const val = group && Array.isArray(group.values) ? group.values.find((v) => String(v.id) === String(valId)) : null;
+                    if (val && typeof val.price === 'number' && Number.isFinite(val.price)) sellingSum += val.price;
+                  });
+                }
               }
-              if (v.price_multiplier != null) {
-                mult = parseFloat(v.price_multiplier);
-              }
-              if (v.price != null) {
-                unitPrice = parseFloat(v.price);
+              unitPrice = sellingSum;
+            }
+          } else {
+            let mult = 1;
+            if (variationId) {
+              const varRes = await query(
+                `SELECT weight, price, price_multiplier FROM product_variations WHERE id = $1 AND product_id = $2`,
+                [variationId, productId]
+              );
+              if (varRes.rows.length > 0) {
+                const v = varRes.rows[0];
+                if (v.weight != null) {
+                  weight = parseFloat(v.weight);
+                }
+                if (v.price_multiplier != null) {
+                  mult = parseFloat(v.price_multiplier);
+                }
+                if (v.price != null) {
+                  unitPrice = parseFloat(v.price);
+                } else {
+                  unitPrice = basePrice * mult;
+                }
               } else {
                 unitPrice = basePrice * mult;
               }
             } else {
               unitPrice = basePrice * mult;
             }
-          } else {
-            unitPrice = basePrice * mult;
           }
 
           totalWeight += weight * quantity;

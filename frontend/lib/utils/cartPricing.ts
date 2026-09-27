@@ -5,6 +5,9 @@ export type CartItemPriceDetails = {
   unitPrice: number;
   originalUnitPrice: number | null;
   unitOff: number;
+  price: number;
+  mrp: number | null;
+  quantity: number;
 };
 
 export function getPhotoboothCartProject(it: CartItem) {
@@ -39,7 +42,7 @@ export function getCartItemCheckoutLineLabel(it: CartItem, p?: Product | null): 
     return getPhotoboothPrintsLabel(it) ?? 'Photobooth print';
   }
 
-  const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
+  const v = it.variationId ? (p?.variations || []).find((x) => String(x.id) === String(it.variationId)) : null;
   return `${it.quantity} × ${p?.name || 'Product'}${v ? ` (${v.size})` : ''}`;
 }
 
@@ -57,35 +60,67 @@ export function getCartItemOrderSubtotalContribution(it: CartItem, p?: Product |
 
 export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartItemPriceDetails {
   if (!p) {
-    return { unitPrice: 0, originalUnitPrice: null, unitOff: 0 };
+    return { unitPrice: 0, originalUnitPrice: null, unitOff: 0, price: 0, mrp: null, quantity: it.quantity || 1 };
   }
 
-  const baseSelling = (p.sellingPrice !== null && p.sellingPrice !== undefined)
-    ? p.sellingPrice
-    : p.pricePerLitre;
-  const baseCompare = (p.compareAtPrice !== null && p.compareAtPrice !== undefined)
-    ? p.compareAtPrice
+  const baseSelling = (p.sellingPrice !== null && p.sellingPrice !== undefined && Number.isFinite(Number(p.sellingPrice)))
+    ? Number(p.sellingPrice)
+    : Number(p.pricePerLitre || 0);
+  const baseCompare = (p.compareAtPrice !== null && p.compareAtPrice !== undefined && Number.isFinite(Number(p.compareAtPrice)))
+    ? Number(p.compareAtPrice)
     : null;
 
   let unitPrice = baseSelling;
   let originalUnitPrice: number | null = baseCompare;
 
-  if (p.isCustomizable) {
-    const combo = it.variationId ? (p.customizationCombinations || []).find((c) => c.id === it.variationId) : null;
-    if (combo && combo.price !== undefined && combo.price !== null) {
-      unitPrice = combo.price;
+  const hasCustomizationOptions = Array.isArray(p.customizationOptions) && p.customizationOptions.length > 0;
+  const hasCustomizationCombinations = Array.isArray(p.customizationCombinations) && p.customizationCombinations.length > 0;
+
+  if (p.isCustomizable || hasCustomizationOptions || hasCustomizationCombinations) {
+    const combo = it.variationId
+      ? (p.customizationCombinations || []).find((c) => String(c.id) === String(it.variationId))
+      : null;
+
+    if (combo && combo.price !== undefined && combo.price !== null && Number.isFinite(Number(combo.price))) {
+      unitPrice = Number(combo.price);
     } else {
       let sellingSum = baseSelling;
-      if (combo) {
-        Object.keys(combo.combinationKeys || {}).forEach((groupId) => {
+      if (combo && combo.combinationKeys) {
+        Object.keys(combo.combinationKeys).forEach((groupId) => {
           const valId = combo.combinationKeys[groupId];
-          const group = (p.customizationOptions || []).find((g) => g.id === groupId);
-          const val = group ? (group.values || []).find((v) => v.id === valId) : null;
-          if (val && typeof val.price === 'number') {
+          const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+          const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+          if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+            sellingSum += val.price;
+          }
+        });
+      } else {
+        const selectedOpts =
+          (it.customizations as any)?.selectedOptions ||
+          (it.customizations as any)?.customizationOptions ||
+          (it.customizations as any)?.options ||
+          {};
+        Object.keys(selectedOpts).forEach((groupId) => {
+          const valId = selectedOpts[groupId];
+          const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+          const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+          if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
             sellingSum += val.price;
           }
         });
       }
+
+      // If variationId directly references a value in customization options
+      if (it.variationId && sellingSum === baseSelling) {
+        for (const grp of p.customizationOptions || []) {
+          const val = (grp.values || []).find((v) => String(v.id) === String(it.variationId));
+          if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+            sellingSum += val.price;
+            break;
+          }
+        }
+      }
+
       unitPrice = sellingSum;
     }
 
@@ -96,7 +131,7 @@ export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartI
           (group.values || []).forEach((val) => {
             const inputKey = `${group.id}_${val.id}`;
             const textVal = textPers[inputKey] || '';
-            if (textVal.trim() && typeof val.price === 'number') {
+            if (textVal.trim() && typeof val.price === 'number' && Number.isFinite(val.price)) {
               unitPrice += val.price;
             }
           });
@@ -104,20 +139,23 @@ export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartI
       });
     }
 
-    if (combo && combo.compareAtPrice !== undefined && combo.compareAtPrice !== null) {
-      originalUnitPrice = combo.compareAtPrice;
+    if (combo && combo.compareAtPrice !== undefined && combo.compareAtPrice !== null && Number.isFinite(Number(combo.compareAtPrice))) {
+      originalUnitPrice = Number(combo.compareAtPrice);
     } else if (baseCompare !== null) {
       let compareSum = baseCompare;
-      if (combo) {
-        Object.keys(combo.combinationKeys || {}).forEach((groupId) => {
-          const valId = combo.combinationKeys[groupId];
-          const group = (p.customizationOptions || []).find((g) => g.id === groupId);
-          const val = group ? (group.values || []).find((v) => v.id === valId) : null;
-          if (val && typeof val.price === 'number') {
-            compareSum += val.price;
-          }
-        });
-      }
+      const selectedOpts =
+        (it.customizations as any)?.selectedOptions ||
+        (it.customizations as any)?.customizationOptions ||
+        (combo?.combinationKeys) ||
+        {};
+      Object.keys(selectedOpts).forEach((groupId) => {
+        const valId = selectedOpts[groupId];
+        const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+        const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
+        if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+          compareSum += val.price;
+        }
+      });
       if (it.customizations?.textPersonalization) {
         const textPers = it.customizations.textPersonalization;
         (p.customizationOptions || []).forEach((group) => {
@@ -125,7 +163,7 @@ export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartI
             (group.values || []).forEach((val) => {
               const inputKey = `${group.id}_${val.id}`;
               const textVal = textPers[inputKey] || '';
-              if (textVal.trim() && typeof val.price === 'number') {
+              if (textVal.trim() && typeof val.price === 'number' && Number.isFinite(val.price)) {
                 compareSum += val.price;
               }
             });
@@ -135,10 +173,15 @@ export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartI
       originalUnitPrice = compareSum;
     }
   } else {
-    const v = it.variationId ? (p.variations || []).find((x) => x.id === it.variationId) : null;
-    const mult = v?.priceMultiplier ?? 1;
-    unitPrice = v?.price ?? (baseSelling * mult);
-    const variationCompare = (v?.compareAtPrice !== null && v?.compareAtPrice !== undefined)
+    const v = it.variationId
+      ? (p.variations || []).find((x) => String(x.id) === String(it.variationId))
+      : null;
+    const mult = v?.priceMultiplier != null && Number.isFinite(Number(v.priceMultiplier)) ? Number(v.priceMultiplier) : 1;
+    unitPrice = (v?.price != null && Number.isFinite(Number(v.price)))
+      ? Number(v.price)
+      : (baseSelling * mult);
+
+    const variationCompare = (v?.compareAtPrice !== null && v?.compareAtPrice !== undefined && Number.isFinite(Number(v.compareAtPrice)))
       ? Number(v.compareAtPrice)
       : null;
     originalUnitPrice = variationCompare !== null
@@ -150,5 +193,12 @@ export function getCartItemPriceDetails(it: CartItem, p?: Product | null): CartI
 
   const unitOff = originalUnitPrice !== null ? Math.max(0, originalUnitPrice - unitPrice) : 0;
 
-  return { unitPrice, originalUnitPrice, unitOff };
+  return {
+    unitPrice,
+    originalUnitPrice,
+    unitOff,
+    price: unitPrice,
+    mrp: originalUnitPrice,
+    quantity: it.quantity || 1,
+  };
 }

@@ -2829,6 +2829,22 @@ export default function Header() {
                           </Link>
 
                           <Link
+                            href="/orders"
+                            className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/orders') ? styles.mobileNavLinkActive : ''}`}
+                            onClick={closeMobileMenu}
+                          >
+                            Orders
+                          </Link>
+
+                          <Link
+                            href="/about"
+                            className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/about') ? styles.mobileNavLinkActive : ''}`}
+                            onClick={closeMobileMenu}
+                          >
+                            About Us
+                          </Link>
+
+                          <Link
                             href="/returns"
                             className={`${styles.mobileNavLink} ${isHeaderNavActive(pathname, '/returns') ? styles.mobileNavLinkActive : ''}`}
                             onClick={closeMobileMenu}
@@ -2902,6 +2918,13 @@ export default function Header() {
 
                           {/* Bottom Center Horizontal Links with 0.52rem Font Size */}
                           <nav className={styles.mobileHorizontalLinks} aria-label="Footer links">
+                            <span className={styles.mobileLinkItem}>
+                              <Link href="/about" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
+                                About Us
+                              </Link>
+                              <span className={styles.mobileDot} aria-hidden="true">•</span>
+                            </span>
+
                             <span className={styles.mobileLinkItem}>
                               <Link href="/faqs" className={styles.mobileBottomLink} onClick={closeMobileMenu}>
                                 FAQs

@@ -214,6 +214,13 @@
   color: #065f46;
 }
 
+/* Cancelled step: red cross icon */
+.timelineIconCancelled .timelineSvg {
+  width: 16px;
+  height: 16px;
+  color: #dc2626;
+}
+
 /* Not confirmed: step icon, muted */
 .timelineStepIncomplete .timelineSvg {
   width: 19px;
@@ -469,6 +476,11 @@
   color: #065f46;
 }
 
+.timelineIconCancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 .timelineLine {
   position: absolute;
   left: 20px;
@@ -481,6 +493,10 @@
 
 .timelineLineCompleted {
   background: #d1fae5;
+}
+
+.timelineLineCancelled {
+  background: #fca5a5;
 }
 
 .timelineStep:last-child .timelineLine {
@@ -497,6 +513,10 @@
   font-weight: 600;
   color: #000;
   margin: 0 0 0.25rem 0;
+}
+
+.timelineTitleCancelled {
+  color: #b91c1c;
 }
 
 .timelineDescription {
@@ -879,13 +899,16 @@
 .productImageWrapper {
   position: relative;
   flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .productCardImage {
   width: 80px;
-  height: 80px;
-  object-fit: cover;
+  height: auto;
+  max-height: 120px;
+  object-fit: contain;
   border-radius: 8px;
+  display: block;
 }
 
 .productImagePlaceholder {
@@ -1258,7 +1281,12 @@
     font-size: 1rem;
   }
 
-  .productCardImage,
+  .productCardImage {
+    width: 70px;
+    height: auto;
+    max-height: 110px;
+  }
+
   .productImagePlaceholder {
     width: 70px;
     height: 70px;
@@ -1338,4 +1366,358 @@
   -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.45) 45%, rgba(0, 0, 0, 0) 100%);
   background: linear-gradient(to top, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
   filter: hue-rotate(45deg) !important;
+}
+
+/* Cancel Order Button & Modal */
+.cancelOrderWrapper {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.cancelOrderBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background: #ffd7d7;
+  color: #8d0000;
+  border: 1px solid #ffd7d7;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.cancelOrderBtn:hover {
+  background: #a30000;
+  border-color: #b10000;
+  color: #ffffff;
+}
+
+.cancelOrderBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deliveredActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.deliveredActionBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #f3f4f6;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.deliveredActionBtn:hover {
+  background: #e5e7eb;
+}
+
+.deliveredActionBtnIcon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Cancel Order Modal */
+.cancelModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.cancelModalCard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.75rem;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: auto;
+}
+
+.cancelReasonCard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  text-align: left;
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 85vh;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin: auto;
+}
+
+.cancelReasonHeader {
+  flex-shrink: 0;
+  margin-bottom: 0.85rem;
+}
+
+.cancelReasonHeader .cancelModalTitle {
+  text-align: left;
+  margin-bottom: 0.25rem;
+  font-size: 1.18rem;
+}
+
+.cancelReasonSubtitle {
+  font-size: 0.86rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cancelReasonBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 52vh;
+  max-height: 52dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-right: 6px;
+  margin-bottom: 1rem;
+}
+
+.cancelReasonBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cancelReasonBody::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.cancelReasonBody::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.cancelReasonBody::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.cancelReasonList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.cancelReasonOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.2rem 1.2rem;
+  border-radius: 17px;
+  border: 1.5px solid #dbdbdb;
+  background: #f7f7f7;
+  cursor: pointer;
+  transition: all 0.0s ease;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.cancelReasonOption:hover {
+  border-color: #adadad;
+  background: #d6d6d6a8;
+}
+
+.cancelReasonOptionActive {
+  border-color: #111827;
+  background: #f9fafb;
+}
+
+.cancelReasonRadio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.cancelReasonOptionActive .cancelReasonRadio {
+  border-color: #111827;
+}
+
+.cancelReasonRadioInner {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #111827;
+}
+
+.cancelReasonLabel {
+  font-size: 0.9rem;
+  color: #1f2937;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.cancelReasonTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  font-size: 0.88rem;
+  color: #1f2937;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 70px;
+  outline: none;
+  transition: border-color 0.18s;
+}
+
+.cancelReasonTextarea:focus {
+  border-color: #111827;
+}
+
+@keyframes modalPop {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cancelModalIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.cancelModalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.75rem;
+}
+
+.cancelModalMessage {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #4b5563;
+  margin: 0 27px 1.5rem;
+}
+
+.cancelModalHighlight {
+  color: #111827;
+  font-weight: 600;
+}
+
+.cancelModalActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cancelModalCancelBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.cancelModalCancelBtn:hover {
+  background: #e5e7eb;
+}
+
+.cancelModalConfirmBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  border-radius: 9999px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.cancelModalConfirmBtn:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.cancelModalConfirmBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelModalNextBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #111827;
+  color: #ffffff;
+  border: 1px solid #111827;
+  border-radius: 9999px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.cancelModalNextBtn:hover {
+  background: #000000;
+  border-color: #000000;
+}
+
+.cancelModalNextBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

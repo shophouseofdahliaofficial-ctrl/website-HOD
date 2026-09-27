@@ -3,8 +3,20 @@ export const IST_TIMEZONE = 'Asia/Kolkata';
 
 function parseValidDate(iso: string | null | undefined): Date | null {
   if (iso == null || iso === '') return null;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : d;
+  const str = String(iso).trim();
+  if (!str) return null;
+  let normalized = str;
+  if (!normalized.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(normalized)) {
+    if (normalized.includes('T')) {
+      normalized = `${normalized}Z`;
+    } else if (normalized.includes(' ')) {
+      normalized = `${normalized.replace(' ', 'T')}Z`;
+    }
+  }
+  const d = new Date(normalized);
+  if (!Number.isNaN(d.getTime())) return d;
+  const fallback = new Date(str);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
 /** Full date & time in IST (e.g. admin order list / detail). */

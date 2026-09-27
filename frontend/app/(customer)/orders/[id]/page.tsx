@@ -16,8 +16,8 @@ const HowWasItModal = dynamicImport(() => import('@/components/HowWasItModal'), 
   ssr: false,
 });
 import { formatDdMmYyIST, formatFullDateIST, formatTimelineStepIST } from '@/lib/utils/datetime';
-import { getCardPriceDisplay } from '@/lib/utils/productCardPricing';
 import { getPrimaryProductImageUrl } from '@/lib/utils/productImages';
+import { getCartItemPriceDetails } from '@/lib/utils/cartPricing';
 import {
   normalizeOrderDeliveryAddress,
   formatOrderDeliveryCityLine,
@@ -101,6 +101,10 @@ type OrderDetail = {
   delhiveryWaybill?: string | null;
   delhiveryTrackingUrl?: string | null;
   delhiveryStatus?: string | null;
+  isSelfCreated?: boolean;
+  walletUsed?: number;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
 };
 
 function isSubscriptionOrderItem(item: OrderItem): boolean {
@@ -111,6 +115,13 @@ function isSubscriptionOrderItem(item: OrderItem): boolean {
 const TickIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={styles.timelineSvg} aria-hidden>
     <path fillRule="evenodd" clipRule="evenodd" d="M16.0303 8.96967C16.3232 9.26256 16.3232 9.73744 16.0303 10.0303L11.0303 15.0303C10.7374 15.3232 10.2626 15.3232 9.96967 15.0303L7.96967 13.0303C7.67678 12.7374 7.67678 12.2626 7.96967 11.9697C8.26256 11.6768 8.73744 11.6768 9.03033 11.9697L10.5 13.4393L12.7348 11.2045L14.9697 8.96967C15.2626 8.67678 15.7374 8.67678 16.0303 8.96967Z" fill="currentColor" />
+  </svg>
+);
+
+const CancelIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.timelineSvg} aria-hidden>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 
@@ -148,7 +159,27 @@ const HubIcon = () => (
 );
 
 function getTimelineSteps(order: OrderDetail) {
-  const steps: { title: string; description: string; date: string; iconType: 'tick' | 'order' | 'package' | 'truck' | 'delivery' | 'hub'; completed: boolean }[] = [];
+  if (order.status === 'cancelled') {
+    return [
+      {
+        title: 'Order confirmed',
+        description: 'Order placed and confirmed',
+        date: order.createdAt ? formatTimelineStepIST(order.createdAt) : '',
+        iconType: 'tick' as const,
+        completed: true,
+      },
+      {
+        title: 'Cancelled by customer',
+        description: order.cancellationReason ? `Reason: ${order.cancellationReason}` : 'Order was cancelled by customer',
+        date: order.cancelledAt ? formatTimelineStepIST(order.cancelledAt) : '',
+        iconType: 'cancel' as const,
+        completed: true,
+        isCancelled: true,
+      },
+    ];
+  }
+
+  const steps: { title: string; description: string; date: string; iconType: 'tick' | 'order' | 'package' | 'truck' | 'delivery' | 'hub' | 'cancel'; completed: boolean; isCancelled?: boolean }[] = [];
 
   steps.push({
     title: 'Order confirmed',
@@ -158,7 +189,7 @@ function getTimelineSteps(order: OrderDetail) {
     completed: true
   });
 
-  if (order.isNationwideDelivery || order.delhiveryWaybill || order.shiprocketAwb) {
+  if (order.isNationwideDelivery || order.isSelfCreated || order.delhiveryWaybill || order.shiprocketAwb) {
     const status = order.status;
     const isDelivered = status === 'delivered';
     const isOut = isDelivered || status === 'out_for_delivery';
@@ -250,9 +281,10 @@ function getTimelineSteps(order: OrderDetail) {
   return steps;
 }
 
-function TimelineIcon({ iconType }: { iconType: 'tick' | 'order' | 'package' | 'truck' | 'delivery' | 'hub' }) {
+function TimelineIcon({ iconType }: { iconType: 'tick' | 'order' | 'package' | 'truck' | 'delivery' | 'hub' | 'cancel' }) {
   switch (iconType) {
     case 'tick': return <TickIcon />;
+    case 'cancel': return <CancelIcon />;
     case 'order': return <OrderIcon />;
     case 'package': return <PackageIcon />;
     case 'truck': return <TruckIcon />;
@@ -280,6 +312,20 @@ export default function OrderDetailsPage() {
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [loadedProducts, setLoadedProducts] = useState<Record<string, Product>>({});
   const [photoboothSettings, setPhotoboothSettings] = useState<any>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelStep, setCancelStep] = useState<null | 'reason' | 'confirm'>(null);
+  const [selectedCancelReason, setSelectedCancelReason] = useState<string>('');
+  const [customCancelReason, setCustomCancelReason] = useState<string>('');
+
+  const CANCELLATION_REASONS = [
+    'Ordered by mistake / duplicate order',
+    'Expected delivery date is too long',
+    'Want to change size, color, or variant',
+    'Need to change shipping address or phone number',
+    'Found a better price / alternative elsewhere',
+    'Product details or design not as expected',
+    'Other reason',
+  ];
 
   const getFallbackImageUrl = (item: OrderItem) => {
     if (!photoboothSettings) return null;
@@ -401,6 +447,33 @@ export default function OrderDetailsPage() {
       if (!silent) setLoading(false);
     }
   }, [orderId]);
+
+  const canCancelOrder =
+    Boolean(order) &&
+    ['placed', 'confirmed', 'pending'].includes((order?.status || '').toLowerCase()) &&
+    !order?.packagePreparedAt &&
+    !['package_prepared', 'shipped', 'in_transit', 'reached_destination_hub', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'].includes((order?.status || '').toLowerCase());
+
+  const handleCancelOrder = async () => {
+    if (!order || cancelling) return;
+    setCancelling(true);
+    try {
+      const res = await apiClient.post<{ success: boolean; message?: string; data?: any }>(
+        `/api/orders/${order.id}/cancel`,
+        {
+          reason: selectedCancelReason,
+          details: customCancelReason,
+        }
+      );
+      showToast(res.message || 'Order cancelled successfully', 'success');
+      setCancelStep(null);
+      await fetchOrder(true);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to cancel order', 'error');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (orderId) fetchOrder();
@@ -537,7 +610,11 @@ export default function OrderDetailsPage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>ORDER SUMMARY</h2>
           <p className={styles.orderSummaryText}>
-            {(order.deliveredAt || order.deliveryDate) ? `Delivered on ${formatFullDateIST(order.deliveredAt || order.deliveryDate)}` : `Ordered on ${formatFullDateIST(order.createdAt)}`}
+            {order.status === 'cancelled'
+              ? (order.cancelledAt ? `Cancelled on ${formatFullDateIST(order.cancelledAt)}` : 'This order has been cancelled')
+              : (order.deliveredAt || order.deliveryDate)
+                ? `Delivered on ${formatFullDateIST(order.deliveredAt || order.deliveryDate)}`
+                : `Ordered on ${formatFullDateIST(order.createdAt)}`}
           </p>
         </section>
 
@@ -554,16 +631,16 @@ export default function OrderDetailsPage() {
                   key={idx}
                   className={`${styles.timelineStep} ${!step.completed ? styles.timelineStepIncomplete : ''}`}
                 >
-                  <div className={`${styles.timelineIcon} ${step.completed ? styles.timelineIconCompleted : ''} ${isTargetIncomplete ? styles.timelineIconActiveIncomplete : ''}`}>
+                  <div className={`${styles.timelineIcon} ${step.completed ? (step.isCancelled ? styles.timelineIconCancelled : styles.timelineIconCompleted) : ''} ${isTargetIncomplete ? styles.timelineIconActiveIncomplete : ''}`}>
                     <TimelineIcon iconType={step.iconType} />
                   </div>
                   <div className={styles.timelineContent}>
-                    <h3 className={styles.timelineTitle}>{step.title}</h3>
+                    <h3 className={`${styles.timelineTitle} ${step.isCancelled ? styles.timelineTitleCancelled : ''}`}>{step.title}</h3>
                     <p className={styles.timelineDescription}>{step.description}</p>
                     {step.date && <p className={styles.timelineDate}>{step.date}</p>}
                   </div>
                   {idx < timelineSteps.length - 1 && (
-                    <div className={`${styles.timelineLine} ${step.completed ? styles.timelineLineCompleted : ''}`}></div>
+                    <div className={`${styles.timelineLine} ${step.completed ? (step.isCancelled ? styles.timelineLineCancelled : styles.timelineLineCompleted) : ''}`}></div>
                   )}
                 </div>
               );
@@ -572,7 +649,7 @@ export default function OrderDetailsPage() {
         </section>
 
         {/* TRACK ORDER SECTION (Courier Details & AWB) */}
-        {order.isNationwideDelivery && (
+        {(order.isNationwideDelivery || order.isSelfCreated || order.delhiveryWaybill || order.shiprocketAwb) && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>TRACK ORDER</h2>
 
@@ -932,16 +1009,29 @@ export default function OrderDetailsPage() {
                       )}
                       <p className={styles.productCardPrice}>
                         {(() => {
-                          if (item.productId) {
-                            const p = loadedProducts[String(item.productId)];
-                            if (p) {
-                              const display = getCardPriceDisplay(p, '₹');
-                              if (display.includes('-')) {
-                                return display;
-                              }
+                          let unitPrice =
+                            item.unitPrice != null && Number.isFinite(Number(item.unitPrice)) && Number(item.unitPrice) > 0
+                              ? Number(item.unitPrice)
+                              : item.lineTotal != null && Number.isFinite(Number(item.lineTotal)) && item.quantity
+                                ? Number(item.lineTotal) / Number(item.quantity)
+                                : Number(item.lineTotal || 0);
+
+                          const p = item.productId ? loadedProducts[String(item.productId)] : null;
+                          if (p && item.productId) {
+                            const details = getCartItemPriceDetails(
+                              {
+                                productId: String(item.productId),
+                                variationId: item.variationId ? String(item.variationId) : undefined,
+                                quantity: item.quantity,
+                                customizations: item.customizations || undefined,
+                              },
+                              p
+                            );
+                            if (details.unitPrice > 0 && (unitPrice === 0 || Math.abs(details.unitPrice - unitPrice) > 0.01)) {
+                              unitPrice = details.unitPrice;
                             }
                           }
-                          return `₹${item.lineTotal.toFixed(2)}`;
+                          return `₹${unitPrice.toFixed(2)}`;
                         })()}
                       </p>
                       <p className={styles.productCardQuantity}>Qty: {item.quantity}</p>
@@ -1034,6 +1124,27 @@ export default function OrderDetailsPage() {
               );
             })}
           </div>
+          {canCancelOrder && (
+            <div className={styles.cancelOrderWrapper}>
+              <button
+                type="button"
+                className={styles.cancelOrderBtn}
+                onClick={() => {
+                  setSelectedCancelReason('');
+                  setCustomCancelReason('');
+                  setCancelStep('reason');
+                }}
+                disabled={cancelling}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                Cancel your order
+              </button>
+            </div>
+          )}
           <div className={styles.deliveredActions}>
             <button
               type="button"
@@ -1096,6 +1207,151 @@ export default function OrderDetailsPage() {
         }
         onSubmitSuccess={() => fetchOrder(true)}
       />
+
+      {/* Step 1: Cancellation Reason / Feedback Modal */}
+      {cancelStep === 'reason' && order && (
+        <div
+          className={styles.cancelModalBackdrop}
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !cancelling) setCancelStep(null);
+          }}
+        >
+          <div className={styles.cancelReasonCard} role="dialog" aria-modal="true" aria-labelledby="cancel-reason-title">
+            <div className={styles.cancelReasonHeader}>
+              <h3 id="cancel-reason-title" className={styles.cancelModalTitle}>Reason for cancellation</h3>
+              <p className={styles.cancelReasonSubtitle}>
+                Please let us know why you are cancelling this order. Your feedback helps us improve.
+              </p>
+            </div>
+
+            <div className={styles.cancelReasonBody}>
+              <div className={styles.cancelReasonList} role="radiogroup" aria-label="Cancellation reasons">
+                {CANCELLATION_REASONS.map((r) => {
+                  const isSelected = selectedCancelReason === r;
+                  return (
+                    <div
+                      key={r}
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      className={`${styles.cancelReasonOption} ${isSelected ? styles.cancelReasonOptionActive : ''}`}
+                      onClick={() => setSelectedCancelReason(r)}
+                      onKeyDown={(e) => {
+                        if (e.key === ' ' || e.key === 'Enter') {
+                          e.preventDefault();
+                          setSelectedCancelReason(r);
+                        }
+                      }}
+                    >
+                      <div className={styles.cancelReasonRadio}>
+                        {isSelected && <div className={styles.cancelReasonRadioInner} />}
+                      </div>
+                      <span className={styles.cancelReasonLabel}>{r}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {selectedCancelReason && (
+                <textarea
+                  className={styles.cancelReasonTextarea}
+                  placeholder={
+                    selectedCancelReason === 'Other reason'
+                      ? 'Please describe why you would like to cancel (required)...'
+                      : 'Additional comments or feedback (optional)...'
+                  }
+                  value={customCancelReason}
+                  onChange={(e) => setCustomCancelReason(e.target.value)}
+                  rows={3}
+                />
+              )}
+            </div>
+
+            <div className={styles.cancelModalActions}>
+              <button
+                type="button"
+                className={styles.cancelModalCancelBtn}
+                onClick={() => setCancelStep(null)}
+                disabled={cancelling}
+              >
+                Don&apos;t cancel
+              </button>
+              <button
+                type="button"
+                className={styles.cancelModalNextBtn}
+                onClick={() => setCancelStep('confirm')}
+                disabled={
+                  !selectedCancelReason ||
+                  (selectedCancelReason === 'Other reason' && !customCancelReason.trim()) ||
+                  cancelling
+                }
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Confirmation Modal */}
+      {cancelStep === 'confirm' && order && (
+        <div
+          className={styles.cancelModalBackdrop}
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !cancelling) setCancelStep(null);
+          }}
+        >
+          <div className={styles.cancelModalCard} role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
+            <div className={styles.cancelModalIcon}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3 id="cancel-modal-title" className={styles.cancelModalTitle}>Cancel Order #{order.orderNumber}?</h3>
+            <p className={styles.cancelModalMessage}>
+              {order.paymentStatus === 'paid' || (order.paymentMethod || '').toLowerCase() === 'online' || (order.paymentMethod || '').toLowerCase() === 'wallet' ? (
+                <>
+                  Are you sure you want to cancel? The full amount of{' '}
+                  <span className={styles.cancelModalHighlight}>₹{order.total.toFixed(2)}</span> (including platform fee and delivery charges) will be immediately refunded to your{' '}
+                  <span className={styles.cancelModalHighlight}>House of Dahlia Wallet</span>.
+                </>
+              ) : (Number(order.walletUsed || 0) > 0) ? (
+                <>
+                  Are you sure you want to cancel? The{' '}
+                  <span className={styles.cancelModalHighlight}>₹{Number(order.walletUsed).toFixed(2)}</span> paid from your wallet will be refunded to your{' '}
+                  <span className={styles.cancelModalHighlight}>House of Dahlia Wallet</span>. The remaining COD amount will not be charged.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to cancel this Cash on Delivery order? Since no payment was deducted, no refund will be issued.
+                </>
+              )}
+            </p>
+            <div className={styles.cancelModalActions}>
+              <button
+                type="button"
+                className={styles.cancelModalCancelBtn}
+                onClick={() => setCancelStep('reason')}
+                disabled={cancelling}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className={styles.cancelModalConfirmBtn}
+                onClick={handleCancelOrder}
+                disabled={cancelling}
+              >
+                {cancelling ? 'Cancelling...' : 'Yes, cancel order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

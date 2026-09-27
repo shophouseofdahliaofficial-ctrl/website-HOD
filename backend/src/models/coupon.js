@@ -60,6 +60,15 @@ const ensureCouponSchema = async () => {
       END $$;
     `);
 
+    await query(`
+      ALTER TABLE coupons
+      ALTER COLUMN valid_until DROP NOT NULL,
+      ALTER COLUMN description DROP NOT NULL,
+      ALTER COLUMN min_purchase_amount DROP NOT NULL,
+      ALTER COLUMN max_discount_amount DROP NOT NULL,
+      ALTER COLUMN usage_limit DROP NOT NULL;
+    `);
+
     await query(`CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_coupons_active ON coupons(is_active) WHERE is_active = true;`);
     await query(`CREATE INDEX IF NOT EXISTS idx_coupons_valid_until ON coupons(valid_until);`);
@@ -201,21 +210,36 @@ const updateCoupon = async (couponId, updates) => {
   const values = [];
   let paramCount = 1;
 
+  const columnMap = {
+    code: 'code',
+    description: 'description',
+    discountType: 'discount_type',
+    discount_type: 'discount_type',
+    discountValue: 'discount_value',
+    discount_value: 'discount_value',
+    minPurchaseAmount: 'min_purchase_amount',
+    min_purchase_amount: 'min_purchase_amount',
+    maxDiscountAmount: 'max_discount_amount',
+    max_discount_amount: 'max_discount_amount',
+    usageLimit: 'usage_limit',
+    usage_limit: 'usage_limit',
+    usedCount: 'used_count',
+    used_count: 'used_count',
+    validFrom: 'valid_from',
+    valid_from: 'valid_from',
+    validUntil: 'valid_until',
+    valid_until: 'valid_until',
+    isActive: 'is_active',
+    is_active: 'is_active',
+  };
+
   Object.keys(updates).forEach((key) => {
-    // Map camelCase to snake_case
-    const dbKey = key === 'discountType' ? 'discount_type' : 
-                  key === 'discountValue' ? 'discount_value' :
-                  key === 'minPurchaseAmount' ? 'min_purchase_amount' :
-                  key === 'maxDiscountAmount' ? 'max_discount_amount' :
-                  key === 'usageLimit' ? 'usage_limit' :
-                  key === 'usedCount' ? 'used_count' :
-                  key === 'validFrom' ? 'valid_from' :
-                  key === 'validUntil' ? 'valid_until' :
-                  key === 'isActive' ? 'is_active' : key;
-    
-    fields.push(`${dbKey} = $${paramCount}`);
-    values.push(updates[key]);
-    paramCount++;
+    const dbCol = columnMap[key];
+    if (dbCol && updates[key] !== undefined) {
+      fields.push(`${dbCol} = $${paramCount}`);
+      values.push(updates[key]);
+      paramCount++;
+    }
   });
 
   fields.push(`updated_at = NOW()`);

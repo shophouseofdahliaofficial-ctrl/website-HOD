@@ -52,13 +52,25 @@ export default function AdminCouponsPage() {
     return () => document.removeEventListener('mousedown', onDown);
   }, [searchExpanded]);
 
+  const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (!error) return fallback;
+    if (typeof error === 'string') return error;
+    if (typeof error === 'object') {
+      const err = error as Record<string, unknown>;
+      if (typeof err.message === 'string' && err.message) return err.message;
+      if (typeof err.error === 'string' && err.error) return err.error;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
   const fetchCoupons = async () => {
     try {
       const data = await adminCouponsApi.getAll();
-      setCoupons(data);
+      setCoupons(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch coupons:', error);
-      showToast('Failed to load coupons', 'error');
+      showToast(getErrorMessage(error, 'Failed to load coupons'), 'error');
     } finally {
       setLoading(false);
     }
@@ -66,18 +78,36 @@ export default function AdminCouponsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.code.trim()) {
+      showToast('Please enter a coupon code', 'error');
+      return;
+    }
+
+    const discountVal = parseFloat(formData.discountValue.toString());
+    if (isNaN(discountVal) || discountVal <= 0) {
+      showToast('Please enter a valid discount value greater than 0', 'error');
+      return;
+    }
+
+    if (formData.discountType === 'percentage' && discountVal > 100) {
+      showToast('Percentage discount cannot exceed 100%', 'error');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const dataToSend = {
-        ...formData,
         code: formData.code.toUpperCase().trim(),
-        discountValue: parseFloat(formData.discountValue.toString()),
+        description: formData.description?.trim() || '',
+        discountType: formData.discountType,
+        discountValue: discountVal,
         minPurchaseAmount: formData.minPurchaseAmount ? parseFloat(formData.minPurchaseAmount.toString()) : 0,
         maxDiscountAmount: formData.maxDiscountAmount ? parseFloat(formData.maxDiscountAmount.toString()) : null,
         usageLimit: formData.usageLimit ? parseInt(formData.usageLimit.toString(), 10) : null,
-        validFrom: formData.validFrom || new Date().toISOString(),
+        validFrom: formData.validFrom || new Date().toISOString().split('T')[0],
         validUntil: formData.validUntil || null,
+        isActive: formData.isActive,
       };
 
       if (editingCoupon) {
@@ -92,7 +122,7 @@ export default function AdminCouponsPage() {
       fetchCoupons();
     } catch (error: unknown) {
       console.error('Failed to save coupon:', error);
-      showToast(error instanceof Error ? error.message : 'Failed to save coupon', 'error');
+      showToast(getErrorMessage(error, 'Failed to save coupon'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -108,7 +138,7 @@ export default function AdminCouponsPage() {
       minPurchaseAmount: coupon.minPurchaseAmount || 0,
       maxDiscountAmount: coupon.maxDiscountAmount || null,
       usageLimit: coupon.usageLimit || null,
-      validFrom: coupon.validFrom.split('T')[0],
+      validFrom: coupon.validFrom ? coupon.validFrom.split('T')[0] : new Date().toISOString().split('T')[0],
       validUntil: coupon.validUntil ? coupon.validUntil.split('T')[0] : null,
       isActive: coupon.isActive,
     });
@@ -126,7 +156,7 @@ export default function AdminCouponsPage() {
       fetchCoupons();
     } catch (error) {
       console.error('Failed to delete coupon:', error);
-      showToast('Failed to delete coupon', 'error');
+      showToast(getErrorMessage(error, 'Failed to delete coupon'), 'error');
     }
   };
 
@@ -508,14 +538,14 @@ export default function AdminCouponsPage() {
                 <label className={styles.label}>Discount Value *</label>
                 <input
                   type="number"
-                  value={formData.discountValue}
-                  onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
+                  value={formData.discountValue || ''}
+                  onChange={(e) => setFormData({ ...formData, discountValue: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0 })}
                   className={styles.input}
                   placeholder={formData.discountType === 'percentage' ? '20' : '100'}
                   required
                   min="0"
-                  step={formData.discountType === 'percentage' ? '1' : '0.01'}
-                  max={formData.discountType === 'percentage' ? '100' : undefined}
+                  step="any"
+                  max={formData.discountType === 'percentage' ? 100 : undefined}
                 />
                 <div className={styles.helpText}>{formData.discountType === 'percentage' ? 'Maximum 100%' : 'Amount in ₹'}</div>
               </div>
@@ -531,7 +561,7 @@ export default function AdminCouponsPage() {
                   className={styles.input}
                   placeholder="0"
                   min="0"
-                  step="0.01"
+                  step="any"
                 />
                 <div className={styles.helpText}>Minimum cart value required (0 = no minimum)</div>
               </div>
@@ -545,7 +575,7 @@ export default function AdminCouponsPage() {
                   className={styles.input}
                   placeholder="Optional"
                   min="0"
-                  step="0.01"
+                  step="any"
                 />
                 <div className={styles.helpText}>Maximum discount cap (only for percentage discounts)</div>
               </div>

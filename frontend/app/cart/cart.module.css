@@ -171,6 +171,7 @@
 @media (max-width: 1024px) {
   .cartLayout {
     grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 
@@ -687,10 +688,10 @@
   top: 50%;
   transform: translateY(-50%);
   padding: 0.625rem 1rem;
-  background: #fff0f4;
-  color: #ff0055;
+  background: #ffe6e6;
+  color: #661515;
   border: none;
-  border-radius: 60px;
+  border-radius: 16px;
   font-size: 0.875rem;
   font-weight: 600;
   font-family: inherit;
@@ -716,10 +717,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.875rem;
-  background: #EAFFF3;
+  padding: 0.875rem 1.1rem;
+  background: #cbffe1;
   border: 1px solid #90ebb8;
-  border-radius: 8px;
+  border-radius: 18px;
 }
 
 .couponCode {
@@ -731,9 +732,9 @@
 .removeCouponButton {
   background: none;
   border: none;
-  color: #999;
+  color: #14873e;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 1.55rem;
   width: 24px;
   height: 24px;
   display: flex;
@@ -1181,6 +1182,17 @@
 .freeDelivery {
   color: #008375;
   font-weight: 500;
+}
+
+.walletPaymentInfo {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  color: #00835d;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 /* Shimmer Animation */

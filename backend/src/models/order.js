@@ -1,6 +1,25 @@
 const { query } = require('../config/database');
 const productReviewModel = require('./productReview');
 
+function toISOStringSafe(val) {
+  if (!val) return null;
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val.toISOString();
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed) return null;
+    if (trimmed.includes('Z') || /[+-]\d{2}(:\d{2})?$/.test(trimmed)) {
+      const d = new Date(trimmed);
+      return isNaN(d.getTime()) ? null : d.toISOString();
+    }
+    const utcString = trimmed.replace(' ', 'T') + 'Z';
+    const d = new Date(utcString);
+    return isNaN(d.getTime()) ? new Date(trimmed).toISOString() : d.toISOString();
+  }
+  return null;
+}
+
 let schemaEnsured = false;
 
 async function ensureOrdersSchema() {
@@ -107,16 +126,19 @@ async function ensureOrdersSchema() {
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_date DATE;`);
   
   // Add timestamp columns for status tracking
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS package_prepared_at TIMESTAMP;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMP;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS in_transit_at TIMESTAMP;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS reached_destination_hub_at TIMESTAMP;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS out_for_delivery_at TIMESTAMP;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS fulfilled_at TIMESTAMP;`);
-  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMP;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS package_prepared_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS in_transit_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS reached_destination_hub_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS out_for_delivery_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS fulfilled_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;`);
   
   // Nationwide delivery flag
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_nationwide_delivery BOOLEAN NOT NULL DEFAULT false;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_self_created BOOLEAN NOT NULL DEFAULT false;`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;`);
 
   // Order items columns
   await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS line_total DECIMAL(10, 2) DEFAULT 0;`);
@@ -136,6 +158,7 @@ async function ensureOrdersSchema() {
     UPDATE orders SET delivery_address = shipping_address WHERE delivery_address IS NULL AND shipping_address IS NOT NULL;
     UPDATE orders SET shipping_address = delivery_address WHERE shipping_address IS NULL AND delivery_address IS NOT NULL;
     UPDATE orders SET total = COALESCE(total, final_amount, total_amount, 0) WHERE total IS NULL OR total = 0;
+    UPDATE orders SET cancelled_at = updated_at WHERE status = 'cancelled' AND cancelled_at IS NULL;
     UPDATE orders SET subtotal = COALESCE(subtotal, total_amount, total, 0) WHERE subtotal IS NULL OR subtotal = 0;
     UPDATE orders SET discount = COALESCE(discount, discount_amount, 0) WHERE discount IS NULL;
     UPDATE order_items SET line_total = COALESCE(line_total, total_price, unit_price * quantity, 0) WHERE line_total IS NULL OR line_total = 0;
@@ -283,21 +306,24 @@ async function ensureOrdersSchema() {
   // Migrate to TIMESTAMPTZ; treat existing naive values as UTC (Supabase/Render default).
   await query(`
     DO $$
+    DECLARE
+      col TEXT;
     BEGIN
-      IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'created_at'
-          AND data_type = 'timestamp without time zone'
-      ) THEN
-        ALTER TABLE orders
-          ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC',
-          ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC',
-          ALTER COLUMN package_prepared_at TYPE timestamptz USING package_prepared_at AT TIME ZONE 'UTC',
-          ALTER COLUMN out_for_delivery_at TYPE timestamptz USING out_for_delivery_at AT TIME ZONE 'UTC',
-          ALTER COLUMN delivered_at TYPE timestamptz USING delivered_at AT TIME ZONE 'UTC',
-          ALTER COLUMN fulfilled_at TYPE timestamptz USING fulfilled_at AT TIME ZONE 'UTC';
-      END IF;
-    END $$
+      FOREACH col IN ARRAY ARRAY[
+        'created_at', 'updated_at', 'package_prepared_at', 'shipped_at',
+        'in_transit_at', 'reached_destination_hub_at', 'out_for_delivery_at',
+        'delivered_at', 'fulfilled_at', 'cancelled_at'
+      ]
+      LOOP
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = col
+            AND data_type = 'timestamp without time zone'
+        ) THEN
+          EXECUTE format('ALTER TABLE orders ALTER COLUMN %I TYPE timestamptz USING %I AT TIME ZONE ''UTC''', col, col);
+        END IF;
+      END LOOP;
+    END $$;
   `).catch((e) => console.warn('[orders schema] timestamptz migration:', e.message));
 
   await query(`
@@ -415,6 +441,7 @@ async function createOrder({
   savingsAmount = 0,
   couponCode = null,
   isNationwideDelivery = false,
+  isSelfCreated = false,
   creatorSlug = null,
 }) {
   await ensureOrdersSchema();
@@ -430,12 +457,12 @@ async function createOrder({
       `
       INSERT INTO orders (
         user_id, order_number, status, payment_method, payment_status,
-        currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug,
+        currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, is_self_created, creator_slug,
         total_amount, discount_amount, final_amount, shipping_address
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
       RETURNING id, user_id, order_number, status, payment_method, payment_status, currency,
-                subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
+                subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, is_self_created, creator_slug
       `,
       [
         userId,
@@ -455,6 +482,7 @@ async function createOrder({
         savingsAmount,
         couponCode,
         isNationwideDelivery,
+        isSelfCreated,
         creatorSlug,
         subtotal || total || 0,
         discount || 0,
@@ -467,12 +495,12 @@ async function createOrder({
       `
       INSERT INTO orders (
         id, user_id, order_number, status, payment_method, payment_status,
-        currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, creator_slug,
+        currency, subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, razorpay_order_id, savings_amount, coupon_code, is_nationwide_delivery, is_self_created, creator_slug,
         total_amount, discount_amount, final_amount, shipping_address
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
       RETURNING id, user_id, order_number, status, payment_method, payment_status, currency,
-                subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, creator_slug
+                subtotal, discount, platform_fee, delivery_charges, total, wallet_used, delivery_address, created_at, savings_amount, coupon_code, is_nationwide_delivery, is_self_created, creator_slug
       `,
       [
         id,
@@ -493,6 +521,7 @@ async function createOrder({
         savingsAmount,
         couponCode,
         isNationwideDelivery,
+        isSelfCreated,
         creatorSlug,
         subtotal || total || 0,
         discount || 0,
@@ -561,6 +590,7 @@ async function createOrder({
     deliveryAddress: order.delivery_address,
     createdAt: order.created_at ? new Date(order.created_at).toISOString() : null,
     isNationwideDelivery: order.is_nationwide_delivery,
+    isSelfCreated: Boolean(order.is_self_created),
   };
 }
 
@@ -699,7 +729,8 @@ async function listAllOrdersAdmin() {
         WHERE oi.order_id = o.id
       ) AS items_count,
       o.status AS delivery_status,
-      o.is_nationwide_delivery
+      o.is_nationwide_delivery,
+      o.is_self_created
     FROM orders o
     LEFT JOIN users u ON u.id = o.user_id
     WHERE (
@@ -726,6 +757,7 @@ async function listAllOrdersAdmin() {
     itemsCount: row.items_count !== null ? parseInt(row.items_count, 10) : 0,
     deliveryStatus: row.delivery_status || 'pending',
     isNationwideDelivery: row.is_nationwide_delivery || false,
+    isSelfCreated: Boolean(row.is_self_created),
   }));
 }
 
@@ -776,10 +808,13 @@ async function getOrderByIdForUser(userId, orderId) {
       o.out_for_delivery_at,
       o.delivered_at,
       o.fulfilled_at,
+      o.cancelled_at,
+      o.updated_at,
       o.card_last4,
       o.card_network,
       o.savings_amount,
       o.is_nationwide_delivery,
+      o.is_self_created,
       o.shiprocket_awb,
       o.shiprocket_courier,
       o.shiprocket_order_id,
@@ -787,6 +822,7 @@ async function getOrderByIdForUser(userId, orderId) {
       o.delhivery_status,
       o.delhivery_upload_wbn,
       o.delhivery_tracking_url,
+      o.cancellation_reason,
       u.name AS user_name,
       u.email AS user_email
     FROM orders o
@@ -881,24 +917,27 @@ async function getOrderByIdForUser(userId, orderId) {
     deliveryCharges: r.delivery_charges != null ? parseFloat(r.delivery_charges) : 0,
     total: r.total != null ? parseFloat(r.total) : 0,
     deliveryAddress: r.delivery_address,
-    createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
+    createdAt: toISOStringSafe(r.created_at),
     deliveryDate: r.delivery_date ? new Date(r.delivery_date).toISOString().slice(0, 10) : null,
-    packagePreparedAt: r.package_prepared_at ? new Date(r.package_prepared_at).toISOString() : null,
-    shippedAt: r.shipped_at ? new Date(r.shipped_at).toISOString() : null,
-    inTransitAt: r.in_transit_at ? new Date(r.in_transit_at).toISOString() : null,
-    reachedDestinationHubAt: r.reached_destination_hub_at ? new Date(r.reached_destination_hub_at).toISOString() : null,
-    outForDeliveryAt: r.out_for_delivery_at ? new Date(r.out_for_delivery_at).toISOString() : null,
-    deliveredAt: r.delivered_at ? new Date(r.delivered_at).toISOString() : null,
-    fulfilledAt: r.fulfilled_at ? new Date(r.fulfilled_at).toISOString() : null,
+    packagePreparedAt: toISOStringSafe(r.package_prepared_at),
+    shippedAt: toISOStringSafe(r.shipped_at),
+    inTransitAt: toISOStringSafe(r.in_transit_at),
+    reachedDestinationHubAt: toISOStringSafe(r.reached_destination_hub_at),
+    outForDeliveryAt: toISOStringSafe(r.out_for_delivery_at),
+    deliveredAt: toISOStringSafe(r.delivered_at),
+    fulfilledAt: toISOStringSafe(r.fulfilled_at),
     cardLast4: r.card_last4 || null,
     cardNetwork: r.card_network || null,
     savingsAmount: parseFloat(r.savings_amount || 0),
+    cancellationReason: r.cancellation_reason || null,
+    cancelledAt: toISOStringSafe(r.cancelled_at) || (r.status === 'cancelled' && r.updated_at ? toISOStringSafe(r.updated_at) : null),
     customer: {
       name: r.user_name || '',
       email: r.user_email || '',
     },
     items,
     isNationwideDelivery: r.is_nationwide_delivery,
+    isSelfCreated: Boolean(r.is_self_created),
     shiprocketAwb: r.shiprocket_awb || null,
     shiprocketCourier: r.shiprocket_courier || null,
     shiprocketOrderId: r.shiprocket_order_id || null,
@@ -1269,16 +1308,19 @@ async function getOrderByIdForAdmin(orderId) {
     deliveryCharges: r.delivery_charges != null ? parseFloat(r.delivery_charges) : 0,
     total: r.total != null ? parseFloat(r.total) : 0,
     deliveryAddress: r.delivery_address,
-    createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
+    createdAt: toISOStringSafe(r.created_at),
     deliveryDate: r.delivery_date ? new Date(r.delivery_date).toISOString().slice(0, 10) : null,
-    packagePreparedAt: r.package_prepared_at ? new Date(r.package_prepared_at).toISOString() : null,
-    shippedAt: r.shipped_at ? new Date(r.shipped_at).toISOString() : null,
-    inTransitAt: r.in_transit_at ? new Date(r.in_transit_at).toISOString() : null,
-    reachedDestinationHubAt: r.reached_destination_hub_at ? new Date(r.reached_destination_hub_at).toISOString() : null,
-    outForDeliveryAt: r.out_for_delivery_at ? new Date(r.out_for_delivery_at).toISOString() : null,
-    deliveredAt: r.delivered_at ? new Date(r.delivered_at).toISOString() : null,
-    fulfilledAt: r.fulfilled_at ? new Date(r.fulfilled_at).toISOString() : null,
+    packagePreparedAt: toISOStringSafe(r.package_prepared_at),
+    shippedAt: toISOStringSafe(r.shipped_at),
+    inTransitAt: toISOStringSafe(r.in_transit_at),
+    reachedDestinationHubAt: toISOStringSafe(r.reached_destination_hub_at),
+    outForDeliveryAt: toISOStringSafe(r.out_for_delivery_at),
+    deliveredAt: toISOStringSafe(r.delivered_at),
+    fulfilledAt: toISOStringSafe(r.fulfilled_at),
+    cancelledAt: toISOStringSafe(r.cancelled_at) || (r.status === 'cancelled' && r.updated_at ? toISOStringSafe(r.updated_at) : null),
+    cancellationReason: r.cancellation_reason || null,
     isNationwideDelivery: r.is_nationwide_delivery,
+    isSelfCreated: Boolean(r.is_self_created),
     delhiveryWaybill: r.delhivery_waybill || null,
     shiprocketOrderId: r.shiprocket_order_id || null,
     customer: {
@@ -1391,6 +1433,8 @@ async function updateTimelineStatus(orderId, targetStatus) {
     queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW()), in_transit_at = COALESCE(in_transit_at, NOW()), reached_destination_hub_at = COALESCE(reached_destination_hub_at, NOW()), out_for_delivery_at = COALESCE(out_for_delivery_at, NOW())`;
   } else if (targetStatus === 'delivered') {
     queryStr += `, package_prepared_at = COALESCE(package_prepared_at, NOW()), shipped_at = COALESCE(shipped_at, NOW()), in_transit_at = COALESCE(in_transit_at, NOW()), reached_destination_hub_at = COALESCE(reached_destination_hub_at, NOW()), out_for_delivery_at = COALESCE(out_for_delivery_at, NOW()), delivered_at = COALESCE(delivered_at, NOW()), fulfilled_at = COALESCE(fulfilled_at, NOW()), delivery_date = CURRENT_DATE, payment_status = CASE WHEN LOWER(payment_method) = 'cod' THEN 'paid' ELSE payment_status END`;
+  } else if (targetStatus === 'cancelled') {
+    queryStr += `, cancelled_at = COALESCE(cancelled_at, NOW())`;
   }
 
   queryStr += ` WHERE id::text = $2::text RETURNING *`;
@@ -1657,6 +1701,55 @@ async function listOrderDeliveriesAdmin() {
   }));
 }
 
+async function getCancellationFeedbacks() {
+  await ensureOrdersSchema();
+  const res = await query(
+    `
+    SELECT
+      o.id AS order_id,
+      o.order_number,
+      o.cancellation_reason,
+      o.updated_at AS cancelled_at,
+      o.created_at AS ordered_at,
+      o.total AS amount,
+      o.currency,
+      o.payment_method,
+      o.payment_status,
+      u.name AS user_name,
+      u.email AS user_email
+    FROM orders o
+    LEFT JOIN users u ON u.id = o.user_id
+    WHERE o.status = 'cancelled'
+      AND o.cancellation_reason IS NOT NULL
+      AND BTRIM(o.cancellation_reason) <> ''
+    ORDER BY o.updated_at DESC
+    `
+  );
+
+  return res.rows.map((row) => ({
+    id: String(row.order_id),
+    orderNumber: String(row.order_number),
+    cancellationReason: row.cancellation_reason,
+    cancelledAt: toISOStringSafe(row.cancelled_at),
+    orderedAt: toISOStringSafe(row.ordered_at),
+    amount: row.amount !== null ? parseFloat(row.amount) : 0,
+    currency: row.currency || 'INR',
+    paymentMethod: row.payment_method || 'cod',
+    paymentStatus: row.payment_status || 'pending',
+    userName: row.user_name || null,
+    userEmail: row.user_email || null,
+  }));
+}
+
+async function deleteCancellationFeedback(orderId) {
+  await ensureOrdersSchema();
+  await query(
+    `UPDATE orders SET cancellation_reason = NULL, updated_at = NOW() WHERE id::text = $1::text`,
+    [String(orderId)]
+  );
+  return true;
+}
+
 module.exports = {
   ensureOrdersSchema,
   createOrder,
@@ -1676,5 +1769,7 @@ module.exports = {
   submitOrderFeedback,
   submitDetailedFeedback,
   getFeedbackStats,
+  getCancellationFeedbacks,
+  deleteCancellationFeedback,
   getDeliveredItemsForReview,
 };

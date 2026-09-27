@@ -81,6 +81,7 @@ router.get('/customers', adminController.getCustomerStats);
 router.patch('/customers/:id/wallet', adminController.updateCustomerWalletBalance);
 router.get('/feedback', adminController.getFeedback);
 router.get('/feedback/latest', adminController.getLatestFeedbackTime);
+router.delete('/feedback/cancellations/:id', adminController.deleteCancellationFeedback);
 
 // Subscriptions
 router.get('/subscriptions', adminController.getAllSubscriptions);

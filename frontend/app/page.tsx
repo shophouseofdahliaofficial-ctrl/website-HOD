@@ -503,6 +503,13 @@ export default function HomePage() {
         {/* Bottom Center Horizontal Links in Phase 2 for Desktop (0.52rem) */}
         <nav className={styles.phase3HorizontalLinks} aria-label="Footer links">
           <span className={styles.phase3LinkItem}>
+            <Link href="/about" className={styles.phase3Link}>
+              About Us
+            </Link>
+            <span className={styles.phase3Dot} aria-hidden="true">•</span>
+          </span>
+
+          <span className={styles.phase3LinkItem}>
             <Link href="/faqs" className={styles.phase3Link}>
               FAQs
             </Link>

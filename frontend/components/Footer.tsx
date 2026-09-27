@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import styles from './Footer.module.css';
 
 const FOOTER_LINKS = [
+  { label: 'About Us', href: '/about' },
   { label: 'My Account', href: '/account' },
   { label: 'Cart', href: '/cart' },
   { label: 'Returns & Exchanges', href: '/returns' },

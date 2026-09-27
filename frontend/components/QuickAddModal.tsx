@@ -99,7 +99,7 @@ export default function QuickAddModal({
   const activeVariation: ProductVariation | null = useMemo(() => {
     if (!variations.length) return null;
     if (selectedVariationId) {
-      const match = variations.find((v) => v.id === selectedVariationId);
+      const match = variations.find((v) => String(v.id) === String(selectedVariationId));
       if (match) return match;
     }
     return variations.find((v) => v.isAvailable) || variations[0] || null;
@@ -107,7 +107,7 @@ export default function QuickAddModal({
 
   // Customizable options
   const isCustomizable = Boolean(
-    displayProduct?.isCustomizable &&
+    (displayProduct?.isCustomizable || (displayProduct?.customizationOptions && displayProduct.customizationOptions.length > 0)) &&
     displayProduct?.customizationOptions &&
     displayProduct.customizationOptions.length > 0
   );
@@ -253,7 +253,7 @@ export default function QuickAddModal({
     }
   }
 
-  const isOutOfStock = displayProduct.isOutOfStock || (activeVariation ? !activeVariation.isAvailable : false);
+  const isOutOfStock = (displayProduct.quantity !== undefined && displayProduct.quantity <= 0) || (activeVariation ? !activeVariation.isAvailable : false);
   const maxQty = displayProduct.maxQuantity ?? 99;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -345,7 +345,7 @@ export default function QuickAddModal({
               {displayProduct.name}
             </h3>
             <span className={styles.categoryBadge}>
-              {categoryName || displayProduct.variationLabel || displayProduct.variationTitle || 'Select option'}
+              {categoryName || (displayProduct as any).variationLabel || (displayProduct as any).variationTitle || 'Select option'}
             </span>
           </div>
           <button

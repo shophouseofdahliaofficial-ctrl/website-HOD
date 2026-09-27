@@ -126,6 +126,8 @@ export default function ProductDetailsModal({
   const detailsSectionRef = useRef<HTMLDivElement | null>(null);
   const imageSectionRef = useRef<HTMLDivElement>(null);
   const imageGridRef = useRef<HTMLDivElement>(null);
+  const imageGridScrollRef = useRef<HTMLDivElement>(null);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -150,8 +152,12 @@ export default function ProductDetailsModal({
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [zoomPan, setZoomPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [zoomSwipeOffset, setZoomSwipeOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isZoomDragging, setIsZoomDragging] = useState<boolean>(false);
   const zoomDragStartRef = useRef<{ x: number; y: number; panX: number; panY: number }>({ x: 0, y: 0, panX: 0, panY: 0 });
+  const zoomTouchStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
+  const zoomPinchStartRef = useRef<{ dist: number; scale: number }>({ dist: 0, scale: 1 });
+  const isZoomPinchingRef = useRef<boolean>(false);
   const hasZoomMovedRef = useRef<boolean>(false);
   const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(0);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
@@ -355,9 +361,9 @@ export default function ProductDetailsModal({
 
   useEffect(() => {
     if (variations.length > 0) {
-      if (!selectedVariationId || !variations.some((v) => v.id === selectedVariationId)) {
+      if (!selectedVariationId || !variations.some((v) => String(v.id) === String(selectedVariationId))) {
         const firstAvailable = variations.find((v) => v.isAvailable) || variations[0];
-        if (firstAvailable) setSelectedVariationId(firstAvailable.id);
+        if (firstAvailable) setSelectedVariationId(String(firstAvailable.id));
       }
     }
   }, [variations, selectedVariationId]);
@@ -370,26 +376,34 @@ export default function ProductDetailsModal({
   }, [displayProduct?.id]);
 
   useEffect(() => {
-    if ((displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) && displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0) {
-      if (displayProduct.customizationOptions.length === 1) {
-        const g = displayProduct.customizationOptions[0];
-        if (!selectedCustomizations[g.id] && g.values && g.values.length > 0) {
-          if (g.type !== 'text_input' && g.type !== 'uploads') {
-            const firstAvailable = g.values.find((val) => (val as any).isActive !== false) || g.values[0];
-            if (firstAvailable) {
-              setSelectedCustomizations((prev) => {
-                if (prev[g.id]) return prev;
-                return { ...prev, [g.id]: firstAvailable.id };
-              });
+    const custOptions = displayProduct.customizationOptions;
+    if (Array.isArray(custOptions) && custOptions.length > 0) {
+      setSelectedCustomizations((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        custOptions.forEach((g) => {
+          if (g.type !== 'text_input' && g.type !== 'uploads' && Array.isArray(g.values) && g.values.length > 0) {
+            if (!next[g.id]) {
+              const firstAvailable = g.values.find((val: any) => val.isActive !== false) || g.values[0];
+              if (firstAvailable) {
+                next[g.id] = String(firstAvailable.id);
+                changed = true;
+              }
             }
           }
-        }
-      }
+        });
+        return changed ? next : prev;
+      });
     }
-  }, [displayProduct.customizationOptions, displayProduct.isCustomizable, displayProduct.id]);
+  }, [displayProduct.customizationOptions, displayProduct.id]);
 
   const selectedVariation = useMemo(() => {
-    return variations.find((v) => v.id === selectedVariationId) || variations[0] || null;
+    if (!variations.length) return null;
+    if (selectedVariationId) {
+      const match = variations.find((v) => String(v.id) === String(selectedVariationId));
+      if (match) return match;
+    }
+    return variations.find((v) => v.isAvailable) || variations[0] || null;
   }, [variations, selectedVariationId]);
 
   // Customization combinations calculation
@@ -418,8 +432,15 @@ export default function ProductDetailsModal({
     ? Number(displayProduct.compareAtPrice)
     : null;
 
+  const hasCustomization = Boolean(
+    displayProduct.customizationOptions &&
+    displayProduct.customizationOptions.some(
+      (g) => g.type !== 'text_input' && g.type !== 'uploads' && Array.isArray(g.values) && g.values.length > 0
+    )
+  );
+
   const unitPrice = useMemo(() => {
-    if (displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) {
+    if (hasCustomization || displayProduct.isCustomizable) {
       if (currentCombination?.price != null && Number.isFinite(Number(currentCombination.price))) {
         let comboPrice = Number(currentCombination.price);
         if (textPersonalizations) {
@@ -441,7 +462,7 @@ export default function ProductDetailsModal({
       let sellingSum = basePrice;
       Object.keys(selectedCustomizations).forEach((groupId) => {
         const valId = selectedCustomizations[groupId];
-        const group = (displayProduct.customizationOptions || []).find((g) => g.id === groupId);
+        const group = (displayProduct.customizationOptions || []).find((g) => String(g.id) === String(groupId));
         const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
         if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
           sellingSum += val.price;
@@ -466,12 +487,19 @@ export default function ProductDetailsModal({
     }
 
     // Standard variations
-    if (selectedVariation?.price != null && Number.isFinite(Number(selectedVariation.price))) {
-      return Number(selectedVariation.price);
+    if (selectedVariation) {
+      if (selectedVariation.price != null && Number.isFinite(Number(selectedVariation.price))) {
+        return Number(selectedVariation.price);
+      }
+      const mult = selectedVariation.priceMultiplier != null && Number.isFinite(Number(selectedVariation.priceMultiplier))
+        ? Number(selectedVariation.priceMultiplier)
+        : 1;
+      return basePrice * mult;
     }
-    const mult = Number(selectedVariation?.priceMultiplier) || 1;
-    return basePrice * mult;
+
+    return basePrice;
   }, [
+    hasCustomization,
     displayProduct.isCustomizable,
     displayProduct.customizationOptions,
     currentCombination,
@@ -482,7 +510,7 @@ export default function ProductDetailsModal({
   ]);
 
   const originalUnitPrice = useMemo(() => {
-    if (displayProduct.isCustomizable || (displayProduct.customizationOptions && displayProduct.customizationOptions.length > 0)) {
+    if (hasCustomization || displayProduct.isCustomizable) {
       if (currentCombination?.compareAtPrice != null && Number.isFinite(Number(currentCombination.compareAtPrice))) {
         return Number(currentCombination.compareAtPrice);
       }
@@ -490,7 +518,7 @@ export default function ProductDetailsModal({
         let compareSum = baseCompareAtPrice;
         Object.keys(selectedCustomizations).forEach((groupId) => {
           const valId = selectedCustomizations[groupId];
-          const group = (displayProduct.customizationOptions || []).find((g) => g.id === groupId);
+          const group = (displayProduct.customizationOptions || []).find((g) => String(g.id) === String(groupId));
           const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
           if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
             compareSum += val.price;
@@ -502,15 +530,20 @@ export default function ProductDetailsModal({
     }
 
     // Standard variations
-    if (selectedVariation?.compareAtPrice != null && Number.isFinite(Number(selectedVariation.compareAtPrice))) {
-      return Number(selectedVariation.compareAtPrice);
-    }
-    if (baseCompareAtPrice != null) {
-      const mult = Number(selectedVariation?.priceMultiplier) || 1;
-      return baseCompareAtPrice * mult;
+    if (selectedVariation) {
+      if (selectedVariation.compareAtPrice != null && Number.isFinite(Number(selectedVariation.compareAtPrice))) {
+        return Number(selectedVariation.compareAtPrice);
+      }
+      if (baseCompareAtPrice != null) {
+        const mult = selectedVariation.priceMultiplier != null && Number.isFinite(Number(selectedVariation.priceMultiplier))
+          ? Number(selectedVariation.priceMultiplier)
+          : 1;
+        return baseCompareAtPrice * mult;
+      }
     }
     return null;
   }, [
+    hasCustomization,
     displayProduct.isCustomizable,
     displayProduct.customizationOptions,
     currentCombination,
@@ -603,11 +636,180 @@ export default function ProductDetailsModal({
     return fallback ? [fallback] : [];
   }, [displayProduct]);
 
+  const isProgrammaticScrollRef = useRef(false);
+  const programmaticScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle scroll events on mobile image carousel to update pagination dots in real-time
+  const handleImageGridScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    // Prevent feedback loops while zoom overlay is open or when programmatically scrolling
+    if (isImageZoomOpen || isProgrammaticScrollRef.current) return;
+    const el = e.currentTarget;
+    if (!el || collageItems.length <= 1) return;
+    const width = el.clientWidth;
+    if (width > 0) {
+      const rawIndex = Math.round(el.scrollLeft / width);
+      const activeIndex = ((rawIndex % collageItems.length) + collageItems.length) % collageItems.length;
+      setSelectedImageIndex((prev) => (prev !== activeIndex ? activeIndex : prev));
+    }
+  }, [collageItems.length, isImageZoomOpen]);
+
+  // Smoothly scroll to a specific slide index when dot or thumbnail is selected
+  const scrollToImageSlide = useCallback((index: number) => {
+    setSelectedImageIndex(index);
+    if (imageGridScrollRef.current) {
+      const el = imageGridScrollRef.current;
+      const width = el.clientWidth;
+      if (width > 0) {
+        isProgrammaticScrollRef.current = true;
+        if (programmaticScrollTimeoutRef.current) clearTimeout(programmaticScrollTimeoutRef.current);
+        programmaticScrollTimeoutRef.current = setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 400);
+
+        const rawIndex = Math.round(el.scrollLeft / width);
+        const setOffset = Math.floor(rawIndex / collageItems.length) * collageItems.length;
+        el.scrollTo({
+          left: (setOffset + index) * width,
+          behavior: 'smooth',
+        });
+      }
+    }
+  }, [collageItems.length]);
+
+  // When closing zoom lightbox, instantly sync the background carousel to match selectedImageIndex
+  useEffect(() => {
+    if (!isImageZoomOpen && imageGridScrollRef.current && collageItems.length > 0) {
+      const el = imageGridScrollRef.current;
+      const width = el.clientWidth;
+      if (width > 0) {
+        const currentRaw = Math.round(el.scrollLeft / width);
+        const activeIdx = ((currentRaw % collageItems.length) + collageItems.length) % collageItems.length;
+        if (activeIdx !== selectedImageIndex) {
+          const setOffset = Math.floor(currentRaw / collageItems.length) * collageItems.length;
+          el.scrollTo({
+            left: (setOffset + selectedImageIndex) * width,
+            behavior: 'instant',
+          });
+        }
+      }
+    }
+  }, [isImageZoomOpen, selectedImageIndex, collageItems.length]);
+
+  // Touch gesture handlers for mobile zoom overlay (Swipe Left/Right for Next/Prev, Swipe Down to close, Pinch to zoom, Pan when zoomed)
+  const handleZoomTouchStart = useCallback((e: React.TouchEvent) => {
+    hasZoomMovedRef.current = false;
+    if (e.touches.length === 2) {
+      isZoomPinchingRef.current = true;
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      zoomPinchStartRef.current = { dist, scale: zoomScale };
+    } else if (e.touches.length === 1) {
+      isZoomPinchingRef.current = false;
+      const touch = e.touches[0];
+      zoomTouchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+      };
+      if (zoomScale > 1) {
+        setIsZoomDragging(true);
+        zoomDragStartRef.current = {
+          x: touch.clientX,
+          y: touch.clientY,
+          panX: zoomPan.x,
+          panY: zoomPan.y,
+        };
+      }
+    }
+  }, [zoomScale, zoomPan]);
+
+  const handleZoomTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.touches.length === 2 && isZoomPinchingRef.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (zoomPinchStartRef.current.dist > 0) {
+        const factor = dist / zoomPinchStartRef.current.dist;
+        const targetScale = Math.min(4, Math.max(1, +(zoomPinchStartRef.current.scale * factor).toFixed(2)));
+        setZoomScale(targetScale);
+        if (targetScale === 1) {
+          setZoomPan({ x: 0, y: 0 });
+        }
+      }
+      hasZoomMovedRef.current = true;
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - zoomTouchStartRef.current.x;
+      const dy = touch.clientY - zoomTouchStartRef.current.y;
+
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+        hasZoomMovedRef.current = true;
+      }
+
+      if (zoomScale > 1 && isZoomDragging) {
+        setZoomPan({
+          x: zoomDragStartRef.current.panX + dx,
+          y: zoomDragStartRef.current.panY + dy,
+        });
+      } else if (zoomScale === 1) {
+        setZoomSwipeOffset({ x: dx, y: dy });
+      }
+    }
+  }, [zoomScale, isZoomDragging]);
+
+  const handleZoomTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (isZoomPinchingRef.current) {
+      isZoomPinchingRef.current = false;
+      return;
+    }
+
+    if (zoomScale > 1) {
+      setIsZoomDragging(false);
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    if (touch && collageItems.length > 0) {
+      const dx = touch.clientX - zoomTouchStartRef.current.x;
+      const dy = touch.clientY - zoomTouchStartRef.current.y;
+      const dt = Date.now() - zoomTouchStartRef.current.time;
+
+      const isFastSwipe = dt < 320 && Math.abs(dx) > 25;
+      const isNormalSwipe = Math.abs(dx) > 45;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0 && (isNormalSwipe || isFastSwipe)) {
+          setSelectedImageIndex((prev) => (prev < collageItems.length - 1 ? prev + 1 : 0));
+          setZoomScale(1);
+          setZoomPan({ x: 0, y: 0 });
+        } else if (dx > 0 && (isNormalSwipe || isFastSwipe)) {
+          setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : collageItems.length - 1));
+          setZoomScale(1);
+          setZoomPan({ x: 0, y: 0 });
+        }
+      } else if (dy > 90 && Math.abs(dy) > Math.abs(dx) * 1.5) {
+        setIsImageZoomOpen(false);
+      }
+    }
+
+    setZoomSwipeOffset({ x: 0, y: 0 });
+  }, [zoomScale, collageItems.length]);
+
   // Zoom overlay effects: lock scrollbar on page/body, handle wheel zoom, Esc / Arrow key nav
   useEffect(() => {
     if (!isImageZoomOpen) {
       setZoomScale(1);
       setZoomPan({ x: 0, y: 0 });
+      setZoomSwipeOffset({ x: 0, y: 0 });
       return;
     }
 
@@ -629,12 +831,6 @@ export default function ProductDetailsModal({
       });
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 1 || isZoomDragging) {
-        e.preventDefault();
-      }
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsImageZoomOpen(false);
@@ -651,14 +847,12 @@ export default function ProductDetailsModal({
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     return () => {
       document.body.style.overflow = prevBodyOverflow;
       document.documentElement.style.overflow = prevDocOverflow;
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchmove', handleTouchMove);
     };
   }, [isImageZoomOpen, collageItems.length, isZoomDragging]);
 
@@ -1341,7 +1535,11 @@ export default function ProductDetailsModal({
                   )}
 
                   <div ref={imageGridRef} className={styles.imageGridWrapper}>
-                    <div className={styles.imageGrid}>
+                    <div
+                      ref={imageGridScrollRef}
+                      className={styles.imageGrid}
+                      onScroll={handleImageGridScroll}
+                    >
                       {infiniteGalleryItems.map((item, idx) => (
                         <div
                           key={idx}
@@ -1365,9 +1563,15 @@ export default function ProductDetailsModal({
                     {collageItems.length > 1 && (
                       <div className={styles.imagePaginationDots}>
                         {collageItems.map((_, dotIdx) => (
-                          <span
+                          <button
                             key={dotIdx}
+                            type="button"
                             className={`${styles.paginationDot} ${selectedImageIndex === dotIdx ? styles.paginationDotActive : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              scrollToImageSlide(dotIdx);
+                            }}
+                            aria-label={`Go to slide ${dotIdx + 1}`}
                           />
                         ))}
                       </div>
@@ -1751,14 +1955,14 @@ export default function ProductDetailsModal({
                           </div>
                           <div className={styles.variationsGrid}>
                             {variations.map((v) => {
-                              const isActive = v.id === selectedVariationId;
+                              const isActive = String(v.id) === String(selectedVariation?.id);
                               return (
                                 <button
                                   key={v.id}
                                   type="button"
                                   className={`${styles.variationButton} ${isActive ? styles.variationActive : ''} ${v.isAvailable ? '' : styles.variationDisabled}`}
                                   disabled={!v.isAvailable}
-                                  onClick={() => setSelectedVariationId(v.id)}
+                                  onClick={() => setSelectedVariationId(String(v.id))}
                                 >
                                   {removePriceFromName(v.size)}
                                 </button>
@@ -2079,15 +2283,18 @@ export default function ProductDetailsModal({
       {isImageZoomOpen && collageItems.length > 0 && typeof document !== 'undefined' && createPortal(
         <div
           className={styles.zoomOverlay}
-          onClick={() => setIsImageZoomOpen(false)}
+          onClick={() => {
+            if (!hasZoomMovedRef.current) {
+              setIsImageZoomOpen(false);
+            }
+          }}
           onWheel={(e) => {
             e.preventDefault();
             e.stopPropagation();
           }}
-          onTouchMove={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+          onTouchStart={handleZoomTouchStart}
+          onTouchMove={handleZoomTouchMove}
+          onTouchEnd={handleZoomTouchEnd}
         >
           <div className={styles.zoomCounter}>
             {selectedImageIndex + 1} / {collageItems.length}
@@ -2114,6 +2321,7 @@ export default function ProductDetailsModal({
                   setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : collageItems.length - 1));
                   setZoomScale(1);
                   setZoomPan({ x: 0, y: 0 });
+                  setZoomSwipeOffset({ x: 0, y: 0 });
                 }}
                 aria-label="Previous image"
               >
@@ -2129,6 +2337,7 @@ export default function ProductDetailsModal({
                   setSelectedImageIndex((prev) => (prev < collageItems.length - 1 ? prev + 1 : 0));
                   setZoomScale(1);
                   setZoomPan({ x: 0, y: 0 });
+                  setZoomSwipeOffset({ x: 0, y: 0 });
                 }}
                 aria-label="Next image"
               >
@@ -2182,32 +2391,6 @@ export default function ProductDetailsModal({
             }}
             onMouseUp={() => setIsZoomDragging(false)}
             onMouseLeave={() => setIsZoomDragging(false)}
-            onTouchStart={(e) => {
-              hasZoomMovedRef.current = false;
-              if (zoomScale > 1 && e.touches.length === 1) {
-                setIsZoomDragging(true);
-                zoomDragStartRef.current = {
-                  x: e.touches[0].clientX,
-                  y: e.touches[0].clientY,
-                  panX: zoomPan.x,
-                  panY: zoomPan.y,
-                };
-              }
-            }}
-            onTouchMove={(e) => {
-              if (isZoomDragging && zoomScale > 1 && e.touches.length === 1) {
-                const dx = e.touches[0].clientX - zoomDragStartRef.current.x;
-                const dy = e.touches[0].clientY - zoomDragStartRef.current.y;
-                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-                  hasZoomMovedRef.current = true;
-                }
-                setZoomPan({
-                  x: zoomDragStartRef.current.panX + dx,
-                  y: zoomDragStartRef.current.panY + dy,
-                });
-              }
-            }}
-            onTouchEnd={() => setIsZoomDragging(false)}
             style={{
               position: 'relative',
               width: '85vw',
@@ -2222,8 +2405,12 @@ export default function ProductDetailsModal({
                 position: 'relative',
                 width: '100%',
                 height: '100%',
-                transform: `translate(${zoomPan.x}px, ${zoomPan.y}px) scale(${zoomScale})`,
-                transition: isZoomDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: zoomScale > 1
+                  ? `translate(${zoomPan.x}px, ${zoomPan.y}px) scale(${zoomScale})`
+                  : `translate(${zoomSwipeOffset.x}px, ${zoomSwipeOffset.y * 0.3}px) scale(1)`,
+                transition: (isZoomDragging || (zoomScale === 1 && (zoomSwipeOffset.x !== 0 || zoomSwipeOffset.y !== 0)))
+                  ? 'none'
+                  : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                 transformOrigin: 'center center',
                 willChange: 'transform',
               }}

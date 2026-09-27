@@ -747,6 +747,8 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
   const deliveryRateResult = resolveDeliveryRate(deliveryRatesConfig, addressForm.latitude, addressForm.longitude);
   const displayedDeliveryCharges = isFirstProductOrder && items.length > 0 ? 0 : (backendDeliveryCharges !== null ? backendDeliveryCharges : deliveryRateResult.charge);
   const total = Math.max(0, subtotal - couponDiscount + displayedDeliveryCharges + platformFee + totalGiftWrapFee);
+  const walletExtraToPay = Math.max(0, total - walletBalance);
+  const walletRemainingAfterOrder = Math.max(0, walletBalance - total);
 
   const savings = useMemo(() => {
     return items.reduce((sum, it) => {
@@ -1965,6 +1967,18 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
                       <p style={{ margin: 0, fontSize: '0.78rem', color: '#047857' }}>Balance: ₹{formatINR(walletBalance)}</p>
                     </div>
                   </label>
+                )}
+
+                {paymentMethod === 'wallet' && walletBalance > 0 && (
+                  <div className={checkoutStyles.walletPaymentInfo}>
+                    {walletExtraToPay > 0 ? (
+                      <>You need to pay ₹{walletExtraToPay.toFixed(2)} more to complete this order. Payment will be done Online.</>
+                    ) : (
+                      <>
+                        You need to pay ₹0 to complete this order. Remaining Wallet amount = ₹{walletRemainingAfterOrder.toFixed(2)}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

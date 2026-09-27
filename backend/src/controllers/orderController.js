@@ -123,7 +123,7 @@ const createOrder = async (req, res, next) => {
 
       const productRes = await query(
         `
-        SELECT id, name, price_per_litre, selling_price, compare_at_price, is_nationwide_delivery, delivery_pincodes, weight
+        SELECT id, name, price_per_litre, selling_price, compare_at_price, is_nationwide_delivery, delivery_pincodes, weight, is_customizable, customization_options, customization_combinations
         FROM products
         WHERE id = $1
         `,
@@ -146,7 +146,22 @@ const createOrder = async (req, res, next) => {
         }
       }
 
+      let custOpts = p.customization_options;
+      if (typeof custOpts === 'string') {
+        try { custOpts = JSON.parse(custOpts); } catch {}
+      }
+      if (!Array.isArray(custOpts)) custOpts = [];
+
+      let custCombos = p.customization_combinations;
+      if (typeof custCombos === 'string') {
+        try { custCombos = JSON.parse(custCombos); } catch {}
+      }
+      if (!Array.isArray(custCombos)) custCombos = [];
+
+      const isCustomizable = p.is_customizable || custOpts.length > 0 || custCombos.length > 0;
+
       let variation = null;
+      let variationSize = null;
       if (variationId) {
         const varRes = await query(
           `
@@ -156,34 +171,134 @@ const createOrder = async (req, res, next) => {
           `,
           [variationId, productId]
         );
-        if (varRes.rows.length === 0) throw new ValidationError('Invalid product variation');
-        variation = varRes.rows[0];
+        if (varRes.rows.length > 0) {
+          variation = varRes.rows[0];
+          variationSize = variation.size || null;
+        }
       }
 
       const basePrice = p.selling_price !== null && p.selling_price !== undefined
         ? parseFloat(p.selling_price)
-        : parseFloat(p.price_per_litre);
+        : parseFloat(p.price_per_litre || 0);
 
-      const mult = variation?.price_multiplier !== null && variation?.price_multiplier !== undefined
-        ? parseFloat(variation.price_multiplier)
-        : 1;
-
-      const unitPrice = variation?.price !== null && variation?.price !== undefined
-        ? parseFloat(variation.price)
-        : basePrice * mult;
-
-      // Savings calculation
       const baseCompare = p.compare_at_price !== null && p.compare_at_price !== undefined
         ? parseFloat(p.compare_at_price)
         : null;
-      const variationCompare = variation?.compare_at_price !== null && variation?.compare_at_price !== undefined
-        ? parseFloat(variation.compare_at_price)
-        : null;
-      const originalUnitPrice = variationCompare !== null
-        ? variationCompare
-        : baseCompare !== null
-          ? baseCompare * mult
+
+      let unitPrice = basePrice;
+      let originalUnitPrice = baseCompare;
+
+      if (isCustomizable) {
+        const rawVarId = raw?.variationId ? String(raw.variationId) : null;
+        const combo = rawVarId
+          ? custCombos.find((c) => String(c.id) === rawVarId)
           : null;
+
+        if (combo && combo.price !== undefined && combo.price !== null && Number.isFinite(Number(combo.price))) {
+          unitPrice = Number(combo.price);
+        } else {
+          let sellingSum = basePrice;
+          if (combo && combo.combinationKeys) {
+            Object.keys(combo.combinationKeys).forEach((groupId) => {
+              const valId = combo.combinationKeys[groupId];
+              const group = custOpts.find((g) => String(g.id) === String(groupId));
+              const val = group && Array.isArray(group.values) ? group.values.find((v) => String(v.id) === String(valId)) : null;
+              if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                sellingSum += val.price;
+              }
+            });
+          } else {
+            const cust = raw?.customizations || {};
+            const selectedOpts = cust.selectedOptions || cust.customizationOptions || cust.options || {};
+            if (Array.isArray(selectedOpts)) {
+              selectedOpts.forEach((opt) => {
+                if (opt && typeof opt.price === 'number' && Number.isFinite(opt.price)) {
+                  sellingSum += opt.price;
+                } else if (opt && opt.valueId) {
+                  const group = custOpts.find((g) => String(g.id) === String(opt.groupId));
+                  const val = group && Array.isArray(group.values) ? group.values.find((v) => String(v.id) === String(opt.valueId)) : null;
+                  if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                    sellingSum += val.price;
+                  }
+                }
+              });
+            } else if (typeof selectedOpts === 'object' && selectedOpts !== null) {
+              Object.keys(selectedOpts).forEach((groupId) => {
+                const valId = selectedOpts[groupId];
+                const group = custOpts.find((g) => String(g.id) === String(groupId));
+                const val = group && Array.isArray(group.values) ? group.values.find((v) => String(v.id) === String(valId)) : null;
+                if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                  sellingSum += val.price;
+                }
+              });
+            }
+          }
+
+          if (rawVarId && sellingSum === basePrice) {
+            for (const grp of custOpts) {
+              const val = Array.isArray(grp.values) ? grp.values.find((v) => String(v.id) === rawVarId) : null;
+              if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                sellingSum += val.price;
+                break;
+              }
+            }
+          }
+
+          unitPrice = sellingSum;
+        }
+
+        if (raw?.customizations?.textPersonalization && typeof raw?.customizations?.textPersonalization === 'object') {
+          const textPers = raw.customizations.textPersonalization;
+          custOpts.forEach((group) => {
+            if (group.type === 'text_input' && Array.isArray(group.values)) {
+              group.values.forEach((val) => {
+                const inputKey = `${group.id}_${val.id}`;
+                const textVal = textPers[inputKey] || '';
+                if (textVal && String(textVal).trim() && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                  unitPrice += val.price;
+                }
+              });
+            }
+          });
+        }
+
+        if (combo && combo.compareAtPrice !== undefined && combo.compareAtPrice !== null && Number.isFinite(Number(combo.compareAtPrice))) {
+          originalUnitPrice = Number(combo.compareAtPrice);
+        } else if (baseCompare !== null) {
+          let compareSum = baseCompare;
+          const cust = raw?.customizations || {};
+          const selectedOpts = cust.selectedOptions || cust.customizationOptions || cust.options || (combo?.combinationKeys) || {};
+          if (typeof selectedOpts === 'object' && selectedOpts !== null) {
+            Object.keys(selectedOpts).forEach((groupId) => {
+              const valId = selectedOpts[groupId];
+              const group = custOpts.find((g) => String(g.id) === String(groupId));
+              const val = group && Array.isArray(group.values) ? group.values.find((v) => String(v.id) === String(valId)) : null;
+              if (val && typeof val.price === 'number' && Number.isFinite(val.price)) {
+                compareSum += val.price;
+              }
+            });
+          }
+          originalUnitPrice = compareSum;
+        }
+      } else {
+        const mult = variation?.price_multiplier !== null && variation?.price_multiplier !== undefined
+          ? parseFloat(variation.price_multiplier)
+          : 1;
+
+        unitPrice = variation?.price !== null && variation?.price !== undefined
+          ? parseFloat(variation.price)
+          : basePrice * mult;
+
+        const variationCompare = variation?.compare_at_price !== null && variation?.compare_at_price !== undefined
+          ? parseFloat(variation.compare_at_price)
+          : null;
+
+        originalUnitPrice = variationCompare !== null
+          ? variationCompare
+          : baseCompare !== null
+            ? baseCompare * mult
+            : null;
+      }
 
       if (originalUnitPrice !== null && originalUnitPrice > unitPrice) {
         totalSavings += (originalUnitPrice - unitPrice) * quantity;
@@ -196,9 +311,9 @@ const createOrder = async (req, res, next) => {
 
       computedItems.push({
         productId,
-        variationId,
+        variationId: variation?.id ? parseInt(variation.id, 10) : null,
         productName: p.name,
-        variationSize: variation?.size || null,
+        variationSize: variationSize || raw?.variationSize || null,
         unitPrice,
         quantity,
         lineTotal,
@@ -1128,6 +1243,151 @@ const getOrderInvoice = async (req, res, next) => {
   }
 };
 
+/**
+ * Cancel an order by customer (only allowed before package is prepared)
+ * POST /api/orders/:id/cancel
+ */
+const cancelOrder = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { id: orderId } = req.params;
+    if (!userId) throw new ValidationError('User not found');
+    if (!orderId) throw new ValidationError('Order ID is required');
+
+    const { reason, details } = req.body || {};
+    let finalReason = typeof reason === 'string' ? reason.trim() : '';
+    if (details && typeof details === 'string' && details.trim()) {
+      finalReason = finalReason ? `${finalReason} (${details.trim()})` : details.trim();
+    }
+
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
+
+      const orderRes = await client.query(
+        `SELECT * FROM orders WHERE id::text = $1::text AND user_id::text = $2::text FOR UPDATE`,
+        [String(orderId), String(userId)]
+      );
+
+      if (orderRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: 'Order not found' });
+      }
+
+      const order = orderRes.rows[0];
+      const currentStatus = (order.status || '').toLowerCase();
+
+      // Check if order can be cancelled: only before package is prepared
+      const nonCancellableStatuses = [
+        'package_prepared',
+        'shipped',
+        'in_transit',
+        'reached_destination_hub',
+        'out_for_delivery',
+        'delivered',
+        'cancelled',
+        'refunded',
+      ];
+
+      if (nonCancellableStatuses.includes(currentStatus) || order.package_prepared_at) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: currentStatus === 'cancelled'
+            ? 'Order is already cancelled'
+            : 'Order cannot be cancelled because the package is already prepared for delivery.',
+        });
+      }
+
+      // Calculate refund amount: ONLY refund to wallet if customer actually paid online/wallet
+      let refundAmount = 0;
+      const paymentStatus = (order.payment_status || '').toLowerCase();
+      const paymentMethod = (order.payment_method || '').toLowerCase();
+      const orderTotal = parseFloat(order.total || 0);
+      const walletUsed = parseFloat(order.wallet_used || 0);
+
+      if (paymentStatus === 'paid' || paymentMethod === 'online') {
+        // Full prepaid order amount including platform fee & delivery charges
+        refundAmount = orderTotal;
+      } else if (paymentMethod === 'wallet') {
+        refundAmount = orderTotal > 0 ? orderTotal : walletUsed;
+      } else if (paymentMethod === 'cod') {
+        // For COD: if partial wallet was used, refund only the used wallet amount; for standard COD unpaid, refund is strictly 0
+        refundAmount = walletUsed > 0 ? walletUsed : 0;
+      }
+
+      // Credit wallet ONLY if refundAmount > 0 (prepaid / wallet used)
+      if (refundAmount > 0) {
+        await walletService.creditWallet({
+          userId: order.user_id,
+          amount: refundAmount,
+          source: 'refund',
+          referenceId: `order_${order.order_number || order.id}`,
+        });
+      }
+
+      // Restock items
+      const itemsRes = await client.query(
+        `SELECT product_id, quantity FROM order_items WHERE order_id = $1`,
+        [order.id]
+      );
+      for (const it of itemsRes.rows) {
+        if (it.product_id && it.quantity > 0) {
+          await client.query(
+            `UPDATE products SET quantity = quantity + $1, updated_at = NOW() WHERE id = $2`,
+            [it.quantity, it.product_id]
+          );
+        }
+      }
+
+      // Cancel Delhivery waybill if manifested
+      if (order.delhivery_waybill) {
+        delhiveryService.cancelDelhiveryOrder(order.delhivery_waybill).catch((err) => {
+          console.warn('[ORDER] Delhivery waybill cancel notice:', err?.message || err);
+        });
+      }
+
+      const finalPaymentStatus = refundAmount > 0 ? 'refunded' : order.payment_status;
+      const cancelTime = new Date().toISOString();
+      await client.query(
+        `UPDATE orders 
+         SET status = 'cancelled', 
+             payment_status = $1, 
+             cancellation_reason = $2,
+             cancelled_at = NOW(),
+             updated_at = NOW() 
+         WHERE id = $3 
+         RETURNING *`,
+        [finalPaymentStatus, finalReason || null, order.id]
+      );
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: refundAmount > 0
+          ? `Order cancelled. ₹${refundAmount.toFixed(2)} refunded to your wallet.`
+          : 'Order cancelled successfully.',
+        data: {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          status: 'cancelled',
+          paymentStatus: finalPaymentStatus,
+          refundAmount,
+          cancelledAt: cancelTime,
+        },
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -1138,4 +1398,5 @@ module.exports = {
   submitDetailedFeedback,
   getCheckoutFees,
   getOrderInvoice,
+  cancelOrder,
 };

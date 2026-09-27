@@ -22,6 +22,9 @@ export default function WalletModal({ open, onClose }: { open: boolean; onClose:
 
   const getWalletTxPurpose = (tx: { type: 'credit' | 'debit'; source: string }) => {
     const source = (tx.source || '').toLowerCase();
+    if (source === 'refund' || source.includes('refund') || source.includes('cancel')) {
+      return 'Refund';
+    }
     if (tx.type === 'credit') {
       return 'Money added';
     }

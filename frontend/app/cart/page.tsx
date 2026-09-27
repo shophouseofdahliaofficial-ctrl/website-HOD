@@ -18,7 +18,7 @@ import {
   scopedSubscriptionCartKey,
   scopedCartKey,
 } from '@/lib/utils/userScopedStorage';
-import { productsApi, couponsApi, contentApi } from '@/lib/api';
+import { productsApi, couponsApi, contentApi, walletApi } from '@/lib/api';
 import type { Coupon } from '@/lib/api';
 import { Product } from '@/types';
 import { CartItem } from '@/lib/utils/cart';
@@ -80,6 +80,25 @@ export default function CartPage() {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [photoboothSettings, setPhotoboothSettings] = useState<any>(null);
   const [coverProducts, setCoverProducts] = useState<Record<string, Product>>({});
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (user) {
+      walletApi.getSummary()
+        .then((s) => {
+          if (!cancelled) setWalletBalance(s.balance || 0);
+        })
+        .catch(() => {
+          if (!cancelled) setWalletBalance(0);
+        });
+    } else {
+      setWalletBalance(0);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     contentApi.getByType('photobooth_links')
@@ -396,6 +415,9 @@ export default function CartPage() {
 
   const displayedDeliveryCharges = 0;
   const total = subtotalAlignedWithCheckout - couponDiscount + platformFee;
+  const canUseWallet = walletBalance > 0;
+  const walletExtraToPay = Math.max(0, Math.round((total - walletBalance) * 100) / 100);
+  const walletRemainingAfterOrder = Math.max(0, Math.round((walletBalance - total) * 100) / 100);
   const totalItemCount = items.filter((it) => shouldShowCartPriceLine(it, products[it.productId])).length
     + (subscriptionCartItem ? 1 : 0);
   const hasAnyGiftWrap = items.some((it) => it.customizations?.giftWrap);

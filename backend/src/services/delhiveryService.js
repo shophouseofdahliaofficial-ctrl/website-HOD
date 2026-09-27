@@ -392,9 +392,44 @@ async function getPackingSlip(waybill) {
   };
 }
 
+/**
+ * Cancel a manifested Delhivery shipment waybill
+ * @param {string} waybill
+ */
+async function cancelDelhiveryOrder(waybill) {
+  const cleanWbn = String(waybill || '').trim();
+  if (!cleanWbn) return null;
+  const token = getApiToken();
+  if (!token) return null;
+
+  try {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/p/edit`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        waybill: cleanWbn,
+        cancellation: 'true',
+      }),
+      timeout: 8000,
+    });
+    const data = await response.json().catch(() => ({}));
+    return data;
+  } catch (err) {
+    console.warn('[Delhivery] Cancel order request notice:', err?.message || err);
+    return null;
+  }
+}
+
 module.exports = {
   checkPincodeServiceability,
   createDelhiveryOrder,
+  cancelDelhiveryOrder,
   trackDelhiveryShipment,
   getPackingSlip,
   getBaseUrl,

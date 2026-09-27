@@ -6,6 +6,19 @@ const { ValidationError } = require('../utils/errors');
  * Business logic for coupon operations
  */
 
+const parseDateBoundary = (val, isEndOfDay = false) => {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return new Date(isEndOfDay ? `${trimmed}T23:59:59.999Z` : `${trimmed}T00:00:00.000Z`);
+    }
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 /**
  * Create a new coupon
  * @param {Object} couponData - Coupon data
@@ -22,12 +35,18 @@ const createCoupon = async (couponData) => {
     usageLimit = null,
     validFrom = null,
     validUntil = null,
-    isActive = true
+    isActive = true,
   } = couponData;
 
   // Validate required fields
-  if (!code || !discountType || !discountValue) {
-    throw new ValidationError('Code, discount type, and discount value are required');
+  if (!code || !String(code).trim()) {
+    throw new ValidationError('Coupon code is required');
+  }
+  if (!discountType) {
+    throw new ValidationError('Discount type is required');
+  }
+  if (discountValue === undefined || discountValue === null || discountValue === '') {
+    throw new ValidationError('Discount value is required');
   }
 
   // Validate discount type
@@ -36,41 +55,42 @@ const createCoupon = async (couponData) => {
   }
 
   // Validate discount value
-  if (discountValue <= 0) {
+  const numDiscountValue = parseFloat(String(discountValue));
+  if (isNaN(numDiscountValue) || numDiscountValue <= 0) {
     throw new ValidationError('Discount value must be greater than 0');
   }
 
   // Validate percentage discount (0-100)
-  if (discountType === 'percentage' && discountValue > 100) {
+  if (discountType === 'percentage' && numDiscountValue > 100) {
     throw new ValidationError('Percentage discount cannot exceed 100%');
   }
 
   // Validate dates
-  if (validUntil && validFrom) {
-    const fromDate = new Date(validFrom);
-    const untilDate = new Date(validUntil);
-    if (untilDate <= fromDate) {
-      throw new ValidationError('Valid until date must be after valid from date');
-    }
+  const parsedValidFrom = parseDateBoundary(validFrom, false) || new Date();
+  const parsedValidUntil = parseDateBoundary(validUntil, true);
+
+  if (parsedValidUntil && parsedValidUntil < parsedValidFrom) {
+    throw new ValidationError('Valid until date cannot be before valid from date');
   }
 
   // Check if code already exists
-  const existing = await couponModel.getCouponByCode(code);
+  const normalizedCode = String(code).trim().toUpperCase();
+  const existing = await couponModel.getCouponByCode(normalizedCode);
   if (existing) {
-    throw new ValidationError('Coupon code already exists');
+    throw new ValidationError(`Coupon code "${normalizedCode}" already exists`);
   }
 
   return await couponModel.createCoupon({
-    code: code.toUpperCase().trim(),
-    description,
+    code: normalizedCode,
+    description: description ? String(description).trim() : null,
     discountType,
-    discountValue,
-    minPurchaseAmount,
-    maxDiscountAmount,
-    usageLimit,
-    validFrom: validFrom ? new Date(validFrom) : new Date(),
-    validUntil: validUntil ? new Date(validUntil) : null,
-    isActive
+    discountValue: numDiscountValue,
+    minPurchaseAmount: minPurchaseAmount ? Math.max(0, parseFloat(String(minPurchaseAmount)) || 0) : 0,
+    maxDiscountAmount: maxDiscountAmount != null && maxDiscountAmount !== '' ? Math.max(0, parseFloat(String(maxDiscountAmount)) || 0) : null,
+    usageLimit: usageLimit != null && usageLimit !== '' ? Math.max(1, parseInt(String(usageLimit), 10) || 1) : null,
+    validFrom: parsedValidFrom,
+    validUntil: parsedValidUntil,
+    isActive: isActive !== false,
   });
 };
 
@@ -86,41 +106,92 @@ const updateCoupon = async (couponId, updates) => {
     throw new ValidationError('Coupon not found');
   }
 
+  const payload = {};
+
   // Validate discount type if provided
-  if (updates.discountType && !['percentage', 'fixed'].includes(updates.discountType)) {
-    throw new ValidationError('Discount type must be "percentage" or "fixed"');
+  if (updates.discountType !== undefined) {
+    if (!['percentage', 'fixed'].includes(updates.discountType)) {
+      throw new ValidationError('Discount type must be "percentage" or "fixed"');
+    }
+    payload.discountType = updates.discountType;
   }
 
   // Validate discount value if provided
-  if (updates.discountValue !== undefined) {
-    if (updates.discountValue <= 0) {
+  if (updates.discountValue !== undefined && updates.discountValue !== null && updates.discountValue !== '') {
+    const numDiscountValue = parseFloat(String(updates.discountValue));
+    if (isNaN(numDiscountValue) || numDiscountValue <= 0) {
       throw new ValidationError('Discount value must be greater than 0');
     }
-    if (updates.discountType === 'percentage' || coupon.discountType === 'percentage') {
-      const discountType = updates.discountType || coupon.discountType;
-      if (discountType === 'percentage' && updates.discountValue > 100) {
-        throw new ValidationError('Percentage discount cannot exceed 100%');
-      }
+    const discountType = payload.discountType || coupon.discountType;
+    if (discountType === 'percentage' && numDiscountValue > 100) {
+      throw new ValidationError('Percentage discount cannot exceed 100%');
     }
+    payload.discountValue = numDiscountValue;
   }
 
   // Validate code uniqueness if code is being updated
   if (updates.code) {
-    const existing = await couponModel.getCouponByCode(updates.code);
-    if (existing && existing.id !== couponId) {
-      throw new ValidationError('Coupon code already exists');
+    const normalizedCode = String(updates.code).trim().toUpperCase();
+    const existing = await couponModel.getCouponByCode(normalizedCode);
+    if (existing && String(existing.id) !== String(couponId)) {
+      throw new ValidationError(`Coupon code "${normalizedCode}" already exists`);
     }
-    updates.code = updates.code.toUpperCase().trim();
+    payload.code = normalizedCode;
+  }
+
+  if (updates.description !== undefined) {
+    payload.description = updates.description ? String(updates.description).trim() : null;
   }
 
   // Validate dates
-  const validFrom = updates.validFrom ? new Date(updates.validFrom) : coupon.validFrom;
-  const validUntil = updates.validUntil ? new Date(updates.validUntil) : coupon.validUntil;
-  if (validUntil && validFrom && validUntil <= validFrom) {
-    throw new ValidationError('Valid until date must be after valid from date');
+  let validFromDate = coupon.validFrom ? new Date(coupon.validFrom) : new Date();
+  if (updates.validFrom !== undefined) {
+    const parsed = parseDateBoundary(updates.validFrom, false);
+    if (updates.validFrom && !parsed) {
+      throw new ValidationError('Invalid valid from date');
+    }
+    validFromDate = parsed || new Date();
+    payload.validFrom = validFromDate;
   }
 
-  return await couponModel.updateCoupon(couponId, updates);
+  if (updates.validUntil !== undefined) {
+    if (updates.validUntil) {
+      const parsed = parseDateBoundary(updates.validUntil, true);
+      if (!parsed) {
+        throw new ValidationError('Invalid valid until date');
+      }
+      if (parsed < validFromDate) {
+        throw new ValidationError('Valid until date cannot be before valid from date');
+      }
+      payload.validUntil = parsed;
+    } else {
+      payload.validUntil = null;
+    }
+  }
+
+  if (updates.minPurchaseAmount !== undefined) {
+    payload.minPurchaseAmount = updates.minPurchaseAmount != null && updates.minPurchaseAmount !== '' 
+      ? Math.max(0, parseFloat(String(updates.minPurchaseAmount)) || 0) 
+      : 0;
+  }
+
+  if (updates.maxDiscountAmount !== undefined) {
+    payload.maxDiscountAmount = updates.maxDiscountAmount != null && updates.maxDiscountAmount !== '' 
+      ? Math.max(0, parseFloat(String(updates.maxDiscountAmount)) || 0) 
+      : null;
+  }
+
+  if (updates.usageLimit !== undefined) {
+    payload.usageLimit = updates.usageLimit != null && updates.usageLimit !== '' 
+      ? Math.max(1, parseInt(String(updates.usageLimit), 10) || 1) 
+      : null;
+  }
+
+  if (updates.isActive !== undefined) {
+    payload.isActive = Boolean(updates.isActive);
+  }
+
+  return await couponModel.updateCoupon(couponId, payload);
 };
 
 /**

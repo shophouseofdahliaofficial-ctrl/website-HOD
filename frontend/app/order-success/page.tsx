@@ -336,9 +336,9 @@ export default function OrderSuccessPage() {
                       <Image
                         src={productImage}
                         alt={productName}
-                        width={60}
-                        height={60}
-                        style={{ objectFit: 'cover', borderRadius: '8px' }}
+                        fill
+                        sizes="84px"
+                        style={{ objectFit: 'cover' }}
                       />
                     ) : (
                       <div className={styles.itemImagePlaceholder}>
@@ -387,10 +387,12 @@ export default function OrderSuccessPage() {
                         {item.customizations.giftWrap.comment && ` - "${item.customizations.giftWrap.comment}"`}
                       </p>
                     )}
-                    <p className={styles.itemQuantity}>Qty: {item.quantity}</p>
-                  </div>
-                  <div className={styles.itemPrice}>
-                    ₹{(item.price * item.quantity).toFixed(2)}
+                    <div className={styles.itemMetaRow}>
+                      <p className={styles.itemQuantity}>Qty: {item.quantity}</p>
+                      <div className={styles.itemPrice}>
+                        ₹{(item.price * item.quantity).toFixed(2)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -452,16 +454,6 @@ export default function OrderSuccessPage() {
                 <p>{deliveryAddress.street}</p>
                 <p>{deliveryAddress.city}, {deliveryAddress.state} {deliveryAddress.postalCode}</p>
                 <p>{deliveryAddress.country}</p>
-              </div>
-              <div className={styles.shippingMethod}>
-                <svg className={styles.truckIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 3H15V13H1V3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M15 7H19L22 10V13H15V7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="5" cy="17" r="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="19" cy="17" r="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Shipping method</span>
-                <span className={styles.shippingMethodValue}>Standard Delivery</span>
               </div>
             </div>
           </div>

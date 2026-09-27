@@ -1044,12 +1044,27 @@ const getFeedback = async (req, res, next) => {
   try {
     const photobookEditorFeedbackModel = require('../models/photobookEditorFeedback');
     const generalFeedbackModel = require('../models/generalFeedback');
-    const [stats, photobookEditor, general] = await Promise.all([
+    const [stats, photobookEditor, general, cancellations] = await Promise.all([
       orderModel.getFeedbackStats(),
       photobookEditorFeedbackModel.getAdminFeedbackData(),
       generalFeedbackModel.getGeneralFeedbackList(),
+      orderModel.getCancellationFeedbacks(),
     ]);
-    res.json({ success: true, data: { ...stats, photobookEditor, general } });
+    res.json({ success: true, data: { ...stats, photobookEditor, general, cancellations } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete cancellation feedback
+ * DELETE /api/admin/feedback/cancellations/:id
+ */
+const deleteCancellationFeedback = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await orderModel.deleteCancellationFeedback(id);
+    res.json({ success: true, message: 'Cancellation feedback deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -2018,8 +2033,16 @@ const createManualOrder = async (req, res, next) => {
     }
     if (itemsIn.length === 0) throw new ValidationError('At least one product line is required');
 
-    const user = await userModel.findByEmail(customerEmail);
-    if (!user) throw new ValidationError('No account found for this email');
+    let user = await userModel.findByEmail(customerEmail);
+    if (!user) {
+      const guestId = crypto.randomUUID();
+      user = await userModel.createUser({
+        id: guestId,
+        name: customerName || 'Customer',
+        email: customerEmail,
+        role: 'customer',
+      });
+    }
 
     const deliveryCharges = roundMoney(Number(deliveryChargesRaw));
     if (!Number.isFinite(deliveryCharges) || deliveryCharges < 0) {
@@ -2040,7 +2063,7 @@ const createManualOrder = async (req, res, next) => {
 
       const productRes = await query(
         `
-        SELECT id, name, price_per_litre, selling_price, compare_at_price, quantity, is_active
+        SELECT id, name, price_per_litre, selling_price, compare_at_price, quantity, is_active, customization_options, customization_combinations
         FROM products
         WHERE id = $1
         `,
@@ -2056,16 +2079,10 @@ const createManualOrder = async (req, res, next) => {
       }
 
       let variation = null;
-      const varCountRes = await query(
-        `SELECT COUNT(*)::int AS c FROM product_variations WHERE product_id = $1`,
-        [productId]
-      );
-      const variationCount = varCountRes.rows[0]?.c || 0;
+      let variationSize = null;
+      let customOptionAddon = 0;
 
-      if (variationCount > 0) {
-        if (!variationId) {
-          throw new ValidationError(`Select a size/variation for "${p.name}"`);
-        }
+      if (variationId) {
         const varRes = await query(
           `
           SELECT id, size, price_multiplier, price, compare_at_price, is_available
@@ -2074,38 +2091,96 @@ const createManualOrder = async (req, res, next) => {
           `,
           [variationId, productId]
         );
-        if (varRes.rows.length === 0) throw new ValidationError('Invalid product variation');
-        variation = varRes.rows[0];
-        if (variation.is_available === false) {
-          throw new ValidationError(`Variation is not available for "${p.name}"`);
+        if (varRes.rows.length > 0) {
+          variation = varRes.rows[0];
+          variationSize = variation.size || null;
+          if (variation.is_available === false) {
+            throw new ValidationError(`Variation is not available for "${p.name}"`);
+          }
         }
-      } else if (variationId) {
-        throw new ValidationError(`Product "${p.name}" has no variations`);
+      }
+
+      // Check customization combinations & options
+      let custCombos = p.customization_combinations;
+      if (typeof custCombos === 'string') {
+        try { custCombos = JSON.parse(custCombos); } catch {}
+      }
+      let custOpts = p.customization_options;
+      if (typeof custOpts === 'string') {
+        try { custOpts = JSON.parse(custOpts); } catch {}
+      }
+
+      if (!variation && Array.isArray(custCombos) && custCombos.length > 0) {
+        const matchedCombo = custCombos.find((c) =>
+          String(c.id) === String(raw?.variationId) ||
+          (raw?.variationSize && c.name && String(c.name).toLowerCase() === String(raw.variationSize).toLowerCase())
+        );
+        if (matchedCombo && matchedCombo.price != null && Number.isFinite(Number(matchedCombo.price))) {
+          const baseP = p.selling_price !== null && p.selling_price !== undefined ? parseFloat(p.selling_price) : parseFloat(p.price_per_litre || 0);
+          customOptionAddon = Number(matchedCombo.price) - baseP;
+          if (raw?.variationSize) variationSize = String(raw.variationSize);
+        }
+      }
+
+      if (!variation && Array.isArray(custOpts) && custOpts.length > 0) {
+        const rawVarId = String(raw?.variationId || '');
+        const idParts = rawVarId.split('__');
+        const rawVarSize = String(raw?.variationSize || '');
+        const sizeParts = rawVarSize.split(' / ').map((s) => s.trim().toLowerCase());
+
+        for (const grp of custOpts) {
+          if (Array.isArray(grp.values)) {
+            const matchedVal = grp.values.find((v) =>
+              idParts.includes(String(v.id)) ||
+              (raw?.variationId && String(v.id) === String(raw.variationId)) ||
+              (raw?.variationSize && (
+                String(v.name).toLowerCase() === rawVarSize.toLowerCase() ||
+                sizeParts.includes(String(v.name).toLowerCase())
+              ))
+            );
+            if (matchedVal) {
+              if (!variationSize) {
+                variationSize = raw?.variationSize || matchedVal.name || null;
+              }
+              if (typeof matchedVal.price === 'number' && Number.isFinite(matchedVal.price)) {
+                customOptionAddon += matchedVal.price;
+              }
+            }
+          }
+        }
+      }
+
+      if (!variationSize && raw?.variationSize) {
+        variationSize = String(raw.variationSize);
       }
 
       const basePrice =
         p.selling_price !== null && p.selling_price !== undefined
           ? parseFloat(p.selling_price)
-          : parseFloat(p.price_per_litre);
+          : parseFloat(p.price_per_litre || 0);
 
       const mult =
         variation?.price_multiplier !== null && variation?.price_multiplier !== undefined
           ? parseFloat(variation.price_multiplier)
           : 1;
 
-      const unitPrice =
-        variation?.price !== null && variation?.price !== undefined
-          ? parseFloat(variation.price)
-          : basePrice * mult;
+      let unitPrice;
+      if (variation?.price !== null && variation?.price !== undefined) {
+        unitPrice = parseFloat(variation.price);
+      } else if (raw?.unitPrice != null && Number.isFinite(Number(raw.unitPrice)) && Number(raw.unitPrice) > 0) {
+        unitPrice = roundMoney(Number(raw.unitPrice));
+      } else {
+        unitPrice = roundMoney(basePrice * mult + customOptionAddon);
+      }
 
       const lineTotal = roundMoney(unitPrice * quantity);
       subtotal += lineTotal;
 
       computedItems.push({
         productId,
-        variationId: variationId || null,
+        variationId: variation?.id ? parseInt(variation.id, 10) : null,
         productName: p.name,
-        variationSize: variation?.size || null,
+        variationSize: variationSize || null,
         unitPrice,
         quantity,
         lineTotal,
@@ -2172,7 +2247,32 @@ const createManualOrder = async (req, res, next) => {
       walletUsed: 0,
       savingsAmount: 0,
       couponCode: null,
+      isNationwideDelivery: true,
+      isSelfCreated: true,
     });
+
+    try {
+      if (order && (order.isNationwideDelivery || deliveryAddress?.postalCode) && !order.delhiveryWaybill) {
+        const dRes = await delhiveryService.createDelhiveryOrder({
+          order,
+          customer: deliveryAddress,
+          items: computedItems,
+        });
+        if (dRes && dRes.waybill) {
+          await query(
+            `UPDATE orders 
+             SET delhivery_waybill = $1, 
+                 delhivery_status = $2, 
+                 delhivery_upload_wbn = $3, 
+                 delhivery_tracking_url = $4 
+             WHERE id = $5`,
+            [dRes.waybill, dRes.status || 'Manifested', dRes.uploadWbn || null, dRes.trackingUrl || `https://www.delhivery.com/track/package/${dRes.waybill}`, order.id]
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('[Delhivery] Auto-manifest for manual order notice:', e?.message || e);
+    }
 
     try {
       await adminPushService.notifyAdminsAboutOrder(
@@ -2488,6 +2588,10 @@ module.exports = {
   createCoupon,
   updateCoupon,
   deleteCoupon,
+  // Feedback
+  getFeedback,
+  getLatestFeedbackTime,
+  deleteCancellationFeedback,
   // Media Library
   getMediaLibrary,
   uploadMedia,
