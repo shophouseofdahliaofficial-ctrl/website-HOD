@@ -12,7 +12,7 @@ declare global {
 }
 
 export default function GoogleAnalytics({
-  measurementId,
+  measurementId = 'G-YCKBCKBLWM',
 }: {
   measurementId?: string;
 }) {
@@ -28,14 +28,13 @@ export default function GoogleAnalytics({
 
   if (!measurementId) return null;
 
-  // Same as Google's tag: gtag.js + config. Loaded in head (beforeInteractive) per Google's instructions.
   return (
     <>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
-        strategy="beforeInteractive"
+        strategy="afterInteractive"
       />
-      <Script id="google-analytics" strategy="beforeInteractive">
+      <Script id="google-analytics" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}

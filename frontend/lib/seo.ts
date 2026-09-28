@@ -2,7 +2,7 @@ export const SITE_NAME = 'House Of Dahlia';
 export const SITE_ALTERNATE_NAME = 'House Of Dahlia';
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
 export const GA_MEASUREMENT_ID = (
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-YCKBCKBLWM'
 ).trim();
 export const SITE_DESCRIPTION =
   "House Of Dahlia — Women's Clothing Brand & Luxury Atelier.";
