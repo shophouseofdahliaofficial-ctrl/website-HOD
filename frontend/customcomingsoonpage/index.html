@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Houseofdahlia.in is coming soon</title>
+  <meta name="description" content="Houseofdahlia.in is coming soon.">
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap"
+    rel="stylesheet">
+
+  <!-- Lenis Smooth Scroll -->
+  <link rel="stylesheet" href="https://unpkg.com/lenis@1.1.14/dist/lenis.css">
+  <script src="https://unpkg.com/lenis@1.1.14/dist/lenis.min.js"></script>
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Vercel Web Analytics -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- Background Video Layer (IMG_4165.MP4) -->
+  <div class="bg-video-wrapper" id="bg-video-wrapper">
+    <video class="bg-video" autoplay loop muted playsinline preload="auto">
+      <source src="IMG_4165.MP4" type="video/mp4">
+    </video>
+    <div class="bg-overlay"></div>
+  </div>
+
+  <!-- Background Black Expansion Mask Layer (Razor Sharp, No Blur) -->
+  <div id="black-expand-overlay" class="black-expand-overlay"></div>
+
+  <!-- Final White Stay Tuned Text Layer -->
+  <div id="stay-tuned-text" class="stay-tuned-text">Stay tuned!</div>
+
+  <!-- Scroll Track for Lenis + GSAP ScrollTrigger -->
+  <div class="scroll-track">
+    <main class="container">
+      <div class="content-box">
+        <h1 class="coming-soon-text">
+          <span id="animated-text" class="text-sentence-wrapper t-digit-group is-animating">
+            <!-- Rendered dynamically by script.js -->
+          </span>
+        </h1>
+
+        <div class="action-wrapper">
+          <a href="mailto:contact@houseofdahlia.in" class="btn-connect">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+            <span>Connect</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
