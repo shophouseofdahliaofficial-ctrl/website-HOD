@@ -1,3 +1,5 @@
+import { ProductImage } from '@/types';
+
 /**
  * Automatically applies Cloudinary automatic format (WebP/AVIF) and compression (q_auto)
  * to any Cloudinary image URL and ensures .webp extension.

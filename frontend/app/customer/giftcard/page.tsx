@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -10,7 +10,7 @@ import { apiClient, walletApi, giftCardApi, GiftCardItem } from '@/lib/api';
 import Logo from '@/components/Logo';
 import styles from './page.module.css';
 
-export default function GiftCardsPage() {
+function GiftCardsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = searchParams?.get('tab') || 'redeem';
@@ -181,6 +181,29 @@ export default function GiftCardsPage() {
     <CustomerSidebarLayout>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>{getTabTitle()}</h1>
+        <div className={styles.mobileTabsContainer}>
+          <button
+            type="button"
+            className={`${styles.mobileTabBtn} ${activeTab === 'redeem' ? styles.mobileTabBtnActive : ''}`}
+            onClick={() => handleTabChange('redeem')}
+          >
+            Redeem
+          </button>
+          <button
+            type="button"
+            className={`${styles.mobileTabBtn} ${activeTab === 'create' ? styles.mobileTabBtnActive : ''}`}
+            onClick={() => handleTabChange('create')}
+          >
+            Create
+          </button>
+          <button
+            type="button"
+            className={`${styles.mobileTabBtn} ${activeTab === 'history' ? styles.mobileTabBtnActive : ''}`}
+            onClick={() => handleTabChange('history')}
+          >
+            History
+          </button>
+        </div>
       </div>
 
       {loading && <LoadingSpinner fullHeight />}
@@ -372,7 +395,7 @@ export default function GiftCardsPage() {
                     Create Another Gift Card
                   </button>
                 </div>
-              ) : step === 'amount' && createdGiftCode ? (
+              ) : step === 'amount' ? (
                 <div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '2rem' }}>
                     <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: '#fff5f7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: '#ff0040' }}>
@@ -486,5 +509,19 @@ export default function GiftCardsPage() {
         </div>
       )}
     </CustomerSidebarLayout>
+  );
+}
+
+export default function GiftCardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <CustomerSidebarLayout>
+          <LoadingSpinner fullHeight />
+        </CustomerSidebarLayout>
+      }
+    >
+      <GiftCardsContent />
+    </Suspense>
   );
 }

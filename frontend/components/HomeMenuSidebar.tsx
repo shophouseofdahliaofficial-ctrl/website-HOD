@@ -25,7 +25,7 @@ const MENU_ITEMS = [
   { label: 'My Account', href: '/account' },
   { label: 'Orders', href: '/orders' },
   { label: 'Favorites', href: '/favorites' },
-  { label: 'Wallet', href: '/dashboard' },
+  { label: 'Wallet', href: '/account?wallet=true' },
   { label: 'Gift Cards', href: '/customer/giftcard' },
 ];
 

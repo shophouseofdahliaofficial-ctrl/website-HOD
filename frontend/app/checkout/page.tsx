@@ -714,15 +714,25 @@ export default function CheckoutPage() {
   };
 
   const getCustomizationDescription = (it: CartItem, p: Product) => {
-    if (!p.isCustomizable || !it.variationId) return '';
-    const combo = (p.customizationCombinations || []).find(c => c.id === it.variationId);
+    if (!p.isCustomizable) return '';
+    const combo = it.variationId ? (p.customizationCombinations || []).find(c => String(c.id) === String(it.variationId)) : null;
 
     const descParts: string[] = [];
     if (combo) {
       Object.keys(combo.combinationKeys || {}).forEach(groupId => {
         const valId = combo.combinationKeys[groupId];
-        const group = (p.customizationOptions || []).find(g => g.id === groupId);
-        const val = group ? (group.values || []).find(v => v.id === valId) : null;
+        const group = (p.customizationOptions || []).find(g => String(g.id) === String(groupId));
+        const val = group ? (group.values || []).find(v => String(v.id) === String(valId)) : null;
+        if (group && val) {
+          descParts.push(`${group.title}: ${val.name}`);
+        }
+      });
+    } else if (it.customizations?.selectedOptions && typeof it.customizations.selectedOptions === 'object') {
+      const selectedOpts = it.customizations.selectedOptions;
+      Object.keys(selectedOpts).forEach((groupId) => {
+        const valId = selectedOpts[groupId];
+        const group = (p.customizationOptions || []).find((g) => String(g.id) === String(groupId));
+        const val = group ? (group.values || []).find((v) => String(v.id) === String(valId)) : null;
         if (group && val) {
           descParts.push(`${group.title}: ${val.name}`);
         }
@@ -1484,7 +1494,7 @@ export default function CheckoutPage() {
                 {items.map((it) => {
                   const p = products[it.productId];
                   const photobooth = getPhotoboothCartProject(it);
-                  const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
+                  const v = it.variationId ? (p?.variations || []).find((x) => String(x.id) === String(it.variationId)) : null;
                   if (!shouldShowCartPriceLine(it, p)) return null;
 
                   const itemTotal = getCartItemPriceLineAmount(it, p);
@@ -1503,7 +1513,10 @@ export default function CheckoutPage() {
                             })()}
                           </>
                         ) : (
-                          v && <span className={styles.orderItemVariation}>{v.size}</span>
+                          (() => {
+                            const sizeVal = v?.size || it.customizations?.size || it.customizations?.variationSize || (it as any).variationSize;
+                            return sizeVal ? <span className={styles.orderItemVariation}>{/^size\s*:/i.test(String(sizeVal).trim()) || String(sizeVal).includes(':') ? String(sizeVal).trim() : `Size: ${String(sizeVal).trim()}`}</span> : null;
+                          })()
                         )}
                         {it.customizations?.giftWrap && (
                           <span className={styles.orderItemVariation} style={{ color: '#f23730', fontWeight: 600 }}>

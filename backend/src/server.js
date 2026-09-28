@@ -25,6 +25,7 @@ const creatorRoutes = require('./routes/creators');
 const analyticsRoutes = require('./routes/analytics');
 const deliveryRoutes = require('./routes/delivery');
 const deliveryTrackingController = require('./controllers/deliveryTrackingController');
+const exchangeRoutes = require('./routes/exchanges');
 
 // Import middleware
 const { authenticate } = require('./middleware/auth');
@@ -34,6 +35,7 @@ const { startSubscriptionExpiryJob } = require('./jobs/subscriptionExpiryJob');
 const productModel = require('./models/product');
 const addressModel = require('./models/address');
 const orderModel = require('./models/order');
+const exchangeModel = require('./models/exchange');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -218,6 +220,7 @@ app.get('/api/orders/delivered-for-review', authenticate, orderController.getDel
 app.use('/api/orders', orderRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/giftcards', giftCardRoutes);
+app.use('/api/exchanges', exchangeRoutes);
 app.use('/api/admin', adminRoutes);
 // Do NOT use app.use('/api', …) — it intercepts every /api/* path (e.g. /api/coupons) if a
 // narrower route like /api/coupons is missing on an older deploy. Register explicit paths only.
@@ -237,7 +240,7 @@ app.listen(PORT, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(
     '[house-of-dahlia-backend] Routes: coupons (public) GET/POST /api/coupons, /api/coupons/validate; ' +
-      'delivery (auth) GET /api/deliveries, POST /api/mark-delivered'
+      'delivery (auth) GET /api/deliveries, POST /api/mark-delivered; exchanges /api/exchanges'
   );
   startSubscriptionExpiryJob();
   productModel.ensureAllProductColumns().catch((error) => {
@@ -248,6 +251,9 @@ app.listen(PORT, () => {
   });
   orderModel.ensureOrdersSchema().catch((error) => {
     console.warn('[milko-backend] Order schema ensure failed on startup:', error.message);
+  });
+  exchangeModel.ensureExchangeSchema().catch((error) => {
+    console.warn('[milko-backend] Exchange schema ensure failed on startup:', error.message);
   });
 });
 

@@ -29,3 +29,5 @@ export { adminMediaApi } from './media';
 export type { MediaResource, MediaLibraryResponse } from './media';
 export { deliveryApi } from './delivery';
 export type { DeliveryPincodeCheckResponse } from './delivery';
+export { exchangesApi, adminExchangesApi } from './exchanges';
+export type { OrderExchange, RequestExchangeInput } from './exchanges';

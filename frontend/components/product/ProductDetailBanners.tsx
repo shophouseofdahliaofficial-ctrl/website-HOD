@@ -15,10 +15,11 @@ export default function ProductDetailBanners({ banners }: ProductDetailBannersPr
       try {
         const obj = JSON.parse(banners);
         if (Array.isArray(obj)) {
-          parsed = { images: obj, adaptToFullImageRatio: false, displayMode: 'stacked' };
+          parsed = { images: obj, mobileImages: [], adaptToFullImageRatio: false, displayMode: 'stacked' };
         } else if (obj && typeof obj === 'object') {
           parsed = {
             images: Array.isArray(obj.images) ? obj.images : (typeof obj.images === 'string' ? [obj.images] : []),
+            mobileImages: Array.isArray(obj.mobileImages) ? obj.mobileImages : (typeof obj.mobileImages === 'string' ? [obj.mobileImages] : []),
             adaptToFullImageRatio: Boolean(obj.adaptToFullImageRatio),
             displayMode: obj.displayMode === 'carousel' ? 'carousel' : 'stacked',
           };
@@ -27,7 +28,7 @@ export default function ProductDetailBanners({ banners }: ProductDetailBannersPr
         parsed = null;
       }
     } else if (Array.isArray(banners)) {
-      parsed = { images: banners, adaptToFullImageRatio: false, displayMode: 'stacked' };
+      parsed = { images: banners, mobileImages: [], adaptToFullImageRatio: false, displayMode: 'stacked' };
     } else if (typeof banners === 'object') {
       parsed = {
         images: Array.isArray(banners.images)
@@ -35,15 +36,37 @@ export default function ProductDetailBanners({ banners }: ProductDetailBannersPr
           : typeof (banners as any).images === 'string'
           ? [(banners as any).images]
           : [],
+        mobileImages: Array.isArray((banners as any).mobileImages)
+          ? (banners as any).mobileImages
+          : typeof (banners as any).mobileImages === 'string'
+          ? [(banners as any).mobileImages]
+          : [],
         adaptToFullImageRatio: Boolean(banners.adaptToFullImageRatio),
         displayMode: banners.displayMode === 'carousel' ? 'carousel' : 'stacked',
       };
     }
   }
 
-  const images = (parsed?.images || [])
+  const desktopImages = (parsed?.images || [])
     .map((item) => (typeof item === 'string' ? item : (item as any)?.url || ''))
     .filter((url) => typeof url === 'string' && url.trim().length > 0);
+
+  const mobileImages = (parsed?.mobileImages || [])
+    .map((item) => (typeof item === 'string' ? item : (item as any)?.url || ''))
+    .filter((url) => typeof url === 'string' && url.trim().length > 0);
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(typeof window !== 'undefined' && window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const images = isMobile && mobileImages.length > 0 ? mobileImages : desktopImages;
 
   const displayMode = parsed?.displayMode === 'carousel' ? 'carousel' : 'stacked';
   const adaptToFullImageRatio = Boolean(parsed?.adaptToFullImageRatio);
@@ -54,7 +77,7 @@ export default function ProductDetailBanners({ banners }: ProductDetailBannersPr
 
   useEffect(() => {
     setCurrentSlide(0);
-  }, [images.length, displayMode]);
+  }, [images.length, displayMode, isMobile]);
 
   useEffect(() => {
     if (!adaptToFullImageRatio || images.length === 0 || !firstImageRef.current) {

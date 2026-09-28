@@ -1,5 +1,6 @@
 .pageHeader {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 @media (min-width: 768px) {
@@ -9,12 +10,59 @@
 }
 
 .pageTitle {
-  font-size: 2.2rem;
-  font-weight: 800;
+  font-size: 1.2rem;
+  font-weight: 500;
   color: #111;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.8px;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.2px;
+  text-align: center;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Mobile Tabs (Mobile Only) */
+.mobileTabsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: #e3e3e3;
+  padding: 0.3rem;
+  border-radius: 100px;
+  margin: 0 auto 1.25rem auto;
+  width: 100%;
+  max-width: 400px;
+}
+
+@media (min-width: 768px) {
+  .mobileTabsContainer {
+    display: none !important;
+  }
+}
+
+.mobileTabBtn {
+  flex: 1;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.mobileTabBtn:hover {
+  color: #111;
+}
+
+.mobileTabBtnActive {
+  background: #ffffff;
+  color: #111;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .pageSubtitle {

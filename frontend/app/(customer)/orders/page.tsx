@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient, contentApi } from '@/lib/api';
+import { apiClient, contentApi, productsApi } from '@/lib/api';
 import { Product } from '@/types';
 import HowWasItModal from '@/components/HowWasItModal';
 import { useToast } from '@/contexts/ToastContext';
@@ -49,8 +49,10 @@ type DetailedFeedback = {
 };
 
 type OrderItem = {
+  id?: number | string | null;
   productName: string;
   variationSize: string | null;
+  variationName?: string | null;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -59,6 +61,7 @@ type OrderItem = {
   variationId?: number | null;
   buyAgainEnabled?: boolean;
   detailedFeedback?: DetailedFeedback | null;
+  customizations?: any;
 };
 
 type MyOrder = {
@@ -72,6 +75,7 @@ type MyOrder = {
   itemsCount: number;
   deliveryDate: string | null;
   items: OrderItem[];
+  exchange?: any;
 };
 
 type OrderLine = { item: OrderItem; orderItemIndex: number };
@@ -510,17 +514,167 @@ export default function OrdersPage() {
                               <button
                                 type="button"
                                 className={styles.orderRowBtn}
-                                onClick={() => {
-                                  order.items.forEach((it) => {
-                                    if (it.productId != null && !isSubscriptionOrderItem(it) && it.buyAgainEnabled !== false) {
-                                      addItem({
-                                        productId: String(it.productId),
-                                        quantity: it.quantity,
-                                        variationId: it.variationId != null ? String(it.variationId) : undefined,
-                                        customizations: (it as any).customizations || undefined,
-                                      });
+                                onClick={async () => {
+                                  const activeExchange = (order as any).exchange;
+                                  const isExchanged = activeExchange && !['rejected', 'cancelled'].includes(activeExchange.status);
+
+                                  for (let itIdx = 0; itIdx < order.items.length; itIdx++) {
+                                    const it = order.items[itIdx];
+                                    if (it.productId == null || isSubscriptionOrderItem(it) || it.buyAgainEnabled === false) {
+                                      continue;
                                     }
-                                  });
+
+                                    let p: Product | null = null;
+                                    try {
+                                      p = await productsApi.getById(String(it.productId), true);
+                                    } catch (_) {}
+
+                                    let matchedExItem: any = null;
+                                    if (isExchanged) {
+                                      if (Array.isArray(activeExchange.exchangeItems) && activeExchange.exchangeItems.length > 0) {
+                                        matchedExItem = activeExchange.exchangeItems.find(
+                                          (ex: any) =>
+                                            (ex.itemId != null && it.id != null && String(ex.itemId) === String(it.id)) ||
+                                            (ex.productId != null && Number(ex.productId) === Number(it.productId))
+                                        );
+                                        if (!matchedExItem && activeExchange.exchangeItems[itIdx]) {
+                                          matchedExItem = activeExchange.exchangeItems[itIdx];
+                                        }
+                                      } else if (
+                                        (activeExchange.itemId != null && it.id != null && String(activeExchange.itemId) === String(it.id)) ||
+                                        (activeExchange.productId != null && Number(activeExchange.productId) === Number(it.productId))
+                                      ) {
+                                        matchedExItem = activeExchange;
+                                      }
+                                    }
+
+                                    const finalCustomizations: Record<string, any> = { ...((it as any).customizations || {}) };
+                                    let resolvedVariationId: string | undefined = undefined;
+
+                                    const rawTargetStr = String(matchedExItem?.requestedVariation || matchedExItem?.requested_variation || '').trim();
+
+                                    if (rawTargetStr) {
+                                      // 1. Remove wrapping annotations like (Replacement), (Confirmed)
+                                      let cleanStr = rawTargetStr.replace(/\s*\((?:replacement|confirmed)\)/ig, '').trim();
+
+                                      // 2. If it contains product name prefix (e.g. "Product No. X215555: Size: XXL..."), strip it
+                                      if (p && cleanStr.toLowerCase().startsWith(p.name.toLowerCase())) {
+                                        cleanStr = cleanStr.slice(p.name.length).replace(/^[:\s\-]+/, '').trim();
+                                      }
+
+                                      // 3. Split key-value pairs (e.g. "Size: XXL, Color: Black, XYZZ: 4242" or "Size: XXL | Color: Black")
+                                      const rawParts = cleanStr.split(/[,|;]+/).map((s) => s.trim()).filter(Boolean);
+                                      const parsedMap: Record<string, string> = {};
+                                      let standaloneSizeVal = '';
+
+                                      rawParts.forEach((part) => {
+                                        const colonIdx = part.indexOf(':');
+                                        if (colonIdx !== -1) {
+                                          const k = part.slice(0, colonIdx).trim().toLowerCase();
+                                          const v = part.slice(colonIdx + 1).trim();
+                                          parsedMap[k] = v;
+                                          if (k === 'size' || k.includes('size')) {
+                                            standaloneSizeVal = v;
+                                          }
+                                        } else {
+                                          const lower = part.toLowerCase();
+                                          if (lower.startsWith('size ')) {
+                                            const val = part.slice(5).trim();
+                                            parsedMap['size'] = val;
+                                            standaloneSizeVal = val;
+                                          } else {
+                                            if (!standaloneSizeVal) {
+                                              standaloneSizeVal = part;
+                                            }
+                                          }
+                                        }
+                                      });
+
+                                      if (!standaloneSizeVal && parsedMap['size']) {
+                                        standaloneSizeVal = parsedMap['size'];
+                                      }
+
+                                      if (standaloneSizeVal) {
+                                        const cleanSize = standaloneSizeVal.replace(/^size\s*:\s*/i, '').trim();
+                                        if (cleanSize) {
+                                          finalCustomizations.size = cleanSize;
+                                          finalCustomizations.variationSize = cleanSize;
+                                          finalCustomizations.variationName = cleanSize;
+                                          finalCustomizations.variation = cleanSize;
+                                        }
+                                      }
+
+                                      if (p) {
+                                        // 4. Update customizationOptions / selectedOptions
+                                        if (Array.isArray(p.customizationOptions) && p.customizationOptions.length > 0) {
+                                          finalCustomizations.selectedOptions = { ...(finalCustomizations.selectedOptions || {}) };
+                                          p.customizationOptions.forEach((g) => {
+                                            const gTitle = String(g.title || '').trim().toLowerCase();
+                                            const targetVal = parsedMap[gTitle] || (gTitle.includes('size') ? standaloneSizeVal : '');
+                                            if (targetVal) {
+                                              const normTarget = targetVal.toLowerCase().replace(/^size\s*:\s*/i, '').trim();
+                                              const matchedVal = (g.values || []).find((v) => {
+                                                const vName = String(v.name || '').trim().toLowerCase();
+                                                return vName === normTarget;
+                                              });
+                                              if (matchedVal) {
+                                                finalCustomizations.selectedOptions[String(g.id)] = String(matchedVal.id);
+                                              }
+                                            }
+                                          });
+                                        }
+
+                                        // 5. Update standard variations if present
+                                        if (Array.isArray(p.variations) && p.variations.length > 0) {
+                                          const targetSize = standaloneSizeVal.toLowerCase().replace(/^size\s*:\s*/i, '').trim();
+                                          if (targetSize) {
+                                            const matchedVar = p.variations.find((v) => {
+                                              if (!v?.size) return false;
+                                              const vSize = String(v.size).replace(/^size\s*:\s*/i, '').trim().toLowerCase();
+                                              return vSize === targetSize;
+                                            });
+                                            if (matchedVar) {
+                                              resolvedVariationId = String(matchedVar.id);
+                                            }
+                                          }
+                                        }
+
+                                        // 6. Match customizationCombinations if present
+                                        if (!resolvedVariationId && Array.isArray(p.customizationCombinations) && p.customizationCombinations.length > 0) {
+                                          const targetKeys = finalCustomizations.selectedOptions || {};
+                                          const matchedCombo = p.customizationCombinations.find((c) => {
+                                            if (!c.combinationKeys) return false;
+                                            const cKeys = c.combinationKeys;
+                                            const gIds = Object.keys(cKeys);
+                                            if (gIds.length === 0) return false;
+                                            return gIds.every((gId) => targetKeys[gId] === cKeys[gId]);
+                                          });
+                                          if (matchedCombo) {
+                                            resolvedVariationId = String(matchedCombo.id);
+                                          }
+                                        }
+                                      }
+                                    } else {
+                                      // NOT exchanged - maintain exact customizations and valid variationId
+                                      if (p && it.variationId != null) {
+                                        const varExists = (p.variations || []).some((v) => String(v.id) === String(it.variationId));
+                                        const comboExists = (p.customizationCombinations || []).some((c) => String(c.id) === String(it.variationId));
+                                        if (varExists || comboExists) {
+                                          resolvedVariationId = String(it.variationId);
+                                        }
+                                      } else if (!p && it.variationId != null) {
+                                        resolvedVariationId = String(it.variationId);
+                                      }
+                                    }
+
+                                    addItem({
+                                      productId: String(it.productId),
+                                      quantity: it.quantity,
+                                      variationId: resolvedVariationId,
+                                      customizations: Object.keys(finalCustomizations).length > 0 ? finalCustomizations : undefined,
+                                    });
+                                  }
+
                                   if (typeof window !== 'undefined' && window.innerWidth >= 768) {
                                     window.dispatchEvent(new CustomEvent('open-desktop-cart'));
                                   } else {

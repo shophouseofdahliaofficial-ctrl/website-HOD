@@ -231,7 +231,7 @@ const transformProduct = (row) => {
     return fallback;
   };
 
-  const parsedDetailBanners = parseJsonObject(row.detail_banners, { images: [], adaptToFullImageRatio: false, displayMode: 'stacked' });
+  const parsedDetailBanners = parseJsonObject(row.detail_banners, { images: [], mobileImages: [], adaptToFullImageRatio: false, displayMode: 'stacked' });
   const parsedDigitalFlipbook = parseJsonObject(row.digital_flipbook, { enabled: false, sections: [] });
   const parsedSizeGuide = parseJsonObject(row.size_guide, { enabled: false, type: 'table', imageUrl: '', tableRows: [] });
 
@@ -274,6 +274,9 @@ const transformProduct = (row) => {
     detailBanners: {
       images: Array.isArray(parsedDetailBanners.images)
         ? parsedDetailBanners.images.map((url) => String(url || '').trim()).filter(Boolean)
+        : [],
+      mobileImages: Array.isArray(parsedDetailBanners.mobileImages)
+        ? parsedDetailBanners.mobileImages.map((url) => String(url || '').trim()).filter(Boolean)
         : [],
       adaptToFullImageRatio: Boolean(parsedDetailBanners.adaptToFullImageRatio),
       displayMode: parsedDetailBanners.displayMode === 'carousel' ? 'carousel' : 'stacked',

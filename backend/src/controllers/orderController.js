@@ -1110,6 +1110,11 @@ const getOrderById = async (req, res, next) => {
     if (order.delhiveryWaybill && !['delivered', 'cancelled', 'refunded'].includes(order.status)) {
       order = await syncDelhiveryStatusForOrder(order);
     }
+    if (order.exchange && (order.exchange.replacementWaybill || order.exchange.reverseWaybill)) {
+      const exchangeService = require('../services/exchangeService');
+      const syncedExchange = await exchangeService.syncDelhiveryStatusForExchange(order.exchange);
+      order.exchange = syncedExchange;
+    }
     res.json({ success: true, data: order });
   } catch (error) {
     next(error);

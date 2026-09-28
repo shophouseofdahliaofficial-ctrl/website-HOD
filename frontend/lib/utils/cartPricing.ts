@@ -42,8 +42,39 @@ export function getCartItemCheckoutLineLabel(it: CartItem, p?: Product | null): 
     return getPhotoboothPrintsLabel(it) ?? 'Photobooth print';
   }
 
-  const v = it.variationId ? (p?.variations || []).find((x) => String(x.id) === String(it.variationId)) : null;
-  return `${it.quantity} × ${p?.name || 'Product'}${v ? ` (${v.size})` : ''}`;
+  let varLabel = '';
+  if (it.variationId && p?.variations) {
+    const v = p.variations.find((x) => String(x.id) === String(it.variationId));
+    if (v?.size) varLabel = v.size;
+  }
+  if (!varLabel && it.variationId && p?.customizationCombinations) {
+    const combo = p.customizationCombinations.find((x) => String(x.id) === String(it.variationId));
+    if (combo && combo.combinationKeys && p.customizationOptions) {
+      const parts: string[] = [];
+      Object.keys(combo.combinationKeys).forEach((gId) => {
+        const valId = combo.combinationKeys[gId];
+        const group = p.customizationOptions?.find((g) => String(g.id) === String(gId));
+        const val = group?.values?.find((v) => String(v.id) === String(valId));
+        if (val) parts.push(val.name);
+      });
+      if (parts.length > 0) varLabel = parts.join(', ');
+    }
+  }
+  if (!varLabel) {
+    const fallback =
+      (it as any).variationSize ||
+      (it as any).size ||
+      it.customizations?.size ||
+      it.customizations?.variationSize ||
+      (it.customizations as any)?.variation?.size ||
+      (it.customizations as any)?.variantName ||
+      (it.customizations as any)?.variationName;
+    if (fallback) {
+      varLabel = String(fallback).replace(/^size\s*:\s*/i, '').trim();
+    }
+  }
+
+  return `${it.quantity} × ${p?.name || 'Product'}${varLabel ? ` (${varLabel})` : ''}`;
 }
 
 export function getCartItemPriceLineAmount(it: CartItem, p?: Product | null): number {

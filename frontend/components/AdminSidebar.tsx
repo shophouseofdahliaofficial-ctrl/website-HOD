@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { adminOrdersApi, apiClient } from '@/lib/api';
+import { adminOrdersApi, adminExchangesApi, apiClient } from '@/lib/api';
 import Logo from '@/components/Logo';
 import styles from './AdminSidebar.module.css';
 
@@ -27,6 +27,7 @@ export default function AdminSidebar() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [pendingExchangesCount, setPendingExchangesCount] = useState(0);
   const [hasNewFeedback, setHasNewFeedback] = useState(false);
 
   // Poll for latest feedback timestamp
@@ -108,6 +109,15 @@ export default function AdminSidebar() {
       ),
     },
     {
+      name: 'Exchanges',
+      path: '/admin/exchanges',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
+        </svg>
+      ),
+    },
+    {
       name: 'Customers',
       path: '/admin/customers',
       icon: (
@@ -151,21 +161,24 @@ export default function AdminSidebar() {
     },
   ];
 
-  // Fetch pending orders count for badge
+  // Fetch pending orders & exchanges count for badge
   useEffect(() => {
-    const fetchPendingCount = async () => {
+    const fetchCounts = async () => {
       try {
-        const data = await adminOrdersApi.getPendingCount();
-        setPendingOrdersCount(data.count || 0);
+        const [ordersData, exchangesData] = await Promise.all([
+          adminOrdersApi.getPendingCount().catch(() => ({ count: 0 })),
+          adminExchangesApi.getPendingCount().catch(() => ({ count: 0 })),
+        ]);
+        setPendingOrdersCount(ordersData.count || 0);
+        setPendingExchangesCount(exchangesData.count || 0);
       } catch (error) {
-        console.error('Failed to fetch pending orders count:', error);
-        setPendingOrdersCount(0);
+        console.error('Failed to fetch pending counts:', error);
       }
     };
 
-    fetchPendingCount();
+    fetchCounts();
     // Refresh every 30 seconds
-    const interval = setInterval(fetchPendingCount, 30000);
+    const interval = setInterval(fetchCounts, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -229,6 +242,9 @@ export default function AdminSidebar() {
             <span className={styles.navLabel}>{item.name}</span>
             {item.path === '/admin/orders' && pendingOrdersCount > 0 && (
               <span className={styles.navBadge}>{pendingOrdersCount}</span>
+            )}
+            {item.path === '/admin/exchanges' && pendingExchangesCount > 0 && (
+              <span className={styles.navBadge}>{pendingExchangesCount}</span>
             )}
             {item.path === '/admin/feedback' && hasNewFeedback && (
               <span className={styles.navDot} />

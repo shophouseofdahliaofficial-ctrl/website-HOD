@@ -121,6 +121,7 @@ export default function AdminProductEditPage() {
 
   const [detailBanners, setDetailBanners] = useState<ProductDetailBanners>({
     images: [],
+    mobileImages: [],
     adaptToFullImageRatio: false,
     displayMode: 'stacked',
   });
@@ -150,6 +151,8 @@ export default function AdminProductEditPage() {
   const [mediaPickerTarget, setMediaPickerTarget] = useState<
     | { type: 'product-gallery' }
     | { type: 'detail-banner' }
+    | { type: 'detail-banner-desktop' }
+    | { type: 'detail-banner-mobile' }
     | { type: 'flipbook'; sectionId: string }
     | { type: 'variation-new'; groupId: string }
     | { type: 'variation-edit' }
@@ -181,12 +184,18 @@ export default function AdminProductEditPage() {
           setSaving(false);
         }
       })();
-    } else if (mediaPickerTarget.type === 'detail-banner') {
+    } else if (mediaPickerTarget.type === 'detail-banner' || mediaPickerTarget.type === 'detail-banner-desktop') {
       setDetailBanners((prev) => ({
         ...prev,
         images: [...prev.images, ...selected.map((s) => s.url || s.secure_url || '')],
       }));
-      showToast(`Added ${selected.length} banner image(s)`, 'success');
+      showToast(`Added ${selected.length} desktop banner image(s)`, 'success');
+    } else if (mediaPickerTarget.type === 'detail-banner-mobile') {
+      setDetailBanners((prev) => ({
+        ...prev,
+        mobileImages: [...(prev.mobileImages || []), ...selected.map((s) => s.url || s.secure_url || '')],
+      }));
+      showToast(`Added ${selected.length} mobile banner image(s)`, 'success');
     } else if (mediaPickerTarget.type === 'flipbook') {
       const { sectionId } = mediaPickerTarget;
       setDigitalFlipbook((prev) => ({
@@ -354,15 +363,19 @@ export default function AdminProductEditPage() {
     }
   };
 
-  const handleBannerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerImageUpload = async (target: 'desktop' | 'mobile', e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     setUploadingBannerImage(true);
     try {
       const imageUrl = await adminProductsApi.uploadDetailAsset(productId, file);
-      setDetailBanners((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
-      showToast('Banner image added', 'success');
+      if (target === 'mobile') {
+        setDetailBanners((prev) => ({ ...prev, mobileImages: [...(prev.mobileImages || []), imageUrl] }));
+      } else {
+        setDetailBanners((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
+      }
+      showToast(`${target === 'mobile' ? 'Mobile' : 'Desktop'} banner image added`, 'success');
     } catch (error) {
       console.error('Failed to upload banner image:', error);
       showToast(getErrorMessage(error), 'error');
@@ -371,20 +384,27 @@ export default function AdminProductEditPage() {
     }
   };
 
-  const handleRemoveBannerImage = (index: number) => {
-    setDetailBanners((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+  const handleRemoveBannerImage = (target: 'desktop' | 'mobile', index: number) => {
+    if (target === 'mobile') {
+      setDetailBanners((prev) => ({
+        ...prev,
+        mobileImages: (prev.mobileImages || []).filter((_, i) => i !== index),
+      }));
+    } else {
+      setDetailBanners((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index),
+      }));
+    }
   };
 
-  const handleMoveBannerImage = (index: number, direction: 'up' | 'down') => {
+  const handleMoveBannerImage = (target: 'desktop' | 'mobile', index: number, direction: 'up' | 'down') => {
     setDetailBanners((prev) => {
-      const next = [...prev.images];
-      const target = direction === 'up' ? index - 1 : index + 1;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return { ...prev, images: next };
+      const list = target === 'mobile' ? [...(prev.mobileImages || [])] : [...prev.images];
+      const dest = direction === 'up' ? index - 1 : index + 1;
+      if (dest < 0 || dest >= list.length) return prev;
+      [list[index], list[dest]] = [list[dest], list[index]];
+      return target === 'mobile' ? { ...prev, mobileImages: list } : { ...prev, images: list };
     });
   };
 
@@ -393,7 +413,7 @@ export default function AdminProductEditPage() {
     try {
       await adminProductsApi.update(productId, { detailBanners });
       const refreshed = await adminProductsApi.getById(productId);
-      setDetailBanners(refreshed.detailBanners || { images: [], adaptToFullImageRatio: false, displayMode: 'stacked' });
+      setDetailBanners(refreshed.detailBanners || { images: [], mobileImages: [], adaptToFullImageRatio: false, displayMode: 'stacked' });
       showToast('Detail banner images saved successfully', 'success');
     } catch (error) {
       console.error('Failed to save detail banners:', error);
@@ -1880,97 +1900,13 @@ export default function AdminProductEditPage() {
             </div>
 
             <div className={styles.formGroup} style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
-              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem' }}>Detail Banner Images</h3>
-              <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
-                Optional banners shown below the product details on the storefront. Add as many images as you need.
-              </p>
-
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={detailBanners.adaptToFullImageRatio}
-                  onChange={(e) => setDetailBanners((prev) => ({ ...prev, adaptToFullImageRatio: e.target.checked }))}
-                />
-                Adapt to full image ratio
-              </label>
-
-              <div className={styles.formGroup}>
-                <label>Display mode</label>
-                <select
-                  value={detailBanners.displayMode || 'stacked'}
-                  onChange={(e) => setDetailBanners((prev) => ({
-                    ...prev,
-                    displayMode: e.target.value as ProductDetailBanners['displayMode'],
-                  }))}
-                  className={styles.input}
-                  style={{ maxWidth: '280px' }}
-                >
-                  <option value="stacked">One by one (stacked)</option>
-                  <option value="carousel">Carousel</option>
-                </select>
-              </div>
-
-              {detailBanners.images.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                  {detailBanners.images.map((url, index) => (
-                    <div key={`${url}-${index}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                      <div style={{ width: 120, height: 72, borderRadius: 8, overflow: 'hidden', background: '#f1f5f9', flexShrink: 0 }}>
-                        <img src={url} alt={`Banner ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.35rem' }}>
-                        <button type="button" className={styles.addButton} onClick={() => handleMoveBannerImage(index, 'up')} disabled={index === 0}>↑</button>
-                        <button type="button" className={styles.addButton} onClick={() => handleMoveBannerImage(index, 'down')} disabled={index === detailBanners.images.length - 1}>↓</button>
-                        <button type="button" onClick={() => handleRemoveBannerImage(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#dc2626' }}>Remove</button>
-                      </div>
-                    </div>
-                  ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Detail Banner Images</h3>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.25rem 0 0' }}>
+                    Configure detail banners shown on the storefront product page for Desktop and Mobile.
+                  </p>
                 </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <label
-                  className={styles.addButton}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    cursor: uploadingBannerImage ? 'not-allowed' : 'pointer',
-                    padding: '0.65rem 1.25rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerImageUpload}
-                    disabled={uploadingBannerImage}
-                    style={{ display: 'none' }}
-                  />
-                  <span>📤</span> {uploadingBannerImage ? 'Uploading...' : '+ Upload Banner from Device'}
-                </label>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMediaPickerMultiple(true);
-                    setMediaPickerTarget({ type: 'detail-banner' });
-                    setMediaPickerOpen(true);
-                  }}
-                  className={styles.addButton}
-                  style={{
-                    background: '#0ea5e9',
-                    borderColor: '#0ea5e9',
-                    color: '#ffffff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.65rem 1.25rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  <span>🖼️</span> + Add from Media Library
-                </button>
-
                 <button
                   type="button"
                   onClick={handleSaveDetailBanners}
@@ -1985,150 +1921,105 @@ export default function AdminProductEditPage() {
                   {saving ? 'Saving...' : '💾 Save Banner Images'}
                 </button>
               </div>
-            </div>
 
-            <div className={styles.formGroup} style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
-              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem' }}>Digital Flipbook</h3>
-              <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
-                Create flipbook sections (e.g. 360 Wheel, Daily check-in) and add page images to each section.
-              </p>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', margin: '1rem 0', flexWrap: 'wrap' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={detailBanners.adaptToFullImageRatio}
+                    onChange={(e) => setDetailBanners((prev) => ({ ...prev, adaptToFullImageRatio: e.target.checked }))}
+                  />
+                  Adapt to full image ratio
+                </label>
 
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={digitalFlipbook.enabled}
-                  onChange={(e) => setDigitalFlipbook((prev) => ({ ...prev, enabled: e.target.checked }))}
-                />
-                Enable digital flipbook on product page
-              </label>
-
-              {digitalFlipbook.enabled && (
-                <div style={{ marginBottom: '1.25rem', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: 12, background: '#fafafa' }}>
-                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '0.65rem' }}>
-                    Hardcover color
-                  </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <input
-                      type="color"
-                      value={normalizeFlipbookHardcoverColor(digitalFlipbook.hardcoverColor)}
-                      onChange={(e) => setDigitalFlipbook((prev) => ({ ...prev, hardcoverColor: e.target.value.toLowerCase() }))}
-                      aria-label="Pick hardcover color"
-                      style={{ width: 44, height: 44, padding: 0, border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer', background: 'transparent' }}
-                    />
-                    <input
-                      type="text"
-                      value={normalizeFlipbookHardcoverColor(digitalFlipbook.hardcoverColor)}
-                      onChange={(e) => {
-                        const next = e.target.value.trim();
-                        if (/^#[0-9A-Fa-f]{0,6}$/.test(next)) {
-                          setDigitalFlipbook((prev) => ({ ...prev, hardcoverColor: next }));
-                        }
-                      }}
-                      onBlur={(e) => setDigitalFlipbook((prev) => ({
-                        ...prev,
-                        hardcoverColor: normalizeFlipbookHardcoverColor(e.target.value),
-                      }))}
-                      className={styles.input}
-                      placeholder="#5f6b3d"
-                      style={{ width: 120, fontFamily: 'monospace' }}
-                    />
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        width: 72,
-                        height: 44,
-                        borderRadius: 4,
-                        border: '1px solid #cbd5e1',
-                        background: `linear-gradient(165deg, color-mix(in srgb, ${normalizeFlipbookHardcoverColor(digitalFlipbook.hardcoverColor)} 86%, white) 0%, ${normalizeFlipbookHardcoverColor(digitalFlipbook.hardcoverColor)} 52%, color-mix(in srgb, ${normalizeFlipbookHardcoverColor(digitalFlipbook.hardcoverColor)} 78%, black) 100%)`,
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {FLIPBOOK_HARDCOVER_PRESETS.map((preset) => (
-                      <button
-                        key={preset.value}
-                        type="button"
-                        onClick={() => setDigitalFlipbook((prev) => ({ ...prev, hardcoverColor: preset.value }))}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          padding: '0.35rem 0.65rem',
-                          borderRadius: 999,
-                          border: normalizeFlipbookHardcoverColor(digitalFlipbook.hardcoverColor) === preset.value
-                            ? '2px solid #111'
-                            : '1px solid #cbd5e1',
-                          background: '#fff',
-                          cursor: 'pointer',
-                          fontSize: '0.8rem',
-                          color: '#334155',
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 14,
-                            height: 14,
-                            borderRadius: '50%',
-                            background: preset.value,
-                            border: '1px solid rgba(0,0,0,0.12)',
-                          }}
-                        />
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.9rem', color: '#334155' }}>Display mode:</label>
+                  <select
+                    value={detailBanners.displayMode || 'stacked'}
+                    onChange={(e) => setDetailBanners((prev) => ({
+                      ...prev,
+                      displayMode: e.target.value as ProductDetailBanners['displayMode'],
+                    }))}
+                    className={styles.input}
+                    style={{ maxWidth: '200px', padding: '0.35rem 0.65rem' }}
+                  >
+                    <option value="stacked">One by one (stacked)</option>
+                    <option value="carousel">Carousel</option>
+                  </select>
                 </div>
-              )}
-
-              <div className={styles.formRow} style={{ marginBottom: '1rem' }}>
-                <input
-                  type="text"
-                  value={newFlipbookSectionTitle}
-                  onChange={(e) => setNewFlipbookSectionTitle(e.target.value)}
-                  className={styles.input}
-                  placeholder="New section title (e.g. Daily check-in)"
-                />
-                <button type="button" onClick={handleAddFlipbookSection} className={styles.addButton}>
-                  Add section
-                </button>
               </div>
 
-              {digitalFlipbook.sections.map((section: FlipbookSection) => (
-                <div key={section.id} style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '1rem', marginBottom: '1rem' }}>
-                  <div className={styles.formRow} style={{ marginBottom: '0.75rem' }}>
-                    <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => handleFlipbookSectionTitleChange(section.id, e.target.value)}
-                      className={styles.input}
-                      placeholder="Section title"
-                    />
-                    <button type="button" onClick={() => handleRemoveFlipbookSection(section.id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#dc2626' }}>
-                      Remove section
-                    </button>
+              {/* Grid with 2 distinct sections: Desktop Banners and Mobile Banners */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+                
+                {/* 1. Desktop Banners */}
+                <div style={{ border: '1px solid #cbd5e1', borderRadius: '12px', padding: '1.25rem', background: '#f8fafc' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      🖥️ Desktop Detail Banners
+                    </h4>
+                    <span style={{ fontSize: '0.8rem', background: '#e2e8f0', padding: '0.2rem 0.55rem', borderRadius: '12px', fontWeight: 600, color: '#475569' }}>
+                      {detailBanners.images.length} image{detailBanners.images.length === 1 ? '' : 's'}
+                    </span>
                   </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 1rem 0' }}>
+                    Displayed on desktop / laptop screens.
+                  </p>
 
-                  {section.imageUrls.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                      {section.imageUrls.map((url, imageIndex) => (
-                        <div key={`${url}-${imageIndex}`} style={{ position: 'relative' }}>
-                          <img src={url} alt={`Page ${imageIndex + 1}`} style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', borderRadius: 6 }} />
-                          <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                            <button type="button" className={styles.addButton} style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handleMoveFlipbookImage(section.id, imageIndex, 'up')} disabled={imageIndex === 0}>↑</button>
-                            <button type="button" className={styles.addButton} style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handleMoveFlipbookImage(section.id, imageIndex, 'down')} disabled={imageIndex === section.imageUrls.length - 1}>↓</button>
-                            <button type="button" onClick={() => handleRemoveFlipbookImage(section.id, imageIndex)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#dc2626', fontSize: '0.75rem' }}>×</button>
+                  {detailBanners.images.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                      {detailBanners.images.map((url, index) => (
+                        <div key={`desktop-${url}-${index}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', background: '#ffffff', padding: '0.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ width: 90, height: 54, borderRadius: 6, overflow: 'hidden', background: '#f1f5f9', flexShrink: 0 }}>
+                            <img src={url} alt={`Desktop Banner ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              Image #{index + 1}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            <button type="button" className={styles.addButton} style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => handleMoveBannerImage('desktop', index, 'up')} disabled={index === 0}>↑</button>
+                            <button type="button" className={styles.addButton} style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => handleMoveBannerImage('desktop', index, 'down')} disabled={index === detailBanners.images.length - 1}>↓</button>
+                            <button type="button" onClick={() => handleRemoveBannerImage('desktop', index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#dc2626', fontSize: '0.8rem', padding: '4px' }}>Remove</button>
                           </div>
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1.25rem', border: '1px dashed #cbd5e1', borderRadius: '8px', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1rem', background: '#ffffff' }}>
+                      No desktop banners added yet
+                    </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <label
+                      className={styles.addButton}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        cursor: uploadingBannerImage ? 'not-allowed' : 'pointer',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBannerImageUpload('desktop', e)}
+                        disabled={uploadingBannerImage}
+                        style={{ display: 'none' }}
+                      />
+                      <span>📤</span> {uploadingBannerImage ? 'Uploading...' : 'Upload from Device'}
+                    </label>
+
                     <button
                       type="button"
                       onClick={() => {
                         setMediaPickerMultiple(true);
-                        setMediaPickerTarget({ type: 'flipbook', sectionId: section.id });
+                        setMediaPickerTarget({ type: 'detail-banner-desktop' });
                         setMediaPickerOpen(true);
                       }}
                       className={styles.addButton}
@@ -2138,15 +2029,106 @@ export default function AdminProductEditPage() {
                         color: '#ffffff',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.4rem',
+                        gap: '0.35rem',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.82rem',
                         fontWeight: 600,
                       }}
                     >
-                      <span>🖼️</span> + Add Page from Media Library
+                      <span>🖼️</span> Media Library
                     </button>
                   </div>
                 </div>
-              ))}
+
+                {/* 2. Mobile Banners */}
+                <div style={{ border: '1px solid #cbd5e1', borderRadius: '12px', padding: '1.25rem', background: '#f8fafc' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      📱 Mobile Detail Banners
+                    </h4>
+                    <span style={{ fontSize: '0.8rem', background: '#e2e8f0', padding: '0.2rem 0.55rem', borderRadius: '12px', fontWeight: 600, color: '#475569' }}>
+                      {(detailBanners.mobileImages || []).length} image{(detailBanners.mobileImages || []).length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 1rem 0' }}>
+                    Displayed on mobile phone screens only.
+                  </p>
+
+                  {(detailBanners.mobileImages || []).length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                      {(detailBanners.mobileImages || []).map((url, index) => (
+                        <div key={`mobile-${url}-${index}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', background: '#ffffff', padding: '0.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ width: 90, height: 54, borderRadius: 6, overflow: 'hidden', background: '#f1f5f9', flexShrink: 0 }}>
+                            <img src={url} alt={`Mobile Banner ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              Image #{index + 1}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            <button type="button" className={styles.addButton} style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => handleMoveBannerImage('mobile', index, 'up')} disabled={index === 0}>↑</button>
+                            <button type="button" className={styles.addButton} style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => handleMoveBannerImage('mobile', index, 'down')} disabled={index === (detailBanners.mobileImages || []).length - 1}>↓</button>
+                            <button type="button" onClick={() => handleRemoveBannerImage('mobile', index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#dc2626', fontSize: '0.8rem', padding: '4px' }}>Remove</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1.25rem', border: '1px dashed #cbd5e1', borderRadius: '8px', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1rem', background: '#ffffff' }}>
+                      No mobile banners added yet (falls back to desktop banners if empty)
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <label
+                      className={styles.addButton}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        cursor: uploadingBannerImage ? 'not-allowed' : 'pointer',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBannerImageUpload('mobile', e)}
+                        disabled={uploadingBannerImage}
+                        style={{ display: 'none' }}
+                      />
+                      <span>📤</span> {uploadingBannerImage ? 'Uploading...' : 'Upload from Device'}
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMediaPickerMultiple(true);
+                        setMediaPickerTarget({ type: 'detail-banner-mobile' });
+                        setMediaPickerOpen(true);
+                      }}
+                      className={styles.addButton}
+                      style={{
+                        background: '#0ea5e9',
+                        borderColor: '#0ea5e9',
+                        color: '#ffffff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span>🖼️</span> Media Library
+                    </button>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
             {/* Size Guide Configuration Section */}

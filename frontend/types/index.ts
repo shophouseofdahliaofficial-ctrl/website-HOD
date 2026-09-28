@@ -117,6 +117,7 @@ export interface ProductCustomizationCombination {
 
 export interface ProductDetailBanners {
   images: string[];
+  mobileImages?: string[];
   adaptToFullImageRatio?: boolean;
   displayMode?: 'carousel' | 'stacked';
 }

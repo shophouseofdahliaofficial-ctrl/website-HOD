@@ -28,6 +28,7 @@ export default function AdminMobileHeader() {
   const adminMenuItems: MenuItem[] = [
     { name: 'Dashboard', path: '/admin', description: 'Admin dashboard' },
     { name: 'Orders', path: '/admin/orders', description: 'View paid orders & shipments' },
+    { name: 'Exchanges', path: '/admin/exchanges', description: 'Customer exchange requests' },
     { name: 'Products', path: '/admin/products', description: 'Manage products' },
     { name: 'Banners', path: '/admin/banners', description: 'Manage banners' },
     { name: 'Customers', path: '/admin/customers', description: 'Customer list & analytics' },

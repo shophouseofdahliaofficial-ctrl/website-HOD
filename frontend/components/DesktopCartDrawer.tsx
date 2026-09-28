@@ -451,7 +451,11 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
         if (group && val) {
           descParts.push(`${group.title}: ${val.name}`);
         } else if (typeof valId === 'string' || typeof valId === 'number') {
-          descParts.push(`${valId}`);
+          if (!String(valId).startsWith('val_') && !String(groupId).startsWith('group_')) {
+            descParts.push(`${groupId}: ${valId}`);
+          } else if (!String(valId).startsWith('val_')) {
+            descParts.push(`${valId}`);
+          }
         }
       });
     }
@@ -472,6 +476,10 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
         (it as any).variationSize ||
         (it as any).size ||
         it.customizations?.size ||
+        it.customizations?.variationSize ||
+        it.customizations?.variation ||
+        it.customizations?.variant ||
+        it.customizations?.variantName ||
         (it.customizations?.variation as any)?.size ||
         (it as any).variation?.size ||
         (it as any).variantName ||
@@ -481,6 +489,23 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
         const trimmed = String(fallbackSize).trim();
         const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
         descParts.push(formatted);
+      }
+    }
+
+    // 5. Ensure direct size from customizations is displayed if not already in descParts
+    const directSize = it.customizations?.size || it.customizations?.variationSize || (it as any).variationSize || (it as any).size;
+    if (directSize) {
+      const trimmedSize = String(directSize).trim();
+      const cleanLower = trimmedSize.toLowerCase().replace(/^size\s*:\s*/i, '').trim();
+      if (cleanLower && cleanLower !== 'size' && !cleanLower.startsWith('val_')) {
+        const hasSizeInDesc = descParts.some((d) => {
+          const lowerD = d.toLowerCase();
+          return lowerD.includes(cleanLower) || (lowerD.startsWith('size:') && cleanLower.startsWith('size:'));
+        });
+        if (!hasSizeInDesc) {
+          const formatted = /^size\s*:/i.test(trimmedSize) || trimmedSize.includes(':') ? trimmedSize : `Size: ${trimmedSize}`;
+          descParts.unshift(formatted);
+        }
       }
     }
 
@@ -1481,7 +1506,7 @@ export default function DesktopCartDrawer({ onClose }: DesktopCartDrawerProps) {
                       {items.map((it) => {
                         const p = products[it.productId];
                         if (!shouldShowCartPriceLine(it, p)) return null;
-                        const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
+                        const v = it.variationId ? (p?.variations || []).find((x) => String(x.id) === String(it.variationId)) : null;
                         const itemKey = getItemKey(it.productId, it.variationId, it.customizations);
                         const photobooth = getPhotoboothCartProject(it);
                         const photobook = getPhotobookCartProject(it);

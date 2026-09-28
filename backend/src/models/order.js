@@ -638,6 +638,7 @@ async function listOrdersForUser(userId) {
   const itemRes = await query(
     `
     SELECT
+      oi.id,
       oi.order_id,
       oi.product_name,
       oi.variation_size,
@@ -652,6 +653,8 @@ async function listOrdersForUser(userId) {
       pb.generated_pdf_url AS generated_pdf_url,
       p.image_url,
       p.buy_again_enabled,
+      oi.customizations,
+      oi.gift_wrap,
       opdf.quality_stars,
       opdf.delivery_agent_stars,
       opdf.on_time_stars,
@@ -673,7 +676,18 @@ async function listOrdersForUser(userId) {
   for (const row of itemRes.rows) {
     const k = row.order_id;
     if (!itemsByOrder[k]) itemsByOrder[k] = [];
+
+    let customizations = row.customizations;
+    if (typeof customizations === 'string') {
+      try { customizations = JSON.parse(customizations); } catch {}
+    }
+    let giftWrap = row.gift_wrap || customizations?.giftWrap || null;
+    if (typeof giftWrap === 'string') {
+      try { giftWrap = JSON.parse(giftWrap); } catch {}
+    }
+
     itemsByOrder[k].push({
+      id: row.id,
       productName: row.product_name || 'Product',
       variationSize: row.variation_size || null,
       variationId: row.variation_id != null ? row.variation_id : null,
@@ -688,8 +702,64 @@ async function listOrdersForUser(userId) {
       imageUrl: row.image_url || null,
       buyAgainEnabled: row.buy_again_enabled === undefined || row.buy_again_enabled === null ? true : Boolean(row.buy_again_enabled),
       detailedFeedback: mapOpdfRowToDetailedFeedback(row),
+      customizations: customizations || null,
+      giftWrap: giftWrap || null,
     });
   }
+
+  const exchangesByOrder = {};
+  try {
+    const exRes = await query(
+      `SELECT * FROM order_exchanges WHERE order_id::text = ANY($1::text[]) ORDER BY created_at DESC`,
+      [orderIds.map(String)]
+    );
+    for (const er of exRes.rows) {
+      const k = er.order_id;
+      if (!exchangesByOrder[k]) {
+        exchangesByOrder[k] = {
+          id: er.id,
+          orderId: er.order_id,
+          userId: er.user_id,
+          orderNumber: er.order_number,
+          itemId: er.item_id,
+          productId: er.product_id,
+          productName: er.product_name,
+          originalVariation: er.original_variation,
+          originalUnitPrice: er.original_unit_price != null ? parseFloat(er.original_unit_price) : 0,
+          quantity: er.quantity || 1,
+          requestedItemName: er.requested_item_name,
+          requestedVariation: er.requested_variation,
+          requestedUnitPrice: er.requested_unit_price != null ? parseFloat(er.requested_unit_price) : 0,
+          priceDifference: er.price_difference != null ? parseFloat(er.price_difference) : 0,
+          exchangeItems: er.exchange_items || null,
+          reason: er.reason,
+          customerMessage: er.customer_message,
+          status: er.status,
+          rejectionReason: er.rejection_reason,
+          approvalMessage: er.approval_message,
+          adminNote: er.admin_note,
+          paymentStatus: er.payment_status,
+          paymentMethod: er.payment_method,
+          paymentReference: er.payment_reference,
+          reverseWaybill: er.reverse_waybill || null,
+          reverseStatus: er.reverse_status || null,
+          reverseTrackingUrl: er.reverse_tracking_url || (er.reverse_waybill ? `https://www.delhivery.com/track/package/${er.reverse_waybill}` : null),
+          reversePickupScheduledAt: er.reverse_pickup_scheduled_at ? new Date(er.reverse_pickup_scheduled_at).toISOString() : null,
+          returnReceivedAt: er.return_received_at ? new Date(er.return_received_at).toISOString() : null,
+          returnVerifiedAt: er.return_verified_at ? new Date(er.return_verified_at).toISOString() : null,
+          replacementWaybill: er.replacement_waybill || null,
+          replacementStatus: er.replacement_status || null,
+          replacementTrackingUrl: er.replacement_tracking_url || (er.replacement_waybill ? `https://www.delhivery.com/track/package/${er.replacement_waybill}` : null),
+          replacementDispatchedAt: er.replacement_dispatched_at ? new Date(er.replacement_dispatched_at).toISOString() : null,
+          replacementDeliveredAt: er.replacement_delivered_at ? new Date(er.replacement_delivered_at).toISOString() : null,
+          requestedAt: er.requested_at ? new Date(er.requested_at).toISOString() : null,
+          approvedAt: er.approved_at ? new Date(er.approved_at).toISOString() : null,
+          rejectedAt: er.rejected_at ? new Date(er.rejected_at).toISOString() : null,
+          paidAt: er.paid_at ? new Date(er.paid_at).toISOString() : null,
+        };
+      }
+    }
+  } catch (_) {}
 
   return orders.map((r) => ({
     id: r.id,
@@ -703,6 +773,7 @@ async function listOrdersForUser(userId) {
     createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
     deliveryDate: r.delivery_date ? new Date(r.delivery_date).toISOString().slice(0, 10) : null,
     items: itemsByOrder[r.id] || [],
+    exchange: exchangesByOrder[r.id] || null,
   }));
 }
 
@@ -838,6 +909,7 @@ async function getOrderByIdForUser(userId, orderId) {
   const itemRes = await query(
     `
     SELECT
+      oi.id,
       oi.product_name,
       oi.variation_size,
       oi.variation_id,
@@ -881,6 +953,7 @@ async function getOrderByIdForUser(userId, orderId) {
     }
 
     return {
+      id: row.id,
       productName: row.product_name || 'Product',
       variationSize: row.variation_size || null,
       variationId: row.variation_id != null ? row.variation_id : null,
@@ -903,6 +976,55 @@ async function getOrderByIdForUser(userId, orderId) {
   const fbRes = await query(`SELECT rating FROM order_feedback WHERE order_id = $1`, [orderId]);
   const feedbackSubmitted = fbRes.rows.length > 0;
   const feedbackRating = fbRes.rows[0]?.rating || null;
+
+  let exchange = null;
+  try {
+    const exRes = await query(`SELECT * FROM order_exchanges WHERE order_id::text = $1::text ORDER BY created_at DESC LIMIT 1`, [String(orderId)]);
+    if (exRes.rows.length > 0) {
+      const er = exRes.rows[0];
+      exchange = {
+        id: er.id,
+        orderId: er.order_id,
+        userId: er.user_id,
+        orderNumber: er.order_number,
+        itemId: er.item_id,
+        productId: er.product_id,
+        productName: er.product_name,
+        originalVariation: er.original_variation,
+        originalUnitPrice: er.original_unit_price != null ? parseFloat(er.original_unit_price) : 0,
+        quantity: er.quantity || 1,
+        requestedItemName: er.requested_item_name,
+        requestedVariation: er.requested_variation,
+        requestedUnitPrice: er.requested_unit_price != null ? parseFloat(er.requested_unit_price) : 0,
+        priceDifference: er.price_difference != null ? parseFloat(er.price_difference) : 0,
+        exchangeItems: er.exchange_items || null,
+        reason: er.reason,
+        customerMessage: er.customer_message,
+        status: er.status,
+        rejectionReason: er.rejection_reason,
+        approvalMessage: er.approval_message,
+        adminNote: er.admin_note,
+        paymentStatus: er.payment_status,
+        paymentMethod: er.payment_method,
+        paymentReference: er.payment_reference,
+        reverseWaybill: er.reverse_waybill || null,
+        reverseStatus: er.reverse_status || null,
+        reverseTrackingUrl: er.reverse_tracking_url || (er.reverse_waybill ? `https://www.delhivery.com/track/package/${er.reverse_waybill}` : null),
+        reversePickupScheduledAt: er.reverse_pickup_scheduled_at ? new Date(er.reverse_pickup_scheduled_at).toISOString() : null,
+        returnReceivedAt: er.return_received_at ? new Date(er.return_received_at).toISOString() : null,
+        returnVerifiedAt: er.return_verified_at ? new Date(er.return_verified_at).toISOString() : null,
+        replacementWaybill: er.replacement_waybill || null,
+        replacementStatus: er.replacement_status || null,
+        replacementTrackingUrl: er.replacement_tracking_url || (er.replacement_waybill ? `https://www.delhivery.com/track/package/${er.replacement_waybill}` : null),
+        replacementDispatchedAt: er.replacement_dispatched_at ? new Date(er.replacement_dispatched_at).toISOString() : null,
+        replacementDeliveredAt: er.replacement_delivered_at ? new Date(er.replacement_delivered_at).toISOString() : null,
+        requestedAt: er.requested_at ? new Date(er.requested_at).toISOString() : null,
+        approvedAt: er.approved_at ? new Date(er.approved_at).toISOString() : null,
+        rejectedAt: er.rejected_at ? new Date(er.rejected_at).toISOString() : null,
+        paidAt: er.paid_at ? new Date(er.paid_at).toISOString() : null,
+      };
+    }
+  } catch (_) {}
 
   return {
     id: r.id,
@@ -947,6 +1069,7 @@ async function getOrderByIdForUser(userId, orderId) {
     delhiveryTrackingUrl: r.delhivery_tracking_url || (r.delhivery_waybill ? `https://www.delhivery.com/track/package/${r.delhivery_waybill}` : null),
     feedbackSubmitted,
     feedbackRating,
+    exchange,
   };
 }
 

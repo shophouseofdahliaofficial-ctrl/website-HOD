@@ -332,13 +332,36 @@ export default function CartPage() {
         (it as any).variationSize ||
         (it as any).size ||
         it.customizations?.size ||
+        it.customizations?.variationSize ||
+        it.customizations?.variation ||
+        it.customizations?.variant ||
+        it.customizations?.variantName ||
         (it.customizations?.variation as any)?.size ||
         (it as any).variation?.size ||
-        (it as any).variantName;
+        (it as any).variantName ||
+        (it as any).variationName ||
+        (it.customizations as any)?.variationName;
       if (fallbackSize) {
         const trimmed = String(fallbackSize).trim();
         const formatted = /^size\s*:/i.test(trimmed) || trimmed.includes(':') ? trimmed : `Size: ${trimmed}`;
         descParts.push(formatted);
+      }
+    }
+
+    // 5. Ensure direct size from customizations is displayed if not already in descParts
+    const directSize = it.customizations?.size || it.customizations?.variationSize || (it as any).variationSize || (it as any).size;
+    if (directSize) {
+      const trimmedSize = String(directSize).trim();
+      const cleanLower = trimmedSize.toLowerCase().replace(/^size\s*:\s*/i, '').trim();
+      if (cleanLower && cleanLower !== 'size' && !cleanLower.startsWith('val_')) {
+        const hasSizeInDesc = descParts.some((d) => {
+          const lowerD = d.toLowerCase();
+          return lowerD.includes(cleanLower) || (lowerD.startsWith('size:') && cleanLower.startsWith('size:'));
+        });
+        if (!hasSizeInDesc) {
+          const formatted = /^size\s*:/i.test(trimmedSize) || trimmedSize.includes(':') ? trimmedSize : `Size: ${trimmedSize}`;
+          descParts.unshift(formatted);
+        }
       }
     }
 
@@ -737,7 +760,7 @@ export default function CartPage() {
             {items.map((it) => {
               const p = products[it.productId];
               if (!shouldShowCartPriceLine(it, p)) return null;
-              const v = it.variationId ? (p?.variations || []).find((x) => x.id === it.variationId) : null;
+              const v = it.variationId ? (p?.variations || []).find((x) => String(x.id) === String(it.variationId)) : null;
               const itemKey = getItemKey(it.productId, it.variationId, it.customizations);
               const photobooth = getPhotoboothCartProject(it);
               const photobook = getPhotobookCartProject(it);
@@ -874,23 +897,31 @@ export default function CartPage() {
                         <span>{getPhotoboothPrintsLabel(it)}</span>
                       </div>
                     ) : null}
-                    {p && p.isCustomizable ? (
-                      (() => {
-                        const descParts = getCustomizationDescriptionParts(it, p);
-                        return descParts.length > 0 ? (
-                          <div className={styles.itemVariationList}>
-                            {descParts.map((desc) => (
-                              <span key={desc}>{desc}</span>
-                            ))}
-                          </div>
-                        ) : null;
-                      })()
-                    ) : null}
-                    {!p?.isCustomizable && v ? (
-                      <div className={styles.itemVariationList}>
-                        <span>{/^size\s*:/i.test(v.size.trim()) || v.size.includes(':') ? v.size.trim() : `Size: ${v.size.trim()}`}</span>
-                      </div>
-                    ) : null}
+                    {(() => {
+                      const descParts = getCustomizationDescriptionParts(it, p);
+                      const variationLabel = v?.size
+                        ? (/^size\s*:/i.test(v.size.trim()) || v.size.includes(':') ? v.size.trim() : `Size: ${v.size.trim()}`)
+                        : (v as any)?.name
+                        ? `Variation: ${(v as any).name}`
+                        : null;
+
+                      return (
+                        <>
+                          {descParts.length > 0 && (
+                            <div className={styles.itemVariationList}>
+                              {descParts.map((desc) => (
+                                <span key={desc}>{desc}</span>
+                              ))}
+                            </div>
+                          )}
+                          {variationLabel && !descParts.some((d) => d.toLowerCase().includes(variationLabel.toLowerCase())) && (
+                            <div className={styles.itemVariationList}>
+                              <span>{variationLabel}</span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     {it.customizations?.giftWrap && (
                       <div className={styles.itemGiftWrapInfo}>
                         <span>Premium Gift Wrap (+₹{it.customizations.giftWrap.price})</span>

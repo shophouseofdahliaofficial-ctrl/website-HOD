@@ -74,8 +74,8 @@ export const getPostLoginRedirect = (role: 'admin' | 'customer' | string): strin
     return '/account';
   }
 
-  // Default: redirect customers to account page
-  return '/account';
+  // Default: redirect customers to dashboard page on desktop
+  return '/dashboard';
 };
 
 /**

@@ -20,6 +20,13 @@ export default function CustomerSidebarLayout({ children }: { children: React.Re
     }
   }, [pathname]);
 
+  useEffect(() => {
+    const walletParam = searchParams?.get('wallet');
+    if (walletParam === 'true' || walletParam === '1' || walletParam === 'open') {
+      setWalletOpen(true);
+    }
+  }, [searchParams]);
+
   const sidebarLinks = [
     {
       href: '/dashboard', label: 'My Account', icon: (

@@ -37,12 +37,19 @@ function safeParse(json: string | null): CartItem[] {
     if (!Array.isArray(parsed)) return [];
     return parsed
       .filter((x): x is CartItem => !!x && typeof x === 'object')
-      .map((x: any) => ({
-        productId: String(x.productId ?? ''),
-        variationId: x.variationId ? String(x.variationId) : undefined,
-        quantity: Number(x.quantity ?? 1),
-        customizations: x.customizations || undefined,
-      }))
+      .map((x: any) => {
+        const customizations = x.customizations ? { ...x.customizations } : (x.variationSize || x.size ? {} : undefined);
+        if (customizations && (x.variationSize || x.size)) {
+          if (!customizations.size) customizations.size = x.size || x.variationSize;
+          if (!customizations.variationSize) customizations.variationSize = x.variationSize || x.size;
+        }
+        return {
+          productId: String(x.productId ?? ''),
+          variationId: x.variationId ? String(x.variationId) : undefined,
+          quantity: Number(x.quantity ?? 1),
+          customizations,
+        };
+      })
       .filter((x) => x.productId && Number.isFinite(x.quantity) && x.quantity > 0);
   } catch {
     return [];

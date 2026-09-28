@@ -80,6 +80,12 @@ export const API_ENDPOINTS = {
     LIST: '/api/deliveries',
     MARK_DELIVERED: '/api/mark-delivered',
   },
+  EXCHANGES: {
+    REQUEST: '/api/exchanges',
+    GET_FOR_ORDER: (orderId: string) => `/api/exchanges/order/${orderId}`,
+    PAYMENT_ORDER: '/api/exchanges/payment-order',
+    SETTLE: '/api/exchanges/settle',
+  },
   // Admin
   ADMIN: {
     PRODUCTS: {
@@ -169,6 +175,17 @@ export const API_ENDPOINTS = {
       LIST: '/api/admin/media',
       UPLOAD: '/api/admin/media/upload',
       DELETE: '/api/admin/media',
+    },
+    EXCHANGES: {
+      LIST: '/api/admin/exchanges',
+      PENDING_COUNT: '/api/admin/exchanges/pending-count',
+      DETAIL: (id: string) => `/api/admin/exchanges/${id}`,
+      APPROVE: (id: string) => `/api/admin/exchanges/${id}/approve`,
+      REJECT: (id: string) => `/api/admin/exchanges/${id}/reject`,
+      MARK_RETURN_RECEIVED: (id: string) => `/api/admin/exchanges/${id}/mark-return-received`,
+      MARK_RETURN_VERIFIED: (id: string) => `/api/admin/exchanges/${id}/mark-return-verified`,
+      DISPATCH_REPLACEMENT: (id: string) => `/api/admin/exchanges/${id}/dispatch-replacement`,
+      MARK_REPLACEMENT_DELIVERED: (id: string) => `/api/admin/exchanges/${id}/mark-replacement-delivered`,
     },
   },
 } as const;

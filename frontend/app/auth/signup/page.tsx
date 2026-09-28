@@ -230,7 +230,8 @@ function SignUpForm() {
         <button
           type="button"
           onClick={() => {
-            if (safeRedirect) localStorage.setItem('milko_return_after_auth', safeRedirect);
+            const returnTarget = safeRedirect || (isPhoneDevice ? '/account' : '/dashboard');
+            if (returnTarget) localStorage.setItem('milko_return_after_auth', returnTarget);
             loginWithGoogle();
           }}
           className={styles.socialPillButton}

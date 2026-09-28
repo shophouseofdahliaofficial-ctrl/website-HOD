@@ -228,7 +228,7 @@ function LoginForm() {
               typeof window !== 'undefined' &&
               (window.innerWidth <= 768 ||
                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-            const returnTarget = safeRedirect || (isPhoneDevice ? '/account' : '/account');
+            const returnTarget = safeRedirect || (isPhoneDevice ? '/account' : '/dashboard');
             localStorage.setItem('milko_return_after_auth', returnTarget);
             loginWithGoogle();
           }}

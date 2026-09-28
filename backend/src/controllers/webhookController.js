@@ -468,6 +468,63 @@ const handleDelhiveryWebhook = async (req, res, next) => {
     const updateResult = await query(updateQuery, values);
     console.log(`[Delhivery Webhook] Processed update (Waybill: ${waybill || 'N/A'}, Order: ${orderNumber || 'N/A'}, Status: ${newStatus || rawStatus})`);
 
+    // Also automatically update order_exchanges for replacement delivery or reverse pickup milestones
+    if (waybill) {
+      try {
+        const cleanWaybill = String(waybill).trim();
+        const eventDate = statusDateTime ? new Date(statusDateTime) : new Date();
+
+        if (newStatus === 'delivered') {
+          // Automated Step: Replacement item delivered to customer
+          const replRes = await query(
+            `UPDATE order_exchanges
+             SET replacement_delivered_at = COALESCE(replacement_delivered_at, $1),
+                 replacement_status = 'Delivered',
+                 updated_at = NOW()
+             WHERE replacement_waybill = $2
+             RETURNING id, order_number`,
+            [eventDate, cleanWaybill]
+          );
+          if (replRes.rowCount > 0) {
+            console.log(`[Delhivery Webhook] Automatically marked replacement delivered for exchange #${replRes.rows[0].order_number} (AWB: ${cleanWaybill})`);
+          }
+
+          // Automated Step: Return item delivered back to origin warehouse
+          const revRes = await query(
+            `UPDATE order_exchanges
+             SET return_received_at = COALESCE(return_received_at, $1),
+                 reverse_pickup_status = 'Received at Warehouse',
+                 updated_at = NOW()
+             WHERE reverse_waybill = $2
+             RETURNING id, order_number`,
+            [eventDate, cleanWaybill]
+          );
+          if (revRes.rowCount > 0) {
+            console.log(`[Delhivery Webhook] Automatically marked reverse package received at warehouse for exchange #${revRes.rows[0].order_number} (AWB: ${cleanWaybill})`);
+          }
+        } else if (newStatus === 'out_for_delivery') {
+          await query(
+            `UPDATE order_exchanges
+             SET replacement_status = 'Out for Delivery',
+                 updated_at = NOW()
+             WHERE replacement_waybill = $1`,
+            [cleanWaybill]
+          );
+        } else if (newStatus === 'shipped' || newStatus === 'in_transit' || newStatus === 'reached_destination_hub') {
+          await query(
+            `UPDATE order_exchanges
+             SET replacement_status = 'In Transit',
+                 replacement_dispatched_at = COALESCE(replacement_dispatched_at, $1),
+                 updated_at = NOW()
+             WHERE replacement_waybill = $2`,
+            [eventDate, cleanWaybill]
+          );
+        }
+      } catch (exchErr) {
+        console.warn('[Delhivery Webhook] Exchange update warning:', exchErr.message);
+      }
+    }
+
     if (updateResult.rowCount === 0 && (orderNumber || waybill)) {
       try {
         const crypto = require('crypto');

@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const adminController = require('../controllers/adminController');
 const adminNotificationController = require('../controllers/adminNotificationController');
+const exchangeController = require('../controllers/exchangeController');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/admin');
 const { uploadVideoToDrive } = require('../services/googleDrive');
@@ -80,8 +81,19 @@ router.get('/customers/lookup-email', adminController.lookupCustomerEmail);
 router.get('/customers', adminController.getCustomerStats);
 router.patch('/customers/:id/wallet', adminController.updateCustomerWalletBalance);
 router.get('/feedback', adminController.getFeedback);
-router.get('/feedback/latest', adminController.getLatestFeedbackTime);
+router.get('/feedback/latest', adminController.getFeedbackTime || adminController.getLatestFeedbackTime);
 router.delete('/feedback/cancellations/:id', adminController.deleteCancellationFeedback);
+
+// Exchanges
+router.get('/exchanges', exchangeController.adminGetAllExchanges);
+router.get('/exchanges/pending-count', exchangeController.adminGetPendingCount);
+router.get('/exchanges/:id', exchangeController.adminGetExchangeById);
+router.post('/exchanges/:id/approve', exchangeController.adminApproveExchange);
+router.post('/exchanges/:id/reject', exchangeController.adminRejectExchange);
+router.post('/exchanges/:id/mark-return-received', exchangeController.adminMarkReturnReceived);
+router.post('/exchanges/:id/mark-return-verified', exchangeController.adminMarkReturnVerified);
+router.post('/exchanges/:id/dispatch-replacement', exchangeController.adminDispatchReplacement);
+router.post('/exchanges/:id/mark-replacement-delivered', exchangeController.adminMarkReplacementDelivered);
 
 // Subscriptions
 router.get('/subscriptions', adminController.getAllSubscriptions);

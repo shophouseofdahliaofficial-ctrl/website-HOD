@@ -83,7 +83,7 @@ export default function AuthCallbackPage() {
           localStorage.removeItem(RETURN_TO_KEY);
         }
 
-        const path = (returnTo && returnTo.startsWith('/')) ? returnTo : (isPhoneDevice ? '/account' : '/account');
+        const path = (returnTo && returnTo.startsWith('/')) ? returnTo : (isPhoneDevice ? '/account' : '/dashboard');
         // Wait 2 seconds for the loader animation to play before redirecting
         setTimeout(() => {
           if (mounted) {

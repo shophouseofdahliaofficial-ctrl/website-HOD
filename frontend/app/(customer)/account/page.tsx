@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { contentApi } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import CustomerSidebarLayout from '@/components/customer/CustomerSidebarLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -29,10 +29,11 @@ function pickOAuthAvatarFromMetadata(meta: Record<string, unknown> | null | unde
   return null;
 }
 
-export default function AccountPage() {
+function AccountContent() {
   const { user, isAuthenticated, logout, loading, refreshUser } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [walletOpen, setWalletOpen] = useState(false);
   const [appDownloadHref, setAppDownloadHref] = useState(
     () => process.env.NEXT_PUBLIC_PLAY_STORE_URL || DEFAULT_APP_STORE_HREF
@@ -40,6 +41,26 @@ export default function AccountPage() {
   /** Google (or other OAuth) picture from Supabase session metadata only — not persisted in Milko DB. */
   const [oauthAvatarUrl, setOauthAvatarUrl] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    const walletParam = searchParams?.get('wallet');
+    if (walletParam === 'true' || walletParam === '1' || walletParam === 'open') {
+      setWalletOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isPhoneDevice =
+        window.innerWidth <= 768 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (!isPhoneDevice) {
+        const walletParam = searchParams?.get('wallet');
+        const target = walletParam ? `/dashboard?wallet=${walletParam}` : '/dashboard';
+        router.replace(target);
+      }
+    }
+  }, [router, searchParams]);
 
   useEffect(() => {
     refreshUser();
@@ -106,7 +127,9 @@ export default function AccountPage() {
   }
 
   if (!isAuthenticated || !user) {
-    router.push('/auth/login');
+    const walletParam = searchParams?.get('wallet');
+    const redirectTarget = walletParam ? `/account?wallet=${walletParam}` : '/account';
+    router.push(`/auth/login?redirect=${encodeURIComponent(redirectTarget)}`);
     return null;
   }
 
@@ -178,6 +201,17 @@ export default function AccountPage() {
             <path d="M8 14H8.01"/>
           </svg>
           <span className={styles.optionLabel}>Orders</span>
+          <svg className={styles.optionArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </Link>
+
+        <Link href="/customer/giftcard" className={styles.optionRow}>
+          <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 8V16C21 17.1 20.1 18 19 18H5C3.9 18 3 17.1 3 16V8M21 8C21 6.9 20.1 6 19 6H5C3.9 6 3 6.9 3 8M21 8V10C21 11.1 20.1 12 19 12H5C3.9 12 3 11.1 3 10V8" />
+            <path d="M12 2C9.5 2 7.5 4 7.5 6.5C7.5 8 8.5 9 10 10L12 12L14 10C15.5 9 16.5 8 16.5 6.5C16.5 4 14.5 2 12 2Z" />
+          </svg>
+          <span className={styles.optionLabel}>Gift Cards</span>
           <svg className={styles.optionArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 18l6-6-6-6"/>
           </svg>
@@ -319,5 +353,19 @@ export default function AccountPage() {
         </Link>
       </div>
     </CustomerSidebarLayout>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <CustomerSidebarLayout>
+          <LoadingSpinner fullHeight />
+        </CustomerSidebarLayout>
+      }
+    >
+      <AccountContent />
+    </Suspense>
   );
 }
