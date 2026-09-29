@@ -45,14 +45,17 @@ async function getAdminPanelPassword() {
 async function verifyAdminPassword(candidate) {
   if (!candidate) return false;
   const cand = sanitizePassword(candidate);
+  const meta = await getPasswordMetadata();
   const activePassword = sanitizePassword(await getAdminPanelPassword());
-  const envPassword = sanitizePassword(process.env.ADMIN_PANEL_PASSWORD);
 
-  if (cand === activePassword) return true;
-  if (envPassword && cand === envPassword) return true;
-  if (cand === '2316') return true;
-  if (cand === '1234') return true;
-  return false;
+  // If a custom password is set in the database, ONLY that custom password is valid
+  if (meta.isCustom && activePassword) {
+    return cand === activePassword;
+  }
+
+  // Otherwise, check environment variable or 2316 default
+  const envPassword = sanitizePassword(process.env.ADMIN_PANEL_PASSWORD);
+  return cand === (envPassword || '2316');
 }
 
 /**
