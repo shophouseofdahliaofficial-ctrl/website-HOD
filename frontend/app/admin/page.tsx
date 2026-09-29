@@ -269,7 +269,14 @@ export default function AdminDashboard() {
       const [subscriptionsRes, productsRes, usersRes, cartAbandonmentRes, cartAbandonment60Res, adminOrdersRes] = await Promise.all([
         adminSubscriptionsApi.getAll().catch(() => []),
         adminProductsApi.getAll().catch(() => []),
-        apiClient.getInstance().get<{ success: boolean; data: User[] }>(API_ENDPOINTS.ADMIN.USERS.LIST).catch(() => ({ data: { data: [] } })),
+        apiClient.get<User[]>(API_ENDPOINTS.ADMIN.USERS.LIST).catch(async () => {
+          try {
+            const custs = await apiClient.get<any[]>(API_ENDPOINTS.ADMIN.CUSTOMERS.STATS);
+            return Array.isArray(custs) ? custs : [];
+          } catch {
+            return [];
+          }
+        }),
         apiClient.get<{ since: string; sessionsWithAdd: number; abandonedSessions: number; abandonmentRatePercent: number }>(
           '/admin/analytics/cart-abandonment?days=30'
         ).catch(() => ({
@@ -291,7 +298,27 @@ export default function AdminDashboard() {
 
       const subscriptions: Subscription[] = removeRedundantPendingSubscriptions(subscriptionsRes || []);
       const products: Product[] = productsRes || [];
-      const users: User[] = Array.isArray(usersRes.data.data) ? usersRes.data.data : [];
+      const rawUsers: any[] = Array.isArray(usersRes)
+        ? usersRes
+        : Array.isArray((usersRes as any)?.data?.data)
+          ? (usersRes as any).data.data
+          : Array.isArray((usersRes as any)?.data)
+            ? (usersRes as any).data
+            : [];
+
+      const users: User[] = rawUsers.map((u: any) => ({
+        id: String(u.id || ''),
+        name: u.name || 'Customer',
+        email: u.email || '',
+        role: String(u.role || 'customer').toLowerCase(),
+        phone: u.phone,
+        createdAt: u.createdAt || u.created_at || new Date().toISOString(),
+        updatedAt: u.updatedAt || u.updated_at || new Date().toISOString(),
+        avatarUrl: u.avatarUrl || u.avatar_url,
+        dateOfBirth: u.dateOfBirth || u.date_of_birth,
+        weddingDate: u.weddingDate || u.wedding_date,
+        lifetimeSavings: u.lifetimeSavings || u.lifetime_savings || 0,
+      }));
       const adminOrders: AdminOrderListRow[] = Array.isArray(adminOrdersRes) ? adminOrdersRes : [];
       const checkoutSpend = checkoutSpendByCustomer(adminOrders);
 
@@ -314,10 +341,29 @@ export default function AdminDashboard() {
       const returningCustomersCount = Object.values(userSubscriptionCounts).filter(count => count > 1).length;
       const returningCustomersPercent = users.length > 0 ? (returningCustomersCount / users.length) * 100 : 0;
 
-      // Customer insights
+      // Customer insights (customer accounts + unique ordering customers)
+      const customerUsers = users.filter((u) => u.role !== 'admin');
+      const orderCustomerEmails = new Set(
+        adminOrders
+          .map((o) => (o.customerEmail || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
+      const totalCustomersCount = Math.max(
+        customerUsers.length > 0 ? customerUsers.length : users.length,
+        orderCustomerEmails.size
+      );
+
       const now = new Date();
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const newCustomers = users.filter(u => new Date(u.createdAt) >= oneWeekAgo).length;
+      const newFromUsers = (customerUsers.length > 0 ? customerUsers : users).filter((u) => {
+        const d = u.createdAt ? new Date(u.createdAt) : null;
+        return d && !isNaN(d.getTime()) && d >= oneWeekAgo;
+      }).length;
+      const newFromOrders = adminOrders.filter((o) => {
+        const d = o.orderedAt ? new Date(o.orderedAt) : null;
+        return d && !isNaN(d.getTime()) && d >= oneWeekAgo;
+      }).length;
+      const newCustomers = Math.max(newFromUsers, Math.min(newFromOrders, totalCustomersCount));
       
 
 
@@ -479,7 +525,7 @@ export default function AdminDashboard() {
 
       setCustomerInsights({
         newCustomers,
-        totalCustomers: users.length,
+        totalCustomers: totalCustomersCount,
       });
 
       setTopCustomers(topCustomersData);
