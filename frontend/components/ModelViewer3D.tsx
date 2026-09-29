@@ -5,9 +5,13 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import gsap from 'gsap';
 import styles from './ModelViewer3D.module.css';
+
+const MASK_KEY = 0x5a;
+const HEADER_MASK_SIZE = 128;
 
 // In-memory module cache for high-performance zero-reloading across models
 export const textureCache = new Map<string, THREE.Texture>();
@@ -379,8 +383,14 @@ export default function ModelViewer3D({
     };
 
     let meshRef: THREE.Mesh | null = null;
-    const isGlb = modelPath.toLowerCase().endsWith('.glb') || modelPath.toLowerCase().endsWith('.gltf');
-    const isObj = modelPath.toLowerCase().endsWith('.obj');
+    const lowerPath = modelPath.toLowerCase();
+    const isGlbOrProtected =
+      lowerPath.endsWith('.glb') ||
+      lowerPath.endsWith('.gltf') ||
+      lowerPath.endsWith('.hod3d') ||
+      lowerPath.endsWith('.bin') ||
+      lowerPath.endsWith('.dat');
+    const isObj = lowerPath.endsWith('.obj');
     const cachedGeo = geometryCache.get(modelPath);
     const cachedGlb = glbCache.get(modelPath);
 
@@ -427,28 +437,65 @@ export default function ModelViewer3D({
 
     // 8. Load or Reuse Cached Geometry / Models
     const isBird = modelPath.toLowerCase().includes('bird');
-    if (isGlb) {
+    if (isGlbOrProtected) {
       if (cachedGlb) {
         setupGlbModel(cachedGlb);
       } else {
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load(
-          modelPath,
-          (gltf) => {
-            glbCache.set(modelPath, gltf);
-            setupGlbModel(gltf);
-          },
-          (xhr) => {
-            if (xhr.total > 0) {
-              setProgress(Math.round((xhr.loaded / xhr.total) * 100));
+        
+        // Setup Draco Loader for compressed geometry
+        try {
+          const dracoLoader = new DRACOLoader();
+          dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+          gltfLoader.setDRACOLoader(dracoLoader);
+        } catch {
+          // Fallback without Draco if CDN blocked
+        }
+
+        // Fetch model as binary ArrayBuffer to support in-memory unmasking/obfuscation
+        fetch(modelPath)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch model (${res.status})`);
+            return res.arrayBuffer();
+          })
+          .then((arrayBuffer) => {
+            const uint8 = new Uint8Array(arrayBuffer);
+
+            // Check if file has standard "glTF" magic header (0x46546C67 -> 0x67, 0x6C, 0x54, 0x46)
+            const isStandardGltf =
+              uint8.length >= 4 &&
+              uint8[0] === 0x67 &&
+              uint8[1] === 0x6c &&
+              uint8[2] === 0x54 &&
+              uint8[3] === 0x46;
+
+            if (!isStandardGltf) {
+              // Unmask the protected header bytes in memory
+              const bytesToUnmask = Math.min(uint8.length, HEADER_MASK_SIZE);
+              for (let i = 0; i < bytesToUnmask; i++) {
+                uint8[i] ^= MASK_KEY;
+              }
             }
-          },
-          (error) => {
-            console.error('Error loading GLB 3D model:', error);
+
+            gltfLoader.parse(
+              uint8.buffer,
+              '',
+              (gltf) => {
+                glbCache.set(modelPath, gltf);
+                setupGlbModel(gltf);
+              },
+              (error) => {
+                console.error('Error parsing 3D model:', error);
+                setLoadError('Failed to parse 3D model.');
+                setLoading(false);
+              }
+            );
+          })
+          .catch((error) => {
+            console.error('Error loading 3D model:', error);
             setLoadError('Failed to load 3D model.');
             setLoading(false);
-          }
-        );
+          });
       }
     } else if (isObj && cachedGeo) {
       const mesh = new THREE.Mesh(cachedGeo, baseMaterial);
@@ -710,7 +757,11 @@ export default function ModelViewer3D({
   }, [modelPath, texturePath]);
 
   return (
-    <div ref={containerRef} className={styles.modelContainer}>
+    <div
+      ref={containerRef}
+      className={styles.modelContainer}
+      onContextMenu={(e) => e.preventDefault()}
+    >
       {loading && !loadError && (
         <div className={styles.loadingOverlay}>
           <div className={styles.spinner} />
