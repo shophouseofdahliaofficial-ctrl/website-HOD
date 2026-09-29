@@ -336,12 +336,7 @@ async function sendPushToTokens(tokens, payload) {
 }
 
 async function notifyAdminsAboutOrder(order, options = {}) {
-  const reserved = await reserveEvent(options.eventKey || null, 'order');
-  if (!reserved) {
-    return { success: true, deduped: true };
-  }
-
-  // 1. Send Email Notification to Admin
+  // 1. Send Email Notification to Admin immediately
   try {
     const emailService = require('./emailService');
     emailService.sendAdminOrderNotification(order).catch(err => {
@@ -351,7 +346,13 @@ async function notifyAdminsAboutOrder(order, options = {}) {
     console.error('[adminPushNotificationService] Email service error on order:', err?.message || err);
   }
 
-  // 2. Send Push Notification to Registered Admin Devices
+  // 2. Reserve event for push notification deduplication
+  const reserved = await reserveEvent(options.eventKey || null, 'order');
+  if (!reserved) {
+    return { success: true, deduped: true };
+  }
+
+  // 3. Send Push Notification to Registered Admin Devices
   const tokens = await listActiveAdminTokens();
   const details = await loadOrderNotificationDetails(order);
   const title = 'New customer order';
@@ -364,20 +365,15 @@ async function notifyAdminsAboutOrder(order, options = {}) {
     data: {
       type: 'admin_new_order',
       orderId: order?.id || '',
-      orderNumber: order?.orderNumber || '',
-      paymentStatus: order?.paymentStatus || '',
+      orderNumber: order?.orderNumber || order?.order_number || '',
+      paymentStatus: order?.paymentStatus || order?.payment_status || '',
       containsSubscription: order?.containsSubscription ? 'true' : 'false',
     },
   });
 }
 
 async function notifyAdminsAboutSubscription(subscription, options = {}) {
-  const reserved = await reserveEvent(options.eventKey || null, 'subscription');
-  if (!reserved) {
-    return { success: true, deduped: true };
-  }
-
-  // 1. Send Email Notification to Admin
+  // 1. Send Email Notification to Admin immediately
   try {
     const emailService = require('./emailService');
     emailService.sendAdminSubscriptionNotification(subscription, options).catch(err => {
@@ -387,7 +383,13 @@ async function notifyAdminsAboutSubscription(subscription, options = {}) {
     console.error('[adminPushNotificationService] Email service error on subscription:', err?.message || err);
   }
 
-  // 2. Send Push Notification to Registered Admin Devices
+  // 2. Reserve event for push notification deduplication
+  const reserved = await reserveEvent(options.eventKey || null, 'subscription');
+  if (!reserved) {
+    return { success: true, deduped: true };
+  }
+
+  // 3. Send Push Notification to Registered Admin Devices
   const tokens = await listActiveAdminTokens();
   const details = await loadSubscriptionNotificationDetails(subscription);
   const isTrial = Boolean(options.isTrial);

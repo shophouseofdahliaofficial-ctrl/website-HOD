@@ -142,9 +142,10 @@ async function sendAdminOrderNotification(order = {}) {
   let customerPhone = order?.customerPhone || '';
   let deliveryAddress = order?.deliveryAddress || order?.delivery_address || {};
 
-  // Fetch full details if only ID is provided
-  if (order?.id) {
+  // Fetch full details if only ID or partial order is provided
+  if (order?.id || order?.order_number || order?.orderNumber) {
     try {
+      const orderIdentifier = String(order?.order_number || order?.orderNumber || order?.id || '');
       const orderRes = await query(
         `
         SELECT
@@ -154,10 +155,10 @@ async function sendAdminOrderNotification(order = {}) {
           COALESCE(u.phone, '') AS user_phone
         FROM orders o
         LEFT JOIN users u ON u.id = o.user_id
-        WHERE o.id = $1
+        WHERE o.order_number = $1 OR o.id::text = $1
         LIMIT 1
         `,
-        [order.id]
+        [orderIdentifier]
       );
       if (orderRes.rows[0]) {
         const row = orderRes.rows[0];
@@ -166,18 +167,18 @@ async function sendAdminOrderNotification(order = {}) {
         customerEmail = row.user_email || customerEmail;
         customerPhone = row.user_phone || customerPhone;
         deliveryAddress = row.delivery_address || row.shipping_address || deliveryAddress;
-      }
 
-      const itemsRes = await query(
-        `
-        SELECT product_name, variation_size, quantity, unit_price, line_total
-        FROM order_items
-        WHERE order_id = $1
-        ORDER BY id ASC
-        `,
-        [order.id]
-      );
-      items = itemsRes.rows || [];
+        const itemsRes = await query(
+          `
+          SELECT product_name, variation_size, quantity, unit_price, line_total
+          FROM order_items
+          WHERE order_id = $1
+          ORDER BY id ASC
+          `,
+          [row.id]
+        );
+        items = itemsRes.rows || [];
+      }
     } catch (err) {
       console.error('[EmailService] Failed to load full order for email alert:', err.message);
     }
