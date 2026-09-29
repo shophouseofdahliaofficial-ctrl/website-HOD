@@ -1,5 +1,7 @@
-const nodemailer = require('nodemailer');
-const { query } = require('../config/database');
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 function getContactRecipient() {
   return (process.env.CONTACT_EMAIL || 'contact@houseofdahlia.in').trim();
@@ -51,9 +53,15 @@ function getTransporter() {
       ...timeoutOptions,
     });
   } else if (emailUser && emailPass) {
+    // Explicitly configure smtp.gmail.com on port 587 with STARTTLS to avoid ENETUNREACH IPv6 routing errors on cloud hosts like Render
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // Port 587 uses STARTTLS
       auth: { user: emailUser, pass: emailPass },
+      tls: {
+        rejectUnauthorized: false,
+      },
       ...timeoutOptions,
     });
   }
