@@ -22,10 +22,17 @@ function getTransporter() {
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
 
+  const timeoutOptions = {
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
+  };
+
   if (emailService && emailUser && emailPass) {
     transporter = nodemailer.createTransport({
       service: emailService,
       auth: { user: emailUser, pass: emailPass },
+      ...timeoutOptions,
     });
   } else if (smtpHost && emailUser && emailPass) {
     transporter = nodemailer.createTransport({
@@ -36,12 +43,14 @@ function getTransporter() {
       tls: {
         rejectUnauthorized: false,
       },
+      ...timeoutOptions,
     });
   } else if (emailUser && emailPass) {
     // Default to Gmail if only user and pass are provided
     transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: emailUser, pass: emailPass },
+      ...timeoutOptions,
     });
   }
   return transporter;

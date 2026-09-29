@@ -67,18 +67,20 @@ function getDeliveryCount(freq, durationDays) {
   return durationDays;
 }
 
-async function notifyAdminsForOrder(order, { containsSubscription = false, eventKey } = {}) {
-  try {
-    await adminPushService.notifyAdminsAboutOrder(
-      {
-        ...order,
-        containsSubscription,
-      },
-      { eventKey }
-    );
-  } catch (error) {
-    console.error('[ORDER] Failed to send admin push:', error?.message || error);
-  }
+function notifyAdminsForOrder(order, { containsSubscription = false, eventKey } = {}) {
+  setImmediate(async () => {
+    try {
+      await adminPushService.notifyAdminsAboutOrder(
+        {
+          ...order,
+          containsSubscription,
+        },
+        { eventKey }
+      );
+    } catch (error) {
+      console.error('[ORDER] Failed to send admin push/email notification:', error?.message || error);
+    }
+  });
 }
 
 function normalizeInt(val) {
@@ -522,23 +524,25 @@ const createOrder = async (req, res, next) => {
       }
 
       if (isNationwideDelivery) {
-        try {
-          const userDetails = await userModel.findById(userId);
-          const shiprocketCustomer = {
-            ...deliveryAddress,
-            email: userDetails?.email || '',
-          };
-          const shiprocketRes = await shiprocketService.createShiprocketOrder(order, shiprocketCustomer, computedItems);
-          if (shiprocketRes && shiprocketRes.order_id) {
-            await query('UPDATE orders SET shiprocket_order_id = $1 WHERE id = $2', [
-              String(shiprocketRes.order_id),
-              order.id
-            ]);
-            console.log(`[ORDER] Saved Shiprocket Order ID ${shiprocketRes.order_id} for COD order ${order.orderNumber}`);
+        setImmediate(async () => {
+          try {
+            const userDetails = await userModel.findById(userId);
+            const shiprocketCustomer = {
+              ...deliveryAddress,
+              email: userDetails?.email || '',
+            };
+            const shiprocketRes = await shiprocketService.createShiprocketOrder(order, shiprocketCustomer, computedItems);
+            if (shiprocketRes && shiprocketRes.order_id) {
+              await query('UPDATE orders SET shiprocket_order_id = $1 WHERE id = $2', [
+                String(shiprocketRes.order_id),
+                order.id
+              ]);
+              console.log(`[ORDER] Saved Shiprocket Order ID ${shiprocketRes.order_id} for COD order ${order.orderNumber}`);
+            }
+          } catch (e) {
+            console.error('[ORDER] Shiprocket integration failed for COD order:', e?.message || e);
           }
-        } catch (e) {
-          console.error('[ORDER] Shiprocket integration failed for COD order:', e?.message || e);
-        }
+        });
       }
 
       await notifyAdminsForOrder(
