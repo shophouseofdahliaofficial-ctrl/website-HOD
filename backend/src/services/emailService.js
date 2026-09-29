@@ -19,28 +19,27 @@ let transporter = null;
 function getTransporter() {
   if (transporter) return transporter;
 
-  const emailService = process.env.EMAIL_SERVICE;
-  const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const rawPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
-  const emailPass = rawPass ? String(rawPass).replace(/\s+/g, '') : ''; // Strip spaces from Google App Passwords
+  const emailService = process.env.EMAIL_SERVICE || 'gmail';
+  const emailUser = (
+    process.env.EMAIL_USER ||
+    process.env.SMTP_USER ||
+    'shophouseofdahliaofficial@gmail.com'
+  ).trim();
+
+  const rawPass = process.env.EMAIL_PASS || process.env.SMTP_PASS || 'wurc cdxo nffw ygum';
+  const emailPass = rawPass ? String(rawPass).replace(/[\s"']/g, '') : ''; // Strip spaces & quotes from Google App Passwords
 
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
 
   const timeoutOptions = {
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 10000,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   };
 
-  if (emailService && emailUser && emailPass) {
-    transporter = nodemailer.createTransport({
-      service: emailService,
-      auth: { user: emailUser, pass: emailPass },
-      ...timeoutOptions,
-    });
-  } else if (smtpHost && emailUser && emailPass) {
+  if (smtpHost && emailUser && emailPass && emailService !== 'gmail') {
     transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
@@ -52,13 +51,13 @@ function getTransporter() {
       ...timeoutOptions,
     });
   } else if (emailUser && emailPass) {
-    // Default to Gmail if only user and pass are provided
     transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: emailUser, pass: emailPass },
       ...timeoutOptions,
     });
   }
+
   return transporter;
 }
 

@@ -188,9 +188,9 @@ let poolConfig = {
   connectionString: databaseUrl,
   // Supabase requires SSL connections
   ssl: databaseUrl?.includes('supabase') ? { rejectUnauthorized: false } : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
-  max: 10, // Reduced pool size to avoid connection issues
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 20000, // Increased to 20 seconds for slow connections
+  max: 5, // Compact pool size to prevent exceeding Supabase session pooler limits
+  idleTimeoutMillis: 10000, // Close idle clients after 10 seconds
+  connectionTimeoutMillis: 15000,
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
   // Naive TIMESTAMP columns are interpreted consistently; timestamptz + API ISO(Z) then display IST on clients

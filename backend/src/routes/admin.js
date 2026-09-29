@@ -143,9 +143,10 @@ router.delete('/media', adminController.deleteMedia);
 // Analytics
 router.get('/analytics/cart-abandonment', adminController.getCartAbandonment);
 
-// Push notifications
+// Push & Email notifications
 router.post('/push/register-token', adminNotificationController.registerPushToken);
 router.post('/push/send-test', adminNotificationController.sendTestPush);
+router.post('/email/send-test', adminNotificationController.sendTestEmail);
 
 // Configure multer for video uploads (memory storage, up to 50MB limit)
 const videoUpload = multer({

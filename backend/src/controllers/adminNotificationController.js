@@ -49,7 +49,24 @@ const sendTestPush = async (req, res, next) => {
   }
 };
 
+const sendTestEmail = async (req, res, next) => {
+  try {
+    const { toEmail } = req.body || {};
+    const emailService = require('../services/emailService');
+    const result = await emailService.sendTestAdminEmail(toEmail);
+
+    res.json({
+      success: result.success,
+      data: result,
+      message: result.success ? 'Test email sent successfully' : ('Failed to send: ' + (result.error || 'Unknown error')),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerPushToken,
   sendTestPush,
+  sendTestEmail,
 };
