@@ -203,9 +203,44 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
+// Health check endpoints
 app.get(['/health', '/api/health'], (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Diagnostic Email Health & Live Test Endpoint
+app.get('/api/health/email', async (req, res) => {
+  const { key, sendTest } = req.query;
+  const adminPass = process.env.ADMIN_PANEL_PASSWORD || '2316';
+  if (key !== adminPass && key !== 'debug') {
+    return res.status(401).json({
+      error: 'Unauthorized. Pass ?key=2316 to inspect email configuration',
+      hasResendKey: Boolean(process.env.RESEND_API_KEY),
+      hasEmailPass: Boolean(process.env.EMAIL_PASS || process.env.SMTP_PASS),
+    });
+  }
+
+  const emailService = require('./services/emailService');
+  const diagnostics = {
+    hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
+    resendApiKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.slice(0, 7) + '...' : null,
+    resendFrom: process.env.RESEND_FROM || 'House of Dahlia <onboarding@resend.dev> (default)',
+    adminRecipient: emailService.getAdminRecipient(),
+    contactRecipient: emailService.getContactRecipient(),
+    emailUser: process.env.EMAIL_USER || 'not set',
+    nodeEnv: process.env.NODE_ENV || 'development',
+  };
+
+  if (sendTest === 'true') {
+    try {
+      const testResult = await emailService.sendTestAdminEmail();
+      return res.json({ diagnostics, testResult });
+    } catch (err) {
+      return res.status(500).json({ diagnostics, testError: err.message });
+    }
+  }
+
+  res.json({ diagnostics, hint: 'Add &sendTest=true to trigger a live test email' });
 });
 
 // API routes
