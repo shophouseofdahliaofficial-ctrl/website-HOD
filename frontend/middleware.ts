@@ -37,9 +37,11 @@ export async function middleware(request: NextRequest) {
   // Check Coming Soon mode: fetch status from backend
   let comingSoonEnabled = false;
   try {
-    const res = await fetch(`${resolveApiBaseUrl({ hostname: hostOnly })}/api/content/coming_soon`, {
+    const apiBase = resolveApiBaseUrl({ hostname: hostOnly }).replace(/\/+$/, '');
+    const res = await fetch(`${apiBase}/api/content/coming_soon`, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(3000),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return NextResponse.next();
 

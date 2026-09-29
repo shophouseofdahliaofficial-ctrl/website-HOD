@@ -45,19 +45,14 @@ export function resolveApiBaseUrl(opts?: ResolveOpts): string {
 
   const envRaw = trimEnv(process.env.NEXT_PUBLIC_API_BASE_URL);
 
-  // If running in local dev / LAN environment:
+  let resolved = DEFAULT_PROD_API;
   if (isLocalHost) {
-    return envRaw || 'http://localhost:4001';
-  }
-  if (isLan) {
-    return `http://${host}:4001`;
-  }
-
-  // If running on a production or non-local host:
-  // Only use envRaw if it is an explicit, public non-dev URL
-  if (envRaw && !isLocalDevApiUrl(envRaw)) {
-    return envRaw;
+    resolved = envRaw || 'http://localhost:4001';
+  } else if (isLan) {
+    resolved = `http://${host}:4001`;
+  } else if (envRaw && !isLocalDevApiUrl(envRaw)) {
+    resolved = envRaw;
   }
 
-  return DEFAULT_PROD_API;
+  return resolved.replace(/\/+$/, '');
 }
