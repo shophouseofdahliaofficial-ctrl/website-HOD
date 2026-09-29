@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
 import { Product, User } from '@/types';
 import { LoadingSpinnerWithText } from '@/components/ui/LoadingSpinner';
+import { GA_MEASUREMENT_ID } from '@/lib/seo';
 import styles from './dashboard.module.css';
 import adminStyles from './admin-styles.module.css';
 
@@ -754,14 +755,14 @@ export default function AdminDashboard() {
 
           <div className={styles.metricCard}>
             <span className={`${styles.cardTopIcon} ${styles.cardTopIconSales}`} aria-hidden="true" />
-            <div className={styles.metricLabel}>Product Views</div>
+            <div className={styles.metricLabel}>Customer Behaviour</div>
             <a
               className={styles.metricReportLink}
               href={googleAnalyticsUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label="View full report in Google Analytics (Measurement ID: G-VP156V95WB)"
-              title="Opens Google Analytics (Measurement ID: G-VP156V95WB)"
+              aria-label={`View full report in Google Analytics (Measurement ID: ${GA_MEASUREMENT_ID})`}
+              title={`Opens Google Analytics (Measurement ID: ${GA_MEASUREMENT_ID})`}
             >
               View full report
             </a>
@@ -832,7 +833,7 @@ export default function AdminDashboard() {
 
         <div className={styles.metricCard}>
           <div className={styles.statsMobileHeader}>
-            <div className={styles.metricLabel}>Product Views</div>
+            <div className={styles.metricLabel}>Customer Behaviour</div>
             <span className={`${styles.cardTopIcon} ${styles.cardTopIconSales}`} aria-hidden="true" />
           </div>
           <a
@@ -840,8 +841,8 @@ export default function AdminDashboard() {
             href={googleAnalyticsUrl}
             target="_blank"
             rel="noreferrer"
-            aria-label="View full report in Google Analytics (Measurement ID: G-VP156V95WB)"
-            title="Opens Google Analytics (Measurement ID: G-VP156V95WB)"
+            aria-label={`View full report in Google Analytics (Measurement ID: ${GA_MEASUREMENT_ID})`}
+            title={`Opens Google Analytics (Measurement ID: ${GA_MEASUREMENT_ID})`}
           >
             View full report
           </a>
