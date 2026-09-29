@@ -49,6 +49,7 @@
 /* Top Header */
 .headerBar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: 6px 28px 9px 30px;
