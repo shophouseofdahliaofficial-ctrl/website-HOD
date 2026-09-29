@@ -20,8 +20,8 @@ export async function middleware(request: NextRequest) {
   const isLocalDevelopment =
     hostname.includes('localhost') || hostname.startsWith('127.0.0.1');
 
-  // Always allow these paths (admin, auth, coming-soon page itself)
-  const alwaysAllowed = ['/admin', '/auth', '/coming-soon'];
+  // Always allow these paths (admin, auth, coming-soon page itself, static models)
+  const alwaysAllowed = ['/admin', '/auth', '/coming-soon', '/models'];
   const isAlwaysAllowed = alwaysAllowed.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
@@ -75,9 +75,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude static assets in /public (including .lottie) from middleware.
-    // Otherwise, when coming-soon is ON, the animation file request (e.g. /animations/*.lottie)
-    // gets redirected to /coming-soon and the Lottie won't load for customers.
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|lottie|json|wasm|mp4|webm|mp3|wav)$).*)',
+    // Exclude static assets in /public (including 3D models and .lottie) from middleware.
+    // Otherwise, when coming-soon is ON, static assets get redirected to /coming-soon HTML.
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|lottie|json|wasm|mp4|webm|mp3|wav|hod3d|glb|gltf|bin|dat|hdr)$).*)',
   ],
 };
