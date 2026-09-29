@@ -1,12 +1,18 @@
 const nodemailer = require('nodemailer');
 const { query } = require('../config/database');
 
-const TARGET_CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'contact@houseofdahlia.in';
-const ADMIN_NOTIFICATION_EMAIL =
-  process.env.ADMIN_NOTIFICATION_EMAIL ||
-  process.env.EMAIL_USER ||
-  process.env.SMTP_USER ||
-  'shophouseofdahliaoffical@gmail.com';
+function getContactRecipient() {
+  return (process.env.CONTACT_EMAIL || 'contact@houseofdahlia.in').trim();
+}
+
+function getAdminRecipient() {
+  return (
+    process.env.ADMIN_NOTIFICATION_EMAIL ||
+    process.env.EMAIL_USER ||
+    process.env.SMTP_USER ||
+    'shophouseofdahliaofficial@gmail.com'
+  ).trim();
+}
 
 let transporter = null;
 
@@ -66,7 +72,7 @@ function formatInr(amount) {
  */
 async function sendContactInquiry({ name, email, topic, subject, message }) {
   const mailTransporter = getTransporter();
-  const recipient = TARGET_CONTACT_EMAIL;
+  const recipient = getContactRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
 
   const mailOptions = {
@@ -140,7 +146,7 @@ async function sendContactInquiry({ name, email, topic, subject, message }) {
  */
 async function sendAdminOrderNotification(order = {}) {
   const mailTransporter = getTransporter();
-  const recipient = ADMIN_NOTIFICATION_EMAIL;
+  const recipient = getAdminRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
   const adminUrl = process.env.ADMIN_URL || 'https://houseofdahlia.in';
 
