@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { adminProductsApi } from '@/lib/api';
+import { adminProductsApi, adminSubscriptionsApi } from '@/lib/api';
 import { apiClient } from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
 import { Product, User } from '@/types';
