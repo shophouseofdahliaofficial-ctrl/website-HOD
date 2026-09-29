@@ -28,6 +28,7 @@ const OTHER_OPTIONS = [
   { type: 'homepage_products', label: 'Homepage Products Rows', path: '/admin/content/homepage_products', description: 'Adjust how many product rows appear on homepage "Our Products"' },
   { type: 'gifting', label: 'Gifting', path: '/admin/content/gifting', description: 'Configure gift wrapping price per product and toggle customer availability' },
   { type: 'cod', label: 'Cash on Delivery (COD)', path: '/admin/content/cod', description: 'Enable or disable Cash on Delivery across cart and checkout' },
+  { type: 'security', label: 'Admin Password', path: '/admin/security', description: 'Change admin dashboard password without editing Render' },
 ];
 
 function Icon({ name }: { name: string }) {
@@ -182,6 +183,13 @@ function Icon({ name }: { name: string }) {
         <svg viewBox="0 0 24 24" {...common}>
           <rect x="2" y="5" width="20" height="14" rx="2" />
           <line x1="2" y1="10" x2="22" y2="10" />
+        </svg>
+      );
+    case 'security':
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
       );
     default:
