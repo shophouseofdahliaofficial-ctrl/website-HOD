@@ -11,12 +11,15 @@ function getContactRecipient() {
 }
 
 function getAdminRecipient() {
-  return (
+  const raw = (
     process.env.ADMIN_NOTIFICATION_EMAIL ||
     process.env.EMAIL_USER ||
     process.env.SMTP_USER ||
     'shophouseofdahliaofficial@gmail.com'
   ).trim();
+
+  // Automatically correct single-character typo 'offical' -> 'official'
+  return raw.replace(/dahliaoffical@/i, 'dahliaofficial@');
 }
 
 function formatInr(amount) {
@@ -33,11 +36,7 @@ function getTransporter() {
   if (transporter) return transporter;
 
   const emailService = process.env.EMAIL_SERVICE || 'gmail';
-  const emailUser = (
-    process.env.EMAIL_USER ||
-    process.env.SMTP_USER ||
-    'shophouseofdahliaofficial@gmail.com'
-  ).trim();
+  const emailUser = getAdminRecipient();
 
   const rawPass = process.env.EMAIL_PASS || process.env.SMTP_PASS || 'wurc cdxo nffw ygum';
   const emailPass = rawPass ? String(rawPass).replace(/[\s"']/g, '') : ''; // Strip spaces & quotes from Google App Passwords
@@ -86,7 +85,10 @@ function getTransporter() {
 async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const brevoApiKey = process.env.BREVO_API_KEY;
-  const recipient = to || getAdminRecipient();
+  let recipient = to || getAdminRecipient();
+  if (typeof recipient === 'string') {
+    recipient = recipient.replace(/dahliaoffical@/i, 'dahliaofficial@').trim();
+  }
 
   // 1. Try Resend REST API (HTTPS Port 443 - 100% unrestricted on Render/Cloud)
   if (resendApiKey) {
@@ -123,20 +125,15 @@ async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
       const data = await res.json();
       if (res.ok && data.id) {
         console.log(`[EmailService] ✅ Email successfully sent via Resend HTTPS to ${recipient}: ${data.id}`);
-        return { success: true, messageId: data.id, provider: 'resend' };
+        return { success: true, messageId: data.id, provider: 'resend', recipient };
       }
 
       const errMsg = data?.message || data?.error || JSON.stringify(data);
       console.warn(`[EmailService] ⚠️ Resend API responded with error (${res.status}):`, errMsg);
-      // If Resend failed with an explicit error, do not silently swallow it if no other provider is configured
-      if (!brevoApiKey && !process.env.EMAIL_PASS) {
-        return { success: false, error: `Resend Error (${res.status}): ${errMsg}`, provider: 'resend' };
-      }
+      return { success: false, error: `Resend Error (${res.status}): ${errMsg}`, provider: 'resend', recipient };
     } catch (resendErr) {
       console.error('[EmailService] ❌ Failed to send via Resend API:', resendErr?.message || resendErr);
-      if (!brevoApiKey && !process.env.EMAIL_PASS) {
-        return { success: false, error: resendErr?.message || 'Network error communicating with Resend', provider: 'resend' };
-      }
+      return { success: false, error: resendErr?.message || 'Network error communicating with Resend', provider: 'resend', recipient };
     }
   }
 
