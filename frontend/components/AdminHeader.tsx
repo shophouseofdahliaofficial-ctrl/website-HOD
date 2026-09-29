@@ -26,6 +26,7 @@ export default function AdminHeader() {
     { name: 'Products', path: '/admin/products', description: 'Manage products' },
     { name: 'Banners', path: '/admin/banners', description: 'Manage banners' },
     { name: 'Orders', path: '/admin/orders', description: 'View paid orders & Delhivery shipments' },
+    { name: 'Exchanges', path: '/admin/exchanges', description: 'Customer exchange requests' },
     { name: 'Customers', path: '/admin/customers', description: 'Customer list & analytics' },
     { name: 'More', path: '/admin/content', description: 'Manage site content' },
     { name: 'Dashboard', path: '/admin', description: 'Admin dashboard' },
@@ -198,6 +199,12 @@ export default function AdminHeader() {
             className={pathname === '/admin/orders' ? styles.activeLink : ''}
           >
             Orders
+          </Link>
+          <Link 
+            href="/admin/exchanges"
+            className={pathname === '/admin/exchanges' ? styles.activeLink : ''}
+          >
+            Exchanges
           </Link>
           <Link 
             href="/admin/customers"

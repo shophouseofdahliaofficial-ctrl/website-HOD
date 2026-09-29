@@ -2,16 +2,40 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { adminOrdersApi, adminExchangesApi } from '@/lib/api';
 import styles from './AdminMobileNav.module.css';
 
 type NavItem = {
   label: string;
   href: string;
+  badge?: number;
   icon: React.ReactNode;
 };
 
 export default function AdminMobileNav() {
   const pathname = usePathname();
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [pendingExchangesCount, setPendingExchangesCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [ordersData, exchangesData] = await Promise.all([
+          adminOrdersApi.getPendingCount().catch(() => ({ count: 0 })),
+          adminExchangesApi.getPendingCount().catch(() => ({ count: 0 })),
+        ]);
+        setPendingOrdersCount(ordersData.count || 0);
+        setPendingExchangesCount(exchangesData.count || 0);
+      } catch (error) {
+        console.error('Failed to fetch pending counts for mobile nav:', error);
+      }
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const items: NavItem[] = [
     {
@@ -27,11 +51,22 @@ export default function AdminMobileNav() {
     {
       label: 'Orders',
       href: '/admin/orders',
+      badge: pendingOrdersCount,
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
           <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
           <path d="M9 14l2 2 4-4" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Exchanges',
+      href: '/admin/exchanges',
+      badge: pendingExchangesCount,
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
         </svg>
       ),
     },
@@ -65,7 +100,12 @@ export default function AdminMobileNav() {
         const active = item.href === '/admin' ? pathname === '/admin' : pathname?.startsWith(item.href);
         return (
           <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ''}`}>
-            <span className={styles.icon}>{item.icon}</span>
+            <span className={styles.iconWrapper}>
+              <span className={styles.icon}>{item.icon}</span>
+              {typeof item.badge === 'number' && item.badge > 0 ? (
+                <span className={styles.badge}>{item.badge}</span>
+              ) : null}
+            </span>
             <span className={styles.label}>{item.label}</span>
           </Link>
         );
@@ -73,4 +113,5 @@ export default function AdminMobileNav() {
     </nav>
   );
 }
+
 

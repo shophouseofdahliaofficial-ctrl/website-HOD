@@ -332,358 +332,606 @@ export default function AdminExchangesPage() {
             <p style={{ margin: 0 }}>There are currently no exchange requests matching this filter.</p>
           </div>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Order / Customer</th>
-                  <th>Item to Exchange</th>
-                  <th>Requested Replacement</th>
-                  <th>Reason & Details</th>
-                  <th>Status & Payment</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exchanges.map((ex) => {
-                  const isPositive = ex.priceDifference > 0;
-                  const isNegative = ex.priceDifference < 0;
-                  const isDelivered =
-                    ex.status === 'completed' ||
-                    ex.replacementStatus?.toLowerCase() === 'delivered' ||
-                    Boolean(ex.replacementDeliveredAt);
-                  const isRejected = ex.status === 'rejected' || ex.status === 'cancelled';
+          <>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Order / Customer</th>
+                    <th>Item to Exchange</th>
+                    <th>Requested Replacement</th>
+                    <th>Reason & Details</th>
+                    <th>Status & Payment</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {exchanges.map((ex) => {
+                    const isPositive = ex.priceDifference > 0;
+                    const isNegative = ex.priceDifference < 0;
+                    const isDelivered =
+                      ex.status === 'completed' ||
+                      ex.replacementStatus?.toLowerCase() === 'delivered' ||
+                      Boolean(ex.replacementDeliveredAt);
+                    const isRejected = ex.status === 'rejected' || ex.status === 'cancelled';
 
-                  const rowClass = isDelivered
-                    ? styles.rowCompleted
-                    : isRejected
-                      ? styles.rowRejected
-                      : '';
+                    const rowClass = isDelivered
+                      ? styles.rowCompleted
+                      : isRejected
+                        ? styles.rowRejected
+                        : '';
 
-                  return (
-                    <tr key={ex.id} className={rowClass}>
-                      {/* Order & Customer */}
-                      <td>
+                    return (
+                      <tr key={ex.id} className={rowClass}>
+                        {/* Order & Customer */}
+                        <td>
+                          <Link href={`/admin/orders?search=${ex.orderNumber}`} className={styles.orderNumLink}>
+                            #{ex.orderNumber}
+                          </Link>
+                          <div className={styles.customerMeta} style={{ marginTop: '0.35rem' }}>
+                            <span className={styles.customerName}>{ex.customerName || 'Customer'}</span>
+                            <span className={styles.customerEmail}>{ex.customerEmail || ''}</span>
+                          </div>
+                        </td>
+
+                        {/* Original Item */}
+                        <td>
+                          <div className={styles.itemSummary}>
+                            {ex.exchangeItems && ex.exchangeItems.length > 1 ? (
+                              <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
+                                  <span className={styles.multiCountBadge}>{ex.exchangeItems.length} Items</span>
+                                </div>
+                                {ex.exchangeItems.map((it, i) => (
+                                  <div key={i} style={{ fontSize: '0.82rem', color: '#1e293b', marginBottom: '0.2rem' }}>
+                                    <strong>{it.productName}</strong> (Qty: {it.quantity})
+                                    {it.originalVariation && (
+                                      <span className={`${styles.variationTag} ${styles.variationTagOld}`} style={{ marginLeft: '0.3rem' }}>
+                                        {it.originalVariation}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </>
+                            ) : (
+                              <>
+                                <span className={styles.originalItem}>{ex.productName}</span>
+                                {ex.originalVariation && (
+                                  <div>
+                                    <span className={`${styles.variationTag} ${styles.variationTagOld}`}>Old: {ex.originalVariation}</span>
+                                  </div>
+                                )}
+                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>₹{ex.originalUnitPrice.toFixed(2)} (Qty: {ex.quantity})</span>
+                              </>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Requested Replacement */}
+                        <td>
+                          <div className={styles.itemSummary}>
+                            {ex.exchangeItems && ex.exchangeItems.length > 1 ? (
+                              <>
+                                {ex.exchangeItems.map((it, i) => (
+                                  <div key={i} style={{ fontSize: '0.82rem', marginBottom: '0.2rem' }}>
+                                    <span className={styles.replacementItem}>{it.requestedItemName || it.productName}</span>
+                                    {it.requestedVariation && (
+                                      <span className={`${styles.variationTag} ${styles.variationTagNew}`} style={{ marginLeft: '0.3rem' }}>
+                                        {it.requestedVariation}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                                <div className={`${styles.priceDiffTag} ${isPositive ? styles.priceDiffPositive : isNegative ? styles.priceDiffNegative : styles.priceDiffNeutral}`} style={{ marginTop: '0.25rem' }}>
+                                  {isPositive
+                                    ? `Total +₹${ex.priceDifference.toFixed(2)} (Customer pays)`
+                                    : isNegative
+                                      ? `Total -₹${Math.abs(ex.priceDifference).toFixed(2)} (Refund)`
+                                      : 'Same price (₹0 diff)'}
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <span className={styles.replacementItem}>
+                                  {ex.requestedItemName || ex.productName}
+                                </span>
+                                {ex.requestedVariation && (
+                                  <div>
+                                    <span className={`${styles.variationTag} ${styles.variationTagNew}`}>
+                                      New: {ex.requestedVariation}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className={`${styles.priceDiffTag} ${isPositive ? styles.priceDiffPositive : isNegative ? styles.priceDiffNegative : styles.priceDiffNeutral}`}>
+                                  {isPositive
+                                    ? `+₹${ex.priceDifference.toFixed(2)} (Customer to pay)`
+                                    : isNegative
+                                      ? `-₹${Math.abs(ex.priceDifference).toFixed(2)} (Refund to wallet)`
+                                      : 'Same price (₹0 diff)'}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Reason & Notes */}
+                        <td>
+                          <div className={styles.reasonBox}>
+                            <div className={styles.reasonTitle}>{ex.reason}</div>
+                            {ex.customerMessage && (
+                              <div style={{ fontStyle: 'italic', marginTop: '0.15rem' }}>
+                                &ldquo;{ex.customerMessage}&rdquo;
+                              </div>
+                            )}
+                            {ex.rejectionReason && (
+                              <div className={styles.rejectionNote}>
+                                <strong>Rejection Reason:</strong> {ex.rejectionReason}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td>
+                          <div>
+                            <span
+                              className={`${styles.statusBadge} ${
+                                ex.status === 'pending'
+                                  ? styles.statusPending
+                                  : ex.status === 'approved'
+                                    ? styles.statusApproved
+                                    : ex.status === 'rejected'
+                                      ? styles.statusRejected
+                                      : styles.statusCompleted
+                              }`}
+                            >
+                              {ex.status}
+                            </span>
+                          </div>
+                          {ex.status === 'approved' && (
+                            <div className={styles.paymentBadge}>
+                              {ex.paymentStatus === 'not_required'
+                                ? 'No payment needed'
+                                : ex.paymentStatus === 'paid'
+                                  ? 'Paid'
+                                  : ex.paymentStatus === 'refunded'
+                                    ? 'Refunded to Wallet'
+                                    : 'Awaiting Settlement'}
+                            </div>
+                          )}
+                          {ex.status === 'completed' && ex.paymentMethod && (
+                            <div className={styles.paymentBadge}>
+                              Settled via {ex.paymentMethod.replace('_', ' ')}
+                            </div>
+                          )}
+                          {ex.reverseWaybill && (
+                            <div style={{ marginTop: '0.35rem' }}>
+                              <a
+                                href={ex.reverseTrackingUrl || `https://www.delhivery.com/track/package/${ex.reverseWaybill}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  color: '#0369a1',
+                                  background: '#e0f2fe',
+                                  padding: '0.2rem 0.45rem',
+                                  borderRadius: '4px',
+                                  textDecoration: 'none',
+                                  border: '1px solid #bae6fd',
+                                }}
+                              >
+                                🚚 RVP #{ex.reverseWaybill} ↗
+                              </a>
+                            </div>
+                          )}
+                          {ex.returnReceivedAt && !ex.returnVerifiedAt && (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  color: '#166534',
+                                  background: '#dcfce7',
+                                  padding: '0.15rem 0.4rem',
+                                  borderRadius: '4px',
+                                  border: '1px solid #bbf7d0',
+                                }}
+                              >
+                                ✓ Return at Origin
+                              </span>
+                            </div>
+                          )}
+                          {ex.returnVerifiedAt && (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  color: '#92400e',
+                                  background: '#fef3c7',
+                                  padding: '0.15rem 0.4rem',
+                                  borderRadius: '4px',
+                                  border: '1px solid #fde68a',
+                                }}
+                              >
+                                ✓ Quality Verified
+                              </span>
+                            </div>
+                          )}
+                          {ex.replacementWaybill && (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              <a
+                                href={ex.replacementTrackingUrl || `https://www.delhivery.com/track/package/${ex.replacementWaybill}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  color: '#065f46',
+                                  background: '#d1fae5',
+                                  padding: '0.2rem 0.45rem',
+                                  borderRadius: '4px',
+                                  textDecoration: 'none',
+                                  border: '1px solid #a7f3d0',
+                                }}
+                              >
+                                📦 Replacement #{ex.replacementWaybill} ↗
+                              </a>
+                            </div>
+                          )}
+                          {ex.replacementDeliveredAt && (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  color: '#15803d',
+                                  background: '#dcfce7',
+                                  padding: '0.15rem 0.4rem',
+                                  borderRadius: '4px',
+                                  border: '1px solid #86efac',
+                                }}
+                              >
+                                ✓ Replacement Delivered
+                              </span>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Date */}
+                        <td>
+                          <span style={{ fontSize: '0.82rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                            {formatDateTimeIST(ex.requestedAt || ex.createdAt)}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td>
+                          <div className={styles.actionBtns}>
+                            {ex.status === 'pending' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => openApproveModal(ex)}
+                                  className={styles.approveBtn}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openRejectModal(ex)}
+                                  className={styles.rejectBtn}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {ex.returnReceivedAt && !ex.returnVerifiedAt && (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkReturnVerified(ex)}
+                                disabled={processingId === ex.id}
+                                className={styles.verifyBtn}
+                                title="Confirm quality inspection and verification passed"
+                              >
+                                {processingId === ex.id ? 'Verifying...' : '🔍 Mark Verified'}
+                              </button>
+                            )}
+                            {ex.returnVerifiedAt && !ex.replacementWaybill && (
+                              <button
+                                type="button"
+                                onClick={() => handleDispatchReplacement(ex)}
+                                disabled={processingId === ex.id}
+                                className={styles.dispatchBtn}
+                                title="Generate forward Delhivery shipment to customer"
+                              >
+                                {processingId === ex.id ? 'Dispatching...' : '🚚 Dispatch Replacement'}
+                              </button>
+                            )}
+                            {ex.replacementWaybill && !ex.replacementDeliveredAt && (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkReplacementDelivered(ex)}
+                                disabled={processingId === ex.id}
+                                className={styles.deliveredBtn}
+                                title="Mark replacement as delivered to customer"
+                              >
+                                {processingId === ex.id ? 'Saving...' : '✓ Mark Delivered'}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setDetailsExchange(ex)}
+                              className={styles.viewBtn}
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className={styles.mobileCardsContainer}>
+              {exchanges.map((ex) => {
+                const isPositive = ex.priceDifference > 0;
+                const isNegative = ex.priceDifference < 0;
+                const isDelivered =
+                  ex.status === 'completed' ||
+                  ex.replacementStatus?.toLowerCase() === 'delivered' ||
+                  Boolean(ex.replacementDeliveredAt);
+                const isRejected = ex.status === 'rejected' || ex.status === 'cancelled';
+
+                const cardClass = isDelivered
+                  ? styles.mobileCardCompleted
+                  : isRejected
+                    ? styles.mobileCardRejected
+                    : '';
+
+                return (
+                  <div key={ex.id} className={`${styles.mobileExchangeCard} ${cardClass}`}>
+                    {/* Header */}
+                    <div className={styles.mobileCardHeader}>
+                      <div className={styles.mobileOrderGroup}>
                         <Link href={`/admin/orders?search=${ex.orderNumber}`} className={styles.orderNumLink}>
                           #{ex.orderNumber}
                         </Link>
-                        <div className={styles.customerMeta} style={{ marginTop: '0.35rem' }}>
-                          <span className={styles.customerName}>{ex.customerName || 'Customer'}</span>
-                          <span className={styles.customerEmail}>{ex.customerEmail || ''}</span>
-                        </div>
-                      </td>
-
-                      {/* Original Item */}
-                      <td>
-                        <div className={styles.itemSummary}>
-                          {ex.exchangeItems && ex.exchangeItems.length > 1 ? (
-                            <>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
-                                <span className={styles.multiCountBadge}>{ex.exchangeItems.length} Items</span>
-                              </div>
-                              {ex.exchangeItems.map((it, i) => (
-                                <div key={i} style={{ fontSize: '0.82rem', color: '#1e293b', marginBottom: '0.2rem' }}>
-                                  <strong>{it.productName}</strong> (Qty: {it.quantity})
-                                  {it.originalVariation && (
-                                    <span className={`${styles.variationTag} ${styles.variationTagOld}`} style={{ marginLeft: '0.3rem' }}>
-                                      {it.originalVariation}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                            </>
-                          ) : (
-                            <>
-                              <span className={styles.originalItem}>{ex.productName}</span>
-                              {ex.originalVariation && (
-                                <div>
-                                  <span className={`${styles.variationTag} ${styles.variationTagOld}`}>Old: {ex.originalVariation}</span>
-                                </div>
-                              )}
-                              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>₹{ex.originalUnitPrice.toFixed(2)} (Qty: {ex.quantity})</span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Requested Replacement */}
-                      <td>
-                        <div className={styles.itemSummary}>
-                          {ex.exchangeItems && ex.exchangeItems.length > 1 ? (
-                            <>
-                              {ex.exchangeItems.map((it, i) => (
-                                <div key={i} style={{ fontSize: '0.82rem', marginBottom: '0.2rem' }}>
-                                  <span className={styles.replacementItem}>{it.requestedItemName || it.productName}</span>
-                                  {it.requestedVariation && (
-                                    <span className={`${styles.variationTag} ${styles.variationTagNew}`} style={{ marginLeft: '0.3rem' }}>
-                                      {it.requestedVariation}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                              <div className={`${styles.priceDiffTag} ${isPositive ? styles.priceDiffPositive : isNegative ? styles.priceDiffNegative : styles.priceDiffNeutral}`} style={{ marginTop: '0.25rem' }}>
-                                {isPositive
-                                  ? `Total +₹${ex.priceDifference.toFixed(2)} (Customer pays)`
-                                  : isNegative
-                                    ? `Total -₹${Math.abs(ex.priceDifference).toFixed(2)} (Refund)`
-                                    : 'Same price (₹0 diff)'}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <span className={styles.replacementItem}>
-                                {ex.requestedItemName || ex.productName}
-                              </span>
-                              {ex.requestedVariation && (
-                                <div>
-                                  <span className={`${styles.variationTag} ${styles.variationTagNew}`}>
-                                    New: {ex.requestedVariation}
-                                  </span>
-                                </div>
-                              )}
-                              <div className={`${styles.priceDiffTag} ${isPositive ? styles.priceDiffPositive : isNegative ? styles.priceDiffNegative : styles.priceDiffNeutral}`}>
-                                {isPositive
-                                  ? `+₹${ex.priceDifference.toFixed(2)} (Customer to pay)`
-                                  : isNegative
-                                    ? `-₹${Math.abs(ex.priceDifference).toFixed(2)} (Refund to wallet)`
-                                    : 'Same price (₹0 diff)'}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Reason & Notes */}
-                      <td>
-                        <div className={styles.reasonBox}>
-                          <div className={styles.reasonTitle}>{ex.reason}</div>
-                          {ex.customerMessage && (
-                            <div style={{ fontStyle: 'italic', marginTop: '0.15rem' }}>
-                              &ldquo;{ex.customerMessage}&rdquo;
-                            </div>
-                          )}
-                          {ex.rejectionReason && (
-                            <div className={styles.rejectionNote}>
-                              <strong>Rejection Reason:</strong> {ex.rejectionReason}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td>
-                        <div>
-                          <span
-                            className={`${styles.statusBadge} ${
-                              ex.status === 'pending'
-                                ? styles.statusPending
-                                : ex.status === 'approved'
-                                  ? styles.statusApproved
-                                  : ex.status === 'rejected'
-                                    ? styles.statusRejected
-                                    : styles.statusCompleted
-                            }`}
-                          >
-                            {ex.status}
-                          </span>
-                        </div>
-                        {ex.status === 'approved' && (
-                          <div className={styles.paymentBadge}>
-                            {ex.paymentStatus === 'not_required'
-                              ? 'No payment needed'
-                              : ex.paymentStatus === 'paid'
-                                ? 'Paid'
-                                : ex.paymentStatus === 'refunded'
-                                  ? 'Refunded to Wallet'
-                                  : 'Awaiting Settlement'}
-                          </div>
-                        )}
-                        {ex.status === 'completed' && ex.paymentMethod && (
-                          <div className={styles.paymentBadge}>
-                            Settled via {ex.paymentMethod.replace('_', ' ')}
-                          </div>
-                        )}
-                        {ex.reverseWaybill && (
-                          <div style={{ marginTop: '0.35rem' }}>
-                            <a
-                              href={ex.reverseTrackingUrl || `https://www.delhivery.com/track/package/${ex.reverseWaybill}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                color: '#0369a1',
-                                background: '#e0f2fe',
-                                padding: '0.2rem 0.45rem',
-                                borderRadius: '4px',
-                                textDecoration: 'none',
-                                border: '1px solid #bae6fd',
-                              }}
-                            >
-                              🚚 RVP #{ex.reverseWaybill} ↗
-                            </a>
-                          </div>
-                        )}
-                        {ex.returnReceivedAt && !ex.returnVerifiedAt && (
-                          <div style={{ marginTop: '0.25rem' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                color: '#166534',
-                                background: '#dcfce7',
-                                padding: '0.15rem 0.4rem',
-                                borderRadius: '4px',
-                                border: '1px solid #bbf7d0',
-                              }}
-                            >
-                              ✓ Return at Origin
-                            </span>
-                          </div>
-                        )}
-                        {ex.returnVerifiedAt && (
-                          <div style={{ marginTop: '0.25rem' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                color: '#92400e',
-                                background: '#fef3c7',
-                                padding: '0.15rem 0.4rem',
-                                borderRadius: '4px',
-                                border: '1px solid #fde68a',
-                              }}
-                            >
-                              ✓ Quality Verified
-                            </span>
-                          </div>
-                        )}
-                        {ex.replacementWaybill && (
-                          <div style={{ marginTop: '0.25rem' }}>
-                            <a
-                              href={ex.replacementTrackingUrl || `https://www.delhivery.com/track/package/${ex.replacementWaybill}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                color: '#065f46',
-                                background: '#d1fae5',
-                                padding: '0.2rem 0.45rem',
-                                borderRadius: '4px',
-                                textDecoration: 'none',
-                                border: '1px solid #a7f3d0',
-                              }}
-                            >
-                              📦 Replacement #{ex.replacementWaybill} ↗
-                            </a>
-                          </div>
-                        )}
-                        {ex.replacementDeliveredAt && (
-                          <div style={{ marginTop: '0.25rem' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                color: '#15803d',
-                                background: '#dcfce7',
-                                padding: '0.15rem 0.4rem',
-                                borderRadius: '4px',
-                                border: '1px solid #86efac',
-                              }}
-                            >
-                              ✓ Replacement Delivered
-                            </span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Date */}
-                      <td>
-                        <span style={{ fontSize: '0.82rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                        <span className={styles.mobileDate}>
                           {formatDateTimeIST(ex.requestedAt || ex.createdAt)}
                         </span>
-                      </td>
+                      </div>
+                      <span
+                        className={`${styles.statusBadge} ${
+                          ex.status === 'pending'
+                            ? styles.statusPending
+                            : ex.status === 'approved'
+                              ? styles.statusApproved
+                              : ex.status === 'rejected'
+                                ? styles.statusRejected
+                                : styles.statusCompleted
+                        }`}
+                      >
+                        {ex.status}
+                      </span>
+                    </div>
 
-                      {/* Actions */}
-                      <td>
-                        <div className={styles.actionBtns}>
-                          {ex.status === 'pending' && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => openApproveModal(ex)}
-                                className={styles.approveBtn}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => openRejectModal(ex)}
-                                className={styles.rejectBtn}
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                          {ex.returnReceivedAt && !ex.returnVerifiedAt && (
-                            <button
-                              type="button"
-                              onClick={() => handleMarkReturnVerified(ex)}
-                              disabled={processingId === ex.id}
-                              className={styles.verifyBtn}
-                              title="Confirm quality inspection and verification passed"
-                            >
-                              {processingId === ex.id ? 'Verifying...' : '🔍 Mark Verified'}
-                            </button>
-                          )}
-                          {ex.returnVerifiedAt && !ex.replacementWaybill && (
-                            <button
-                              type="button"
-                              onClick={() => handleDispatchReplacement(ex)}
-                              disabled={processingId === ex.id}
-                              className={styles.dispatchBtn}
-                              title="Generate forward Delhivery shipment to customer"
-                            >
-                              {processingId === ex.id ? 'Dispatching...' : '🚚 Dispatch Replacement'}
-                            </button>
-                          )}
-                          {ex.replacementWaybill && !ex.replacementDeliveredAt && (
-                            <button
-                              type="button"
-                              onClick={() => handleMarkReplacementDelivered(ex)}
-                              disabled={processingId === ex.id}
-                              className={styles.deliveredBtn}
-                              title="Mark replacement as delivered to customer"
-                            >
-                              {processingId === ex.id ? 'Saving...' : '✓ Mark Delivered'}
-                            </button>
-                          )}
+                    {/* Customer */}
+                    <div className={styles.mobileCustomerRow}>
+                      <span className={styles.mobileCustomerName}>{ex.customerName || 'Customer'}</span>
+                      {ex.customerEmail && <span className={styles.mobileCustomerEmail}>{ex.customerEmail}</span>}
+                    </div>
+
+                    {/* Comparison Item Block */}
+                    <div className={styles.mobileComparisonSection}>
+                      {ex.exchangeItems && ex.exchangeItems.length > 1 ? (
+                        <div className={styles.mobileMultiItems}>
+                          <div style={{ marginBottom: '0.4rem' }}>
+                            <span className={styles.multiCountBadge}>{ex.exchangeItems.length} Items</span>
+                          </div>
+                          {ex.exchangeItems.map((it, i) => (
+                            <div key={i} className={styles.mobileItemRow}>
+                              <div className={styles.mobileOriginalItem}>
+                                <span className={styles.mobileItemLabel}>From:</span> <strong>{it.productName}</strong> (Qty: {it.quantity})
+                                {it.originalVariation && (
+                                  <span className={`${styles.variationTag} ${styles.variationTagOld}`} style={{ marginLeft: '0.35rem' }}>
+                                    {it.originalVariation}
+                                  </span>
+                                )}
+                              </div>
+                              <div className={styles.mobileReplacementItem}>
+                                <span className={styles.mobileItemLabel}>To:</span> <strong>{it.requestedItemName || it.productName}</strong>
+                                {it.requestedVariation && (
+                                  <span className={`${styles.variationTag} ${styles.variationTagNew}`} style={{ marginLeft: '0.35rem' }}>
+                                    {it.requestedVariation}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          <div className={`${styles.priceDiffTag} ${isPositive ? styles.priceDiffPositive : isNegative ? styles.priceDiffNegative : styles.priceDiffNeutral}`}>
+                            {isPositive
+                              ? `Total +₹${ex.priceDifference.toFixed(2)} (Customer pays)`
+                              : isNegative
+                                ? `Total -₹${Math.abs(ex.priceDifference).toFixed(2)} (Refund)`
+                                : 'Same price (₹0 diff)'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={styles.mobileSingleItemComparison}>
+                          <div className={styles.mobileOriginalItem}>
+                            <span className={styles.mobileItemLabel}>Original Item:</span>
+                            <div style={{ fontWeight: 600, color: '#1e293b', marginTop: '0.15rem' }}>{ex.productName}</div>
+                            {ex.originalVariation && (
+                              <div style={{ marginTop: '0.2rem' }}>
+                                <span className={`${styles.variationTag} ${styles.variationTagOld}`}>Old: {ex.originalVariation}</span>
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem' }}>
+                              ₹{ex.originalUnitPrice.toFixed(2)} (Qty: {ex.quantity})
+                            </div>
+                          </div>
+
+                          <div className={styles.mobileArrowDivider}>↓ Requested Exchange ↓</div>
+
+                          <div className={styles.mobileReplacementItem}>
+                            <span className={styles.mobileItemLabel}>New Replacement:</span>
+                            <div style={{ fontWeight: 700, color: '#00835d', marginTop: '0.15rem' }}>{ex.requestedItemName || ex.productName}</div>
+                            {ex.requestedVariation && (
+                              <div style={{ marginTop: '0.2rem' }}>
+                                <span className={`${styles.variationTag} ${styles.variationTagNew}`}>New: {ex.requestedVariation}</span>
+                              </div>
+                            )}
+                            <div className={`${styles.priceDiffTag} ${isPositive ? styles.priceDiffPositive : isNegative ? styles.priceDiffNegative : styles.priceDiffNeutral}`}>
+                              {isPositive
+                                ? `+₹${ex.priceDifference.toFixed(2)} (Customer to pay)`
+                                : isNegative
+                                  ? `-₹${Math.abs(ex.priceDifference).toFixed(2)} (Refund to wallet)`
+                                  : 'Same price (₹0 diff)'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reason */}
+                    {ex.reason && (
+                      <div className={styles.mobileReasonBox}>
+                        <div><strong style={{ color: '#0f172a' }}>Reason:</strong> {ex.reason}</div>
+                        {ex.customerMessage && (
+                          <div style={{ fontStyle: 'italic', color: '#64748b', marginTop: '0.2rem' }}>
+                            &ldquo;{ex.customerMessage}&rdquo;
+                          </div>
+                        )}
+                        {ex.rejectionReason && (
+                          <div className={styles.rejectionNote} style={{ marginTop: '0.35rem' }}>
+                            <strong>Rejection:</strong> {ex.rejectionReason}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Badges & Logistics */}
+                    <div className={styles.mobileBadgesRow}>
+                      {ex.status === 'approved' && (
+                        <span className={styles.paymentBadge}>
+                          {ex.paymentStatus === 'not_required'
+                            ? 'No payment needed'
+                            : ex.paymentStatus === 'paid'
+                              ? 'Paid'
+                              : ex.paymentStatus === 'refunded'
+                                ? 'Refunded to Wallet'
+                                : 'Awaiting Settlement'}
+                        </span>
+                      )}
+                      {ex.reverseWaybill && (
+                        <a
+                          href={ex.reverseTrackingUrl || `https://www.delhivery.com/track/package/${ex.reverseWaybill}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.mobileTrackLink}
+                        >
+                          🚚 RVP #{ex.reverseWaybill} ↗
+                        </a>
+                      )}
+                      {ex.returnReceivedAt && !ex.returnVerifiedAt && (
+                        <span className={styles.mobileOriginBadge}>✓ Return at Origin</span>
+                      )}
+                      {ex.returnVerifiedAt && (
+                        <span className={styles.mobileVerifiedBadge}>✓ Quality Verified</span>
+                      )}
+                      {ex.replacementWaybill && (
+                        <a
+                          href={ex.replacementTrackingUrl || `https://www.delhivery.com/track/package/${ex.replacementWaybill}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.mobileReplacementTrackLink}
+                        >
+                          📦 Repl. #{ex.replacementWaybill} ↗
+                        </a>
+                      )}
+                      {ex.replacementDeliveredAt && (
+                        <span className={styles.mobileOriginBadge}>✓ Replacement Delivered</span>
+                      )}
+                    </div>
+
+                    {/* Mobile Action Buttons */}
+                    <div className={styles.mobileActionBtns}>
+                      {ex.status === 'pending' && (
+                        <div className={styles.mobileActionPair}>
                           <button
                             type="button"
-                            onClick={() => setDetailsExchange(ex)}
-                            className={styles.viewBtn}
+                            onClick={() => openApproveModal(ex)}
+                            className={styles.approveBtn}
                           >
-                            Details
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openRejectModal(ex)}
+                            className={styles.rejectBtn}
+                          >
+                            Reject
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                      {ex.returnReceivedAt && !ex.returnVerifiedAt && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkReturnVerified(ex)}
+                          disabled={processingId === ex.id}
+                          className={styles.verifyBtn}
+                        >
+                          {processingId === ex.id ? 'Verifying...' : '🔍 Mark Verified'}
+                        </button>
+                      )}
+                      {ex.returnVerifiedAt && !ex.replacementWaybill && (
+                        <button
+                          type="button"
+                          onClick={() => handleDispatchReplacement(ex)}
+                          disabled={processingId === ex.id}
+                          className={styles.dispatchBtn}
+                        >
+                          {processingId === ex.id ? 'Dispatching...' : '🚚 Dispatch Replacement'}
+                        </button>
+                      )}
+                      {ex.replacementWaybill && !ex.replacementDeliveredAt && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkReplacementDelivered(ex)}
+                          disabled={processingId === ex.id}
+                          className={styles.deliveredBtn}
+                        >
+                          {processingId === ex.id ? 'Saving...' : '✓ Mark Delivered'}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setDetailsExchange(ex)}
+                        className={styles.viewBtn}
+                      >
+                        View Full Details
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
