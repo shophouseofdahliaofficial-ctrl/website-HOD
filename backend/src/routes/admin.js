@@ -148,6 +148,34 @@ router.post('/push/register-token', adminNotificationController.registerPushToke
 router.post('/push/send-test', adminNotificationController.sendTestPush);
 router.post('/email/send-test', adminNotificationController.sendTestEmail);
 
+// Admin Panel Gate Password Management
+const adminSecurityService = require('../services/adminSecurityService');
+router.get('/security/password-status', async (req, res, next) => {
+  try {
+    const metadata = await adminSecurityService.getPasswordMetadata();
+    res.json({ success: true, data: metadata });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/security/change-password', async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    const isValid = await adminSecurityService.verifyAdminPassword(currentPassword);
+    if (!isValid) {
+      return res.status(400).json({ success: false, error: 'Current admin password is incorrect' });
+    }
+    if (!newPassword || String(newPassword).trim().length < 3) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 3 characters long' });
+    }
+    const result = await adminSecurityService.setAdminPanelPassword(newPassword);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Configure multer for video uploads (memory storage, up to 50MB limit)
 const videoUpload = multer({
   storage: multer.memoryStorage(),

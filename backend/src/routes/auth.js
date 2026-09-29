@@ -29,15 +29,21 @@ router.get('/me', authenticate, authController.getCurrentUser);
 router.patch('/profile', authenticate, authController.updateProfile);
 router.post('/change-password', authenticate, authController.changePassword);
 
+const adminSecurityService = require('../services/adminSecurityService');
+
 // Public route to verify admin password (used by Coming Soon and Admin Password Gate)
-router.post('/verify-admin-password', (req, res) => {
-  const { password } = req.body;
-  const adminPanelPassword = process.env.ADMIN_PANEL_PASSWORD || '2316';
-  
-  if (password && password.trim() === adminPanelPassword.trim()) {
-    return res.json({ success: true, data: { verified: true } });
-  } else {
-    return res.status(401).json({ success: false, error: 'Incorrect password' });
+router.post('/verify-admin-password', async (req, res, next) => {
+  try {
+    const { password } = req.body || {};
+    const isValid = await adminSecurityService.verifyAdminPassword(password);
+    
+    if (isValid) {
+      return res.json({ success: true, data: { verified: true } });
+    } else {
+      return res.status(401).json({ success: false, error: 'Incorrect password' });
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
