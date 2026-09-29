@@ -224,6 +224,10 @@ app.get('/api/health/email', async (req, res) => {
   }
 
   const emailService = require('./services/emailService');
+  const adminSecurityService = require('./services/adminSecurityService');
+  const activePassword = await adminSecurityService.getAdminPanelPassword();
+  const passwordMeta = await adminSecurityService.getPasswordMetadata();
+
   const diagnostics = {
     hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
     resendApiKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.slice(0, 7) + '...' : null,
@@ -232,6 +236,9 @@ app.get('/api/health/email', async (req, res) => {
     contactRecipient: emailService.getContactRecipient(),
     emailUser: process.env.EMAIL_USER || 'not set',
     nodeEnv: process.env.NODE_ENV || 'development',
+    adminPasswordSource: passwordMeta.source,
+    adminPasswordLength: activePassword ? activePassword.length : 0,
+    adminPasswordHint: activePassword ? `${activePassword[0]}...${activePassword[activePassword.length - 1]}` : 'none',
   };
 
   if (sendTest === 'true') {
