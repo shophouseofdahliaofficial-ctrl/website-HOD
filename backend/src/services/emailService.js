@@ -1,4 +1,7 @@
+const nodemailer = require('nodemailer');
 const dns = require('dns');
+const { query } = require('../config/database');
+
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
@@ -14,6 +17,14 @@ function getAdminRecipient() {
     process.env.SMTP_USER ||
     'shophouseofdahliaofficial@gmail.com'
   ).trim();
+}
+
+function formatInr(amount) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+  }).format(Number(amount) || 0);
 }
 
 let transporter = null;
@@ -53,7 +64,7 @@ function getTransporter() {
       ...timeoutOptions,
     });
   } else if (emailUser && emailPass) {
-    // Explicitly configure smtp.gmail.com on port 587 with STARTTLS to avoid ENETUNREACH IPv6 routing errors on cloud hosts like Render
+    // Explicitly configure smtp.gmail.com on port 587 with STARTTLS to avoid IPv6 routing errors
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
@@ -69,23 +80,111 @@ function getTransporter() {
   return transporter;
 }
 
-function formatInr(amount) {
-  const n = Number(amount || 0);
-  return Number.isFinite(n) ? `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '₹0.00';
+/**
+ * Unified Email Dispatcher (Supports HTTPS REST APIs for Resend & Brevo + SMTP fallback)
+ */
+async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  const recipient = to || getAdminRecipient();
+
+  // 1. Try Resend REST API (HTTPS Port 443 - 100% unrestricted on Render/Cloud)
+  if (resendApiKey) {
+    try {
+      const sender = process.env.RESEND_FROM || (process.env.EMAIL_FROM && !process.env.EMAIL_FROM.includes('@gmail.com') ? process.env.EMAIL_FROM : 'House of Dahlia <onboarding@resend.dev>');
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: sender,
+          to: Array.isArray(recipient) ? recipient : [recipient],
+          reply_to: replyTo || undefined,
+          subject,
+          html,
+          text,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        console.log(`[EmailService] Email sent via Resend HTTPS to ${recipient}: ${data.id}`);
+        return { success: true, messageId: data.id, provider: 'resend' };
+      }
+      console.warn('[EmailService] Resend API error response:', data);
+    } catch (resendErr) {
+      console.error('[EmailService] Failed to send via Resend API:', resendErr?.message || resendErr);
+    }
+  }
+
+  // 2. Try Brevo REST API (HTTPS Port 443)
+  if (brevoApiKey) {
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoApiKey.trim(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'House of Dahlia', email: process.env.EMAIL_USER || 'shophouseofdahliaofficial@gmail.com' },
+          to: [{ email: recipient }],
+          replyTo: replyTo ? { email: replyTo } : undefined,
+          subject,
+          htmlContent: html,
+          textContent: text,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        console.log(`[EmailService] Email sent via Brevo HTTPS to ${recipient}: ${data.messageId}`);
+        return { success: true, messageId: data.messageId, provider: 'brevo' };
+      }
+      console.warn('[EmailService] Brevo API error response:', data);
+    } catch (brevoErr) {
+      console.error('[EmailService] Failed to send via Brevo API:', brevoErr?.message || brevoErr);
+    }
+  }
+
+  // 3. Fallback to Nodemailer SMTP
+  const mailTransporter = getTransporter();
+  const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
+  const mailOptions = {
+    from: from || process.env.EMAIL_FROM || `"House of Dahlia" <${authUser}>`,
+    to: recipient,
+    replyTo: replyTo || undefined,
+    subject,
+    html,
+    text,
+  };
+
+  if (mailTransporter) {
+    try {
+      const info = await mailTransporter.sendMail(mailOptions);
+      console.log(`[EmailService] Email sent via SMTP to ${recipient}: ${info.messageId}`);
+      return { success: true, messageId: info.messageId, provider: 'smtp' };
+    } catch (err) {
+      console.error('[EmailService] Failed to send email via SMTP:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  console.log(`[EmailService] SMTP credentials not configured. Email simulated for ${recipient}`);
+  return { success: true, simulated: true };
 }
 
 /**
  * Send Contact Inquiry Notification to contact@houseofdahlia.in
  */
 async function sendContactInquiry({ name, email, topic, subject, message }) {
-  const mailTransporter = getTransporter();
   const recipient = getContactRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
 
-  const mailOptions = {
+  return sendEmailPayload({
     from: process.env.EMAIL_FROM || `"House of Dahlia" <${authUser}>`,
     to: recipient,
-    replyTo: `"${name || 'Customer'}" <${email}>`,
+    replyTo: email,
     subject: `[New Inquiry - ${topic || 'Contact'}] ${subject || 'Website Inquiry'} from ${name || email}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #faf9f6; color: #1a1a1a; border-radius: 12px;">
@@ -130,29 +229,13 @@ async function sendContactInquiry({ name, email, topic, subject, message }) {
       </div>
     `,
     text: `New Contact Inquiry from ${name || 'Customer'} (${email})\nTopic: ${topic || 'General'}\nSubject: ${subject || 'No Subject'}\n\nMessage:\n${message}`,
-  };
-
-  if (mailTransporter) {
-    try {
-      const info = await mailTransporter.sendMail(mailOptions);
-      console.log(`[EmailService] Contact inquiry sent to ${recipient}: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error('[EmailService] Failed to send email via SMTP:', err.message);
-      return { success: false, error: err.message };
-    }
-  } else {
-    console.log(`[EmailService] SMTP credentials not configured. Inquiry saved to database and ready to send to ${recipient}:`);
-    console.log(`From: ${email}, Subject: ${subject}`);
-    return { success: true, simulated: true };
-  }
+  });
 }
 
 /**
  * Send Instant Order Alert to Admin
  */
 async function sendAdminOrderNotification(order = {}) {
-  const mailTransporter = getTransporter();
   const recipient = getAdminRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
   const adminUrl = process.env.ADMIN_URL || 'https://houseofdahlia.in';
@@ -242,9 +325,10 @@ async function sendAdminOrderNotification(order = {}) {
       `).join('')
     : `<tr><td colspan="3" style="padding: 12px 8px; color: #666;">Standard Order Items</td></tr>`;
 
-  const mailOptions = {
+  return sendEmailPayload({
     from: process.env.EMAIL_FROM || `"House of Dahlia Orders" <${authUser}>`,
     to: recipient,
+    replyTo: customerEmail || undefined,
     subject: `🛍️ New Order #${orderNum} received! (${formatInr(totalAmount)}) • House of Dahlia`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; background-color: #faf8f5; color: #1a1a1a; border-radius: 12px; border: 1px solid #e8e0d5;">
@@ -316,39 +400,23 @@ async function sendAdminOrderNotification(order = {}) {
       </div>
     `,
     text: `New Order Alert #${orderNum}\nCustomer: ${customerName} (${customerPhone || customerEmail})\nTotal: ${formatInr(totalAmount)}\nPayment: ${paymentMethod} (${paymentStatus})\nDelivery Address: ${formattedAddr}\nView: ${adminUrl}/admin/orders`,
-  };
-
-  if (mailTransporter) {
-    try {
-      const info = await mailTransporter.sendMail(mailOptions);
-      console.log(`[EmailService] Admin order notification sent to ${recipient}: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error('[EmailService] Failed to send admin order email:', err.message);
-      return { success: false, error: err.message };
-    }
-  } else {
-    console.log(`[EmailService] SMTP credentials not configured. Order #${orderNum} ready to send to ${recipient}`);
-    return { success: true, simulated: true };
-  }
+  });
 }
 
 /**
  * Send Instant Subscription Alert to Admin
  */
 async function sendAdminSubscriptionNotification(subscription = {}, options = {}) {
-  const mailTransporter = getTransporter();
   const recipient = getAdminRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
   const adminUrl = process.env.ADMIN_URL || 'https://houseofdahlia.in';
 
   const isTrial = Boolean(options.isTrial);
-  const subId = subscription.id || 'N/A';
   const customerName = subscription.customerName || 'Customer';
   const productName = subscription.productName || 'Subscription Plan';
   const total = subscription.total || subscription.totalAmountPaid || subscription.totalAmount || 0;
 
-  const mailOptions = {
+  return sendEmailPayload({
     from: process.env.EMAIL_FROM || `"House of Dahlia Subscriptions" <${authUser}>`,
     to: recipient,
     subject: `✨ New ${isTrial ? 'Trial Subscription' : 'Subscription'} Started! • House of Dahlia`,
@@ -371,35 +439,17 @@ async function sendAdminSubscriptionNotification(subscription = {}, options = {}
       </div>
     `,
     text: `New Subscription Started!\nCustomer: ${customerName}\nProduct: ${productName}\nAmount: ${formatInr(total)}\nView: ${adminUrl}/admin/subscriptions`,
-  };
-
-  if (mailTransporter) {
-    try {
-      const info = await mailTransporter.sendMail(mailOptions);
-      console.log(`[EmailService] Admin subscription notification sent to ${recipient}: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error('[EmailService] Failed to send admin subscription email:', err.message);
-      return { success: false, error: err.message };
-    }
-  } else {
-    return { success: true, simulated: true };
-  }
+  });
 }
 
 /**
  * Send a test email to verify credentials
  */
 async function sendTestAdminEmail(toEmail) {
-  const mailTransporter = getTransporter();
   const recipient = toEmail || getAdminRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
 
-  if (!mailTransporter) {
-    return { success: false, error: 'Email transporter not configured. Please set EMAIL_USER and EMAIL_PASS.' };
-  }
-
-  const mailOptions = {
+  return sendEmailPayload({
     from: process.env.EMAIL_FROM || `"House of Dahlia" <${authUser}>`,
     to: recipient,
     subject: '🧪 House of Dahlia Admin Notification Test',
@@ -407,22 +457,15 @@ async function sendTestAdminEmail(toEmail) {
       <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background-color: #faf9f6; border-radius: 10px; border: 1px solid #530000;">
         <h2 style="color: #530000; margin: 0 0 10px 0;">Test Email Successful!</h2>
         <p style="color: #333; font-size: 14px; line-height: 1.5;">
-          Your Gmail notification engine is properly connected to House of Dahlia. You will now receive instant luxury email alerts whenever a customer places an order or begins a subscription!
+          Your notification engine is properly connected to House of Dahlia. You will now receive instant luxury email alerts whenever a customer places an order or begins a subscription!
         </p>
         <div style="margin-top: 15px; font-size: 12px; color: #888;">
           Sent at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST
         </div>
       </div>
     `,
-    text: 'Test Email Successful! Your Gmail notification engine is properly connected to House of Dahlia.',
-  };
-
-  try {
-    const info = await mailTransporter.sendMail(mailOptions);
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+    text: 'Test Email Successful! Your notification engine is properly connected to House of Dahlia.',
+  });
 }
 
 module.exports = {
@@ -435,4 +478,3 @@ module.exports = {
   get TARGET_CONTACT_EMAIL() { return getContactRecipient(); },
   get ADMIN_NOTIFICATION_EMAIL() { return getAdminRecipient(); },
 };
-
