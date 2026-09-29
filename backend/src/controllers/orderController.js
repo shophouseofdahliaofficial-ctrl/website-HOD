@@ -702,6 +702,7 @@ const createOrder = async (req, res, next) => {
       }
 
       await client.query('COMMIT');
+      client.release();
 
       if (razorpayOrderId) {
         return res.status(201).json({
@@ -719,28 +720,39 @@ const createOrder = async (req, res, next) => {
         });
       }
 
-      if (hasSubscriptionItem) {
-        await subscriptionService.createFromCheckoutOrder(dbOrderId);
-      }
-      for (const it of computedItems) {
-        if (it.photoboothProjectId) {
-          await markPhotoboothProjectOrdered(it.photoboothProjectId, userId);
+      // Execute non-blocking post-commit side-effects
+      try {
+        if (hasSubscriptionItem) {
+          await subscriptionService.createFromCheckoutOrder(dbOrderId);
         }
-      }
-      await lockPhotobookProjectsForItems(computedItems, userId);
-      await incrementCouponUsageByCode(normalizedCouponCode);
-      await notifyAdminsForOrder(
-        {
-          id: dbOrderId,
-          orderNumber,
-          total,
-          paymentStatus: 'paid',
-        },
-        {
-          containsSubscription: hasSubscriptionItem,
-          eventKey: `order:${dbOrderId}:paid`,
+        for (const it of computedItems) {
+          if (it.photoboothProjectId) {
+            await markPhotoboothProjectOrdered(it.photoboothProjectId, userId);
+          }
         }
-      );
+        await lockPhotobookProjectsForItems(computedItems, userId);
+        await incrementCouponUsageByCode(normalizedCouponCode);
+      } catch (postErr) {
+        console.error('[ORDER] Post-order side-effect error:', postErr?.message || postErr);
+      }
+
+      try {
+        await notifyAdminsForOrder(
+          {
+            id: dbOrderId,
+            orderNumber,
+            total,
+            paymentStatus: 'paid',
+            deliveryAddress,
+          },
+          {
+            containsSubscription: hasSubscriptionItem,
+            eventKey: `order:${dbOrderId}:paid`,
+          }
+        );
+      } catch (notifyErr) {
+        console.error('[ORDER] Post-order admin notification error:', notifyErr?.message || notifyErr);
+      }
 
       return res.status(201).json({
         success: true,
@@ -753,10 +765,11 @@ const createOrder = async (req, res, next) => {
         message: paymentMethodFinal === 'wallet' ? 'Order paid using wallet' : 'Order paid',
       });
     } catch (e) {
-      await client.query('ROLLBACK');
-      throw e;
-    } finally {
+      try {
+        await client.query('ROLLBACK');
+      } catch (_) {}
       client.release();
+      throw e;
     }
   } catch (error) {
     next(error);
