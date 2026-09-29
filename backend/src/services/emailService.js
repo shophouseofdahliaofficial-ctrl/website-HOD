@@ -331,7 +331,7 @@ async function sendAdminOrderNotification(order = {}) {
  */
 async function sendAdminSubscriptionNotification(subscription = {}, options = {}) {
   const mailTransporter = getTransporter();
-  const recipient = ADMIN_NOTIFICATION_EMAIL;
+  const recipient = getAdminRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
   const adminUrl = process.env.ADMIN_URL || 'https://houseofdahlia.in';
 
@@ -385,7 +385,7 @@ async function sendAdminSubscriptionNotification(subscription = {}, options = {}
  */
 async function sendTestAdminEmail(toEmail) {
   const mailTransporter = getTransporter();
-  const recipient = toEmail || ADMIN_NOTIFICATION_EMAIL;
+  const recipient = toEmail || getAdminRecipient();
   const authUser = process.env.EMAIL_USER || process.env.SMTP_USER || recipient;
 
   if (!mailTransporter) {
@@ -423,7 +423,9 @@ module.exports = {
   sendAdminOrderNotification,
   sendAdminSubscriptionNotification,
   sendTestAdminEmail,
-  TARGET_CONTACT_EMAIL,
-  ADMIN_NOTIFICATION_EMAIL,
+  getContactRecipient,
+  getAdminRecipient,
+  get TARGET_CONTACT_EMAIL() { return getContactRecipient(); },
+  get ADMIN_NOTIFICATION_EMAIL() { return getAdminRecipient(); },
 };
 
