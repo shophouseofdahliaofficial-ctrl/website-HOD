@@ -11,6 +11,8 @@ async function ensureSecuritySchema() {
         value TEXT NOT NULL,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+      ALTER TABLE admin_security_settings ENABLE ROW LEVEL SECURITY;
+      REVOKE ALL ON admin_security_settings FROM anon, authenticated;
     `);
     schemaEnsured = true;
   } catch (err) {

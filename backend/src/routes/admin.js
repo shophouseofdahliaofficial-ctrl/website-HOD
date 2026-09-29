@@ -161,7 +161,14 @@ router.get('/security/password-status', async (req, res, next) => {
 
 router.post('/security/change-password', async (req, res, next) => {
   try {
-    const { newPassword } = req.body || {};
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword) {
+      return res.status(400).json({ success: false, error: 'Current admin password is required' });
+    }
+    const isCurrentValid = await adminSecurityService.verifyAdminPassword(currentPassword);
+    if (!isCurrentValid) {
+      return res.status(400).json({ success: false, error: 'Current admin password is incorrect' });
+    }
     if (!newPassword || String(newPassword).trim().length < 3) {
       return res.status(400).json({ success: false, error: 'New password must be at least 3 characters long' });
     }
