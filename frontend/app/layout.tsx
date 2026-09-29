@@ -127,6 +127,48 @@ export default function RootLayout({
           '@id': 'https://houseofdahlia.in/#organization',
         },
       },
+      {
+        '@type': 'ItemList',
+        '@id': 'https://houseofdahlia.in/#sitelinks',
+        name: 'House Of Dahlia Key Navigation',
+        itemListElement: [
+          {
+            '@type': 'SiteNavigationElement',
+            position: 1,
+            name: 'Home',
+            description: "House Of Dahlia official store — luxury women's clothing & atelier",
+            url: 'https://houseofdahlia.in/',
+          },
+          {
+            '@type': 'SiteNavigationElement',
+            position: 2,
+            name: 'Products',
+            description: "Explore bespoke collections, luxury apparel, and designer dresses",
+            url: 'https://houseofdahlia.in/products',
+          },
+          {
+            '@type': 'SiteNavigationElement',
+            position: 3,
+            name: 'My Account',
+            description: "View and manage your House Of Dahlia account, orders, and details",
+            url: 'https://houseofdahlia.in/account',
+          },
+          {
+            '@type': 'SiteNavigationElement',
+            position: 4,
+            name: 'About Us',
+            description: "Learn about the House Of Dahlia story, heritage, and atelier craftsmanship",
+            url: 'https://houseofdahlia.in/about',
+          },
+          {
+            '@type': 'SiteNavigationElement',
+            position: 5,
+            name: 'Exchanges and Refunds',
+            description: "House Of Dahlia policy and guidelines on hassle-free exchanges and returns",
+            url: 'https://houseofdahlia.in/exchanges-and-refunds',
+          },
+        ],
+      },
     ],
   };
 

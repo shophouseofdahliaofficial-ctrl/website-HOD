@@ -11,6 +11,10 @@ export const metadata: Metadata = {
     'bespoke couture club',
     'vip fashion membership',
   ],
+  robots: {
+    index: false,
+    follow: false,
+  },
   alternates: {
     canonical: '/membership',
   },

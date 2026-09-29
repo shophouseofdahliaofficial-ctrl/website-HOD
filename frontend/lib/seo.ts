@@ -24,16 +24,16 @@ export const DEFAULT_KEYWORDS = [
 
 export const PUBLIC_SITEMAP_ROUTES = [
   '/',
-  '/membership',
   '/products',
+  '/account',
   '/about',
+  '/exchanges-and-refunds',
   '/contact',
-  '/privacy',
-  '/terms',
+  '/faqs',
   '/refunds',
   '/returns',
-  '/exchanges-and-refunds',
-  '/faqs',
+  '/terms',
+  '/privacy',
 ] as const;
 
 export function getSiteUrl(): URL {
