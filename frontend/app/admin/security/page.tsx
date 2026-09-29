@@ -65,27 +65,23 @@ export default function AdminSecurityPage() {
 
     try {
       setLoading(true);
-      const res = await apiClient.post<{ success: boolean; message: string }>('/api/admin/security/change-password', {
+      await apiClient.post<{ updated: boolean }>('/api/admin/security/change-password', {
         currentPassword: currentPassword.trim(),
         newPassword: newPassword.trim(),
       });
 
-      if (res && res.success) {
-        // Keep current admin session verified with new password
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('adminPanelVerified', 'true');
-        }
-        setSuccess('Admin panel password updated successfully! You can now use this new password anytime.');
-        showToast('Admin password changed successfully', 'success');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        fetchMetadata();
-      } else {
-        setError('Failed to update password.');
+      // Keep current admin session verified with new password
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('adminPanelVerified', 'true');
       }
+      setSuccess('Admin panel password updated successfully! You can now use this new password anytime.');
+      showToast('Admin password changed successfully', 'success');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      fetchMetadata();
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || 'Failed to update admin password';
+      const msg = err?.message || err?.response?.data?.error || 'Failed to update admin password';
       setError(msg);
       showToast(msg, 'error');
     } finally {

@@ -173,7 +173,11 @@ router.post('/security/change-password', async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'New password must be at least 3 characters long' });
     }
     const result = await adminSecurityService.setAdminPanelPassword(newPassword);
-    res.json(result);
+    res.json({
+      success: true,
+      data: { updated: true },
+      message: result.message || 'Admin panel password updated successfully',
+    });
   } catch (err) {
     next(err);
   }
