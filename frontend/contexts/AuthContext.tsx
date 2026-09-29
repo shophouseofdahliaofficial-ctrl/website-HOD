@@ -96,7 +96,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Listen to Supabase auth state changes (e.g. OAuth redirects with #access_token)
     const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
+      if (event === 'SIGNED_IN' && session?.access_token) {
+        // Prevent auto-relogin if user is already authenticated with the same session
+        const currentToken = tokenStorage.get();
+        if (currentToken && userStorage.get()) {
+          if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          return;
+        }
+
         try {
           const exchangeResult = await authApi.exchangeToken(session.access_token);
           tokenStorage.set(exchangeResult.token);
@@ -296,7 +305,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    await authApi.logout();
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
+    try {
+      await authApi.logout();
+    } catch (_) {}
+    tokenStorage.remove();
+    userStorage.remove();
     if (typeof window !== 'undefined') {
       getCartStorage(null).clear();
       clearSubscriptionCart(null);
