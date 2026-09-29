@@ -1,23 +1,23 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'MemoryBooks | Scribble Studios',
-  description: 'Shop our custom memory books and add them to your cart.',
+  title: `MemoryBooks | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke memory books from House Of Dahlia.',
   alternates: {
     canonical: '/memorybooks',
   },
   openGraph: {
-    title: 'MemoryBooks | Scribble Studios',
-    description: 'Shop our custom memory books and add them to your cart.',
+    title: `MemoryBooks | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke memory books from House Of Dahlia.',
     type: 'website',
     url: '/memorybooks',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MemoryBooks | Scribble Studios',
-    description: 'Shop our custom memory books and add them to your cart.',
+    title: `MemoryBooks | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke memory books from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function MemoryBooksPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'MemoryBooks | Scribble Studios',
+      name: `MemoryBooks | ${SITE_NAME}`,
       url: absoluteUrl('/memorybooks'),
-      description: 'Shop our custom memory books and add them to your cart.',
+      description: 'Shop luxury bespoke memory books from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

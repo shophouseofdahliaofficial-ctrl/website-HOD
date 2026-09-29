@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Journals | Scribble Studios',
-  description: 'Shop our custom journals and add them to your cart.',
+  title: `Journals | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke journals from House Of Dahlia.',
   alternates: {
     canonical: '/journals',
   },
   openGraph: {
-    title: 'Journals | Scribble Studios',
-    description: 'Shop our custom journals and add them to your cart.',
+    title: `Journals | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke journals from House Of Dahlia.',
     type: 'website',
     url: '/journals',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Journals | Scribble Studios',
-    description: 'Shop our custom journals and add them to your cart.',
+    title: `Journals | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke journals from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function JournalsPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Journals | Scribble Studios',
+      name: `Journals | ${SITE_NAME}`,
       url: absoluteUrl('/journals'),
-      description: 'Shop our custom journals and add them to your cart.',
+      description: 'Shop luxury bespoke journals from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

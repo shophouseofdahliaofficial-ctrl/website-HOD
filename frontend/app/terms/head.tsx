@@ -1,9 +1,9 @@
-﻿import { absoluteUrl, SITE_NAME } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export default function Head() {
   const title = `Terms & Conditions | ${SITE_NAME}`;
   const description =
-    'Read the Scribble Studios terms and conditions for ordering and account usage.';
+    `Read the ${SITE_NAME} terms and conditions for ordering, deliveries, and account usage.`;
   const canonical = absoluteUrl('/terms');
 
   return (

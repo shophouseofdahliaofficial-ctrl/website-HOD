@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Planners | Scribble Studios',
-  description: 'Shop our custom planners and add them to your cart.',
+  title: `Planners | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke planners from House Of Dahlia.',
   alternates: {
     canonical: '/planners',
   },
   openGraph: {
-    title: 'Planners | Scribble Studios',
-    description: 'Shop our custom planners and add them to your cart.',
+    title: `Planners | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke planners from House Of Dahlia.',
     type: 'website',
     url: '/planners',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planners | Scribble Studios',
-    description: 'Shop our custom planners and add them to your cart.',
+    title: `Planners | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke planners from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function PlannersPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Planners | Scribble Studios',
+      name: `Planners | ${SITE_NAME}`,
       url: absoluteUrl('/planners'),
-      description: 'Shop our custom planners and add them to your cart.',
+      description: 'Shop luxury bespoke planners from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

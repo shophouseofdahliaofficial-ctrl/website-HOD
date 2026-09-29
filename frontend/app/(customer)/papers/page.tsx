@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Papers | Scribble Studios',
-  description: 'Shop our custom papers and add them to your cart.',
+  title: `Papers | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke paper collections from House Of Dahlia.',
   alternates: {
     canonical: '/papers',
   },
   openGraph: {
-    title: 'Papers | Scribble Studios',
-    description: 'Shop our custom papers and add them to your cart.',
+    title: `Papers | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke paper collections from House Of Dahlia.',
     type: 'website',
     url: '/papers',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Papers | Scribble Studios',
-    description: 'Shop our custom papers and add them to your cart.',
+    title: `Papers | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke paper collections from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function PapersPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Papers | Scribble Studios',
+      name: `Papers | ${SITE_NAME}`,
       url: absoluteUrl('/papers'),
-      description: 'Shop our custom papers and add them to your cart.',
+      description: 'Shop luxury bespoke paper collections from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

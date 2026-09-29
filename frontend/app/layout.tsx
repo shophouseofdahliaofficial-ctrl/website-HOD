@@ -101,8 +101,43 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://houseofdahlia.in/#organization',
+        name: SITE_NAME,
+        url: 'https://houseofdahlia.in',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://houseofdahlia.in/finallogo.png',
+        },
+        description: SITE_DESCRIPTION,
+        email: 'contact@houseofdahlia.in',
+        sameAs: ['https://www.instagram.com/houseofdahlia.official/'],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://houseofdahlia.in/#website',
+        url: 'https://houseofdahlia.in',
+        name: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        publisher: {
+          '@id': 'https://houseofdahlia.in/#organization',
+        },
+      },
+    ],
+  };
+
   return (
     <html lang="en" className={`${inter.variable} ${epilogue.variable} ${itcFenice.variable} ${chupsItalic.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>

@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import MembershipSection from '@/components/MembershipSection';
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo';
 
@@ -6,9 +6,10 @@ export const metadata: Metadata = {
   title: `Membership Plans | ${SITE_NAME}`,
   description: `Explore membership plans at ${SITE_NAME}.`,
   keywords: [
-    'scribble studios membership',
-    'creative studio plans',
-    'membership plans',
+    'house of dahlia membership',
+    'luxury atelier membership',
+    'bespoke couture club',
+    'vip fashion membership',
   ],
   alternates: {
     canonical: '/membership',

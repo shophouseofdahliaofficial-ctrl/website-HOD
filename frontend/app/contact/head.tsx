@@ -1,9 +1,9 @@
-﻿import { absoluteUrl, SITE_NAME } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export default function Head() {
-  const title = `Contact ${SITE_NAME} | Support & Delivery Help`;
+  const title = `Contact ${SITE_NAME} | Support & Atelier Help`;
   const description =
-    'Contact Scribble Studios for support and service information.';
+    `Contact ${SITE_NAME} customer support for assistance with bespoke couture, orders, and inquiries.`;
   const canonical = absoluteUrl('/contact');
 
   return (

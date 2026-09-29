@@ -1,9 +1,9 @@
-﻿import { absoluteUrl, SITE_NAME } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export default function Head() {
   const title = `Privacy Policy | ${SITE_NAME}`;
   const description =
-    'Read the Scribble Studios privacy policy to understand how customer information is collected, used, and protected.';
+    `Read the ${SITE_NAME} privacy policy to understand how customer information is collected, used, and protected.`;
   const canonical = absoluteUrl('/privacy');
 
   return (

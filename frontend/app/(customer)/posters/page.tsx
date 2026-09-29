@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Posters | Scribble Studios',
-  description: 'Shop our custom posters and add them to your cart.',
+  title: `Posters | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke prints and posters from House Of Dahlia.',
   alternates: {
     canonical: '/posters',
   },
   openGraph: {
-    title: 'Posters | Scribble Studios',
-    description: 'Shop our custom posters and add them to your cart.',
+    title: `Posters | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke prints and posters from House Of Dahlia.',
     type: 'website',
     url: '/posters',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Posters | Scribble Studios',
-    description: 'Shop our custom posters and add them to your cart.',
+    title: `Posters | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke prints and posters from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function PostersPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Posters | Scribble Studios',
+      name: `Posters | ${SITE_NAME}`,
       url: absoluteUrl('/posters'),
-      description: 'Shop our custom posters and add them to your cart.',
+      description: 'Shop luxury bespoke prints and posters from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

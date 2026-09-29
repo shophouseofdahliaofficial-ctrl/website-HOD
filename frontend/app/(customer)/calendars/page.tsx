@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Calendars | Scribble Studios',
-  description: 'Shop our custom calendars and add them to your cart.',
+  title: `Calendars | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke calendars from House Of Dahlia.',
   alternates: {
     canonical: '/calendars',
   },
   openGraph: {
-    title: 'Calendars | Scribble Studios',
-    description: 'Shop our custom calendars and add them to your cart.',
+    title: `Calendars | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke calendars from House Of Dahlia.',
     type: 'website',
     url: '/calendars',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Calendars | Scribble Studios',
-    description: 'Shop our custom calendars and add them to your cart.',
+    title: `Calendars | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke calendars from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function CalendarsPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Calendars | Scribble Studios',
+      name: `Calendars | ${SITE_NAME}`,
       url: absoluteUrl('/calendars'),
-      description: 'Shop our custom calendars and add them to your cart.',
+      description: 'Shop luxury bespoke calendars from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

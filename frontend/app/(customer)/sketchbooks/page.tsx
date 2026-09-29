@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Sketchbooks | Scribble Studios',
-  description: 'Shop our custom sketchbooks and add them to your cart.',
+  title: `Sketchbooks | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke sketchbooks from House Of Dahlia.',
   alternates: {
     canonical: '/sketchbooks',
   },
   openGraph: {
-    title: 'Sketchbooks | Scribble Studios',
-    description: 'Shop our custom sketchbooks and add them to your cart.',
+    title: `Sketchbooks | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke sketchbooks from House Of Dahlia.',
     type: 'website',
     url: '/sketchbooks',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sketchbooks | Scribble Studios',
-    description: 'Shop our custom sketchbooks and add them to your cart.',
+    title: `Sketchbooks | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke sketchbooks from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function SketchbooksPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Sketchbooks | Scribble Studios',
+      name: `Sketchbooks | ${SITE_NAME}`,
       url: absoluteUrl('/sketchbooks'),
-      description: 'Shop our custom sketchbooks and add them to your cart.',
+      description: 'Shop luxury bespoke sketchbooks from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

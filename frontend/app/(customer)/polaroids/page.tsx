@@ -1,23 +1,23 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Polas & Strips | Scribble Studios',
-  description: 'Shop our custom polaroids and strips and add them to your cart.',
+  title: `Polas & Strips | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke photo prints, polaroids and strips from House Of Dahlia.',
   alternates: {
     canonical: '/polaroids',
   },
   openGraph: {
-    title: 'Polas & Strips | Scribble Studios',
-    description: 'Shop our custom polaroids and strips and add them to your cart.',
+    title: `Polas & Strips | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke photo prints, polaroids and strips from House Of Dahlia.',
     type: 'website',
     url: '/polaroids',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Polas & Strips | Scribble Studios',
-    description: 'Shop our custom polaroids and strips and add them to your cart.',
+    title: `Polas & Strips | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke photo prints, polaroids and strips from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function PolaroidsPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Polas & Strips | Scribble Studios',
+      name: `Polas & Strips | ${SITE_NAME}`,
       url: absoluteUrl('/polaroids'),
-      description: 'Shop our custom polaroids and strips and add them to your cart.',
+      description: 'Shop luxury bespoke photo prints, polaroids and strips from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

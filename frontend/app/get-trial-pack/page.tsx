@@ -1,11 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
 import TrialLottie from '@/components/TrialLottie';
 
 export const metadata = {
-  title: 'Get Trial Pack | Scribble Studios',
-  description: 'Unsure where to start? Get a trial pack from Scribble Studios.',
+  title: 'Get Trial Pack | House Of Dahlia',
+  description: 'Experience bespoke luxury apparel with our House Of Dahlia trial pack.',
 };
 
 const faqs = [

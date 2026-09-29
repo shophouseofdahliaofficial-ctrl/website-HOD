@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 import ScribblingSetsClient from './ScribblingSetsClient';
 
 export const metadata: Metadata = {
-  title: 'Scribbling Sets | Scribble Studios',
-  description: 'Shop our custom scribbling sets, journals, and notepads.',
+  title: `Scribbling Sets | ${SITE_NAME}`,
+  description: 'Shop custom luxury stationery & scribbling sets from House Of Dahlia.',
   alternates: {
     canonical: '/scribbling-sets',
   },
   openGraph: {
-    title: 'Scribbling Sets | Scribble Studios',
-    description: 'Shop our custom scribbling sets, journals, and notepads.',
+    title: `Scribbling Sets | ${SITE_NAME}`,
+    description: 'Shop custom luxury stationery & scribbling sets from House Of Dahlia.',
     type: 'website',
     url: '/scribbling-sets',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Scribbling Sets | Scribble Studios',
-    description: 'Shop our custom scribbling sets, journals, and notepads.',
+    title: `Scribbling Sets | ${SITE_NAME}`,
+    description: 'Shop custom luxury stationery & scribbling sets from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function ScribblingSetsPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Scribbling Sets | Scribble Studios',
+      name: `Scribbling Sets | ${SITE_NAME}`,
       url: absoluteUrl('/scribbling-sets'),
-      description: 'Shop our custom scribbling sets, journals, and notepads.',
+      description: 'Shop custom luxury stationery & scribbling sets from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

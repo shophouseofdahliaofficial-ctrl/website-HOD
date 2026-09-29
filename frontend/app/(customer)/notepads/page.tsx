@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Notepads | Scribble Studios',
-  description: 'Shop our custom notepads and add them to your cart.',
+  title: `Notepads | ${SITE_NAME}`,
+  description: 'Shop luxury bespoke notepads from House Of Dahlia.',
   alternates: {
     canonical: '/notepads',
   },
   openGraph: {
-    title: 'Notepads | Scribble Studios',
-    description: 'Shop our custom notepads and add them to your cart.',
+    title: `Notepads | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke notepads from House Of Dahlia.',
     type: 'website',
     url: '/notepads',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Notepads | Scribble Studios',
-    description: 'Shop our custom notepads and add them to your cart.',
+    title: `Notepads | ${SITE_NAME}`,
+    description: 'Shop luxury bespoke notepads from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function NotepadsPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Notepads | Scribble Studios',
+      name: `Notepads | ${SITE_NAME}`,
       url: absoluteUrl('/notepads'),
-      description: 'Shop our custom notepads and add them to your cart.',
+      description: 'Shop luxury bespoke notepads from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',

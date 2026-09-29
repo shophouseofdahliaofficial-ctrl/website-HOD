@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import ProductsClient from '../products/ProductsClient';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, SITE_NAME } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Card Stocks | Scribble Studios',
-  description: 'Shop our custom card stocks and add them to your cart.',
+  title: `Card Stocks | ${SITE_NAME}`,
+  description: 'Shop premium card stocks from House Of Dahlia.',
   alternates: {
     canonical: '/cardstocks',
   },
   openGraph: {
-    title: 'Card Stocks | Scribble Studios',
-    description: 'Shop our custom card stocks and add them to your cart.',
+    title: `Card Stocks | ${SITE_NAME}`,
+    description: 'Shop premium card stocks from House Of Dahlia.',
     type: 'website',
     url: '/cardstocks',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Card Stocks | Scribble Studios',
-    description: 'Shop our custom card stocks and add them to your cart.',
+    title: `Card Stocks | ${SITE_NAME}`,
+    description: 'Shop premium card stocks from House Of Dahlia.',
   },
 };
 
@@ -26,9 +26,9 @@ export default function CardStocksPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Card Stocks | Scribble Studios',
+      name: `Card Stocks | ${SITE_NAME}`,
       url: absoluteUrl('/cardstocks'),
-      description: 'Shop our custom card stocks and add them to your cart.',
+      description: 'Shop premium card stocks from House Of Dahlia.',
     },
     {
       '@context': 'https://schema.org',
