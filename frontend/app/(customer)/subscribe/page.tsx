@@ -51,13 +51,13 @@ export default function SubscribePage() {
   const { isAuthenticated, user } = useAuth();
   const pinUserId = user?.id ?? null;
   
-  const queryProductId = searchParams.get('productId');
-  const queryVariationId = searchParams.get('variationId');
-  const isCartFlow = searchParams.get('from') === 'cart';
-  const isRenewFlow = searchParams.get('renew') === '1';
-  const trialSubscriptionId = searchParams.get('trialSubscriptionId');
-  const isTrialUpgradeFlow = searchParams.get('trial') === '1' && Boolean(trialSubscriptionId);
-  const isProductLocked = searchParams.get('lockProduct') === '1';
+  const queryProductId = searchParams?.get('productId');
+  const queryVariationId = searchParams?.get('variationId');
+  const isCartFlow = searchParams?.get('from') === 'cart';
+  const isRenewFlow = searchParams?.get('renew') === '1';
+  const trialSubscriptionId = searchParams?.get('trialSubscriptionId');
+  const isTrialUpgradeFlow = searchParams?.get('trial') === '1' && Boolean(trialSubscriptionId);
+  const isProductLocked = searchParams?.get('lockProduct') === '1';
 
   const [product, setProduct] = useState<Product | null>(null);
   const [variationId, setVariationId] = useState<string | null>(queryVariationId);
@@ -162,10 +162,10 @@ export default function SubscribePage() {
 
   // Sync state from query params once
   useEffect(() => {
-    const litersParam = searchParams.get('liters');
-    const daysParam = searchParams.get('days');
-    const monthsParam = searchParams.get('months');
-    const frequencyParam = searchParams.get('frequency');
+    const litersParam = searchParams?.get('liters');
+    const daysParam = searchParams?.get('days');
+    const monthsParam = searchParams?.get('months');
+    const frequencyParam = searchParams?.get('frequency');
     
     if (litersParam) setQuantityPerDay(Math.max(1, Math.floor(parseFloat(litersParam) || 1)));
     if (monthsParam) {
@@ -317,7 +317,7 @@ export default function SubscribePage() {
   }, [basePricePerLitre, quantityPerDay, durationDays, selectedVariation, frequency]);
   const trialCreditAmount = useMemo(() => {
     if (!isTrialUpgradeFlow) return 0;
-    const raw = Number(searchParams.get('trialCredit') || 0);
+    const raw = Number(searchParams?.get('trialCredit') || 0);
     return Number.isFinite(raw) && raw > 0 ? raw : 0;
   }, [isTrialUpgradeFlow, searchParams]);
   const initialPaymentPlatformFee = platformFee;

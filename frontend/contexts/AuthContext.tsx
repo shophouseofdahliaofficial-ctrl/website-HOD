@@ -93,6 +93,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initAuth();
+
+    // Listen to Supabase auth state changes (e.g. OAuth redirects with #access_token)
+    const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
+        try {
+          const exchangeResult = await authApi.exchangeToken(session.access_token);
+          tokenStorage.set(exchangeResult.token);
+        } catch {
+          tokenStorage.set(session.access_token);
+        }
+        try {
+          const currentUser = await authApi.getCurrentUser();
+          const normalized = normalizeUserProfile(currentUser);
+          if (normalized) {
+            if (!normalized.avatarUrl) {
+              const metaAvatar = session.user?.user_metadata?.avatar_url || session.user?.user_metadata?.picture || null;
+              if (metaAvatar) normalized.avatarUrl = metaAvatar;
+            }
+            setUser(normalized);
+            userStorage.set(normalized);
+          }
+        } catch (_) {}
+
+        if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        tokenStorage.remove();
+        userStorage.remove();
+        setUser(null);
+      }
+    });
+
+    return () => {
+      authListener?.unsubscribe();
+    };
   }, []);
 
   // Sync admin cookie for coming-soon middleware: set when logged-in admin, clear otherwise

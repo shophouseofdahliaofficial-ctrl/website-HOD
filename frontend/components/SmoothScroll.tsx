@@ -19,8 +19,24 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     const resetToTop = () => {
       // If there is an intentional target hash in URL, let browser/handler navigate to it
       if (window.location.hash) {
-        const hashEl = document.querySelector(window.location.hash);
-        if (hashEl) return;
+        // Do not querySelector on OAuth fragments (e.g. #access_token=..., #error=..., #refresh_token=...)
+        const rawHash = window.location.hash;
+        if (
+          rawHash.startsWith('#access_token') ||
+          rawHash.startsWith('#error') ||
+          rawHash.startsWith('#refresh_token') ||
+          rawHash.includes('=')
+        ) {
+          return;
+        }
+
+        try {
+          const rawId = rawHash.slice(1);
+          const hashEl = document.getElementById(rawId) || document.querySelector(rawHash);
+          if (hashEl) return;
+        } catch {
+          // Ignore invalid selector syntax
+        }
       }
 
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
