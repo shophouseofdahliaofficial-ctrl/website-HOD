@@ -177,6 +177,29 @@ export default function AdminSecurityPage() {
         <div className={styles.noteBox}>
           <div className={styles.noteTitle}>🔒 Instant Security</div>
           Because you are already logged in as a verified Administrator, saving your new password here immediately updates the security settings in the database. Next time anyone enters the admin portal, this new password will be required.
+          <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e0d8cf' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem('adminPanelVerified');
+                  window.location.href = '/admin';
+                }
+              }}
+              style={{
+                background: '#fff',
+                border: '1.5px solid #530000',
+                color: '#530000',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+              }}
+            >
+              🔒 Lock Admin Panel Now (Test Password Popup)
+            </button>
+          </div>
         </div>
       </div>
     </div>
