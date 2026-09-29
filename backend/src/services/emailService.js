@@ -118,18 +118,30 @@ async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
     }
   }
 
-  // 2. Try Brevo REST API (HTTPS Port 443)
-  if (brevoApiKey) {
+  // 2. Try Brevo REST API (HTTPS Port 443 - 100% unrestricted on Render/Cloud)
+  const resolvedBrevoKey = brevoApiKey || process.env.SIB_API_KEY;
+  if (resolvedBrevoKey) {
     try {
+      const senderEmail = (
+        process.env.BREVO_SENDER_EMAIL ||
+        process.env.EMAIL_USER ||
+        process.env.SMTP_USER ||
+        'shophouseofdahliaofficial@gmail.com'
+      ).trim();
+      const senderName = (process.env.BREVO_SENDER_NAME || 'House of Dahlia').trim();
+
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
-          'api-key': brevoApiKey.trim(),
+          'api-key': resolvedBrevoKey.trim(),
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'House of Dahlia', email: process.env.EMAIL_USER || 'shophouseofdahliaofficial@gmail.com' },
-          to: [{ email: recipient }],
+          sender: { name: senderName, email: senderEmail },
+          to: Array.isArray(recipient)
+            ? recipient.map(e => ({ email: e }))
+            : [{ email: recipient }],
           replyTo: replyTo ? { email: replyTo } : undefined,
           subject,
           htmlContent: html,
@@ -137,13 +149,16 @@ async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
         }),
       });
       const data = await res.json();
-      if (res.ok && data.messageId) {
-        console.log(`[EmailService] Email sent via Brevo HTTPS to ${recipient}: ${data.messageId}`);
-        return { success: true, messageId: data.messageId, provider: 'brevo' };
+      if (res.ok && (data.messageId || data.id)) {
+        const msgId = data.messageId || data.id;
+        console.log(`[EmailService] Email sent via Brevo HTTPS to ${recipient}: ${msgId}`);
+        return { success: true, messageId: msgId, provider: 'brevo' };
       }
       console.warn('[EmailService] Brevo API error response:', data);
+      return { success: false, error: data.message || JSON.stringify(data), provider: 'brevo' };
     } catch (brevoErr) {
       console.error('[EmailService] Failed to send via Brevo API:', brevoErr?.message || brevoErr);
+      return { success: false, error: brevoErr?.message || 'Brevo network error', provider: 'brevo' };
     }
   }
 
