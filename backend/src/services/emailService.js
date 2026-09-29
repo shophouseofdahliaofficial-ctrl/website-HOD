@@ -90,12 +90,24 @@ async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
 
   // 1. Try Resend REST API (HTTPS Port 443 - 100% unrestricted on Render/Cloud)
   if (resendApiKey) {
+    const cleanKey = String(resendApiKey).trim().replace(/^['"]|['"]$/g, '');
     try {
-      const sender = process.env.RESEND_FROM || (process.env.EMAIL_FROM && !process.env.EMAIL_FROM.includes('@gmail.com') ? process.env.EMAIL_FROM : 'House of Dahlia <onboarding@resend.dev>');
+      const defaultFrom = 'House of Dahlia <onboarding@resend.dev>';
+      let sender = process.env.RESEND_FROM;
+      if (!sender) {
+        if (process.env.EMAIL_FROM && !/@(gmail|yahoo|outlook|hotmail)\.com/i.test(process.env.EMAIL_FROM)) {
+          sender = process.env.EMAIL_FROM;
+        } else {
+          sender = defaultFrom;
+        }
+      }
+
+      console.log(`[EmailService] Dispatching email via Resend HTTPS (Port 443) to: ${JSON.stringify(recipient)} | From: ${sender}`);
+
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${resendApiKey.trim()}`,
+          'Authorization': `Bearer ${cleanKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -107,41 +119,40 @@ async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
           text,
         }),
       });
+
       const data = await res.json();
       if (res.ok && data.id) {
-        console.log(`[EmailService] Email sent via Resend HTTPS to ${recipient}: ${data.id}`);
+        console.log(`[EmailService] ✅ Email successfully sent via Resend HTTPS to ${recipient}: ${data.id}`);
         return { success: true, messageId: data.id, provider: 'resend' };
       }
-      console.warn('[EmailService] Resend API error response:', data);
+
+      const errMsg = data?.message || data?.error || JSON.stringify(data);
+      console.warn(`[EmailService] ⚠️ Resend API responded with error (${res.status}):`, errMsg);
+      // If Resend failed with an explicit error, do not silently swallow it if no other provider is configured
+      if (!brevoApiKey && !process.env.EMAIL_PASS) {
+        return { success: false, error: `Resend Error (${res.status}): ${errMsg}`, provider: 'resend' };
+      }
     } catch (resendErr) {
-      console.error('[EmailService] Failed to send via Resend API:', resendErr?.message || resendErr);
+      console.error('[EmailService] ❌ Failed to send via Resend API:', resendErr?.message || resendErr);
+      if (!brevoApiKey && !process.env.EMAIL_PASS) {
+        return { success: false, error: resendErr?.message || 'Network error communicating with Resend', provider: 'resend' };
+      }
     }
   }
 
-  // 2. Try Brevo REST API (HTTPS Port 443 - 100% unrestricted on Render/Cloud)
-  const resolvedBrevoKey = brevoApiKey || process.env.SIB_API_KEY;
-  if (resolvedBrevoKey) {
+  // 2. Try Brevo REST API (HTTPS Port 443)
+  if (brevoApiKey) {
+    const cleanBrevoKey = String(brevoApiKey).trim().replace(/^['"]|['"]$/g, '');
     try {
-      const senderEmail = (
-        process.env.BREVO_SENDER_EMAIL ||
-        process.env.EMAIL_USER ||
-        process.env.SMTP_USER ||
-        'shophouseofdahliaofficial@gmail.com'
-      ).trim();
-      const senderName = (process.env.BREVO_SENDER_NAME || 'House of Dahlia').trim();
-
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
-          'api-key': resolvedBrevoKey.trim(),
+          'api-key': cleanBrevoKey,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: senderName, email: senderEmail },
-          to: Array.isArray(recipient)
-            ? recipient.map(e => ({ email: e }))
-            : [{ email: recipient }],
+          sender: { name: 'House of Dahlia', email: process.env.EMAIL_USER || 'shophouseofdahliaofficial@gmail.com' },
+          to: [{ email: recipient }],
           replyTo: replyTo ? { email: replyTo } : undefined,
           subject,
           htmlContent: html,
@@ -149,16 +160,13 @@ async function sendEmailPayload({ from, to, replyTo, subject, html, text }) {
         }),
       });
       const data = await res.json();
-      if (res.ok && (data.messageId || data.id)) {
-        const msgId = data.messageId || data.id;
-        console.log(`[EmailService] Email sent via Brevo HTTPS to ${recipient}: ${msgId}`);
-        return { success: true, messageId: msgId, provider: 'brevo' };
+      if (res.ok && data.messageId) {
+        console.log(`[EmailService] ✅ Email sent via Brevo HTTPS to ${recipient}: ${data.messageId}`);
+        return { success: true, messageId: data.messageId, provider: 'brevo' };
       }
       console.warn('[EmailService] Brevo API error response:', data);
-      return { success: false, error: data.message || JSON.stringify(data), provider: 'brevo' };
     } catch (brevoErr) {
       console.error('[EmailService] Failed to send via Brevo API:', brevoErr?.message || brevoErr);
-      return { success: false, error: brevoErr?.message || 'Brevo network error', provider: 'brevo' };
     }
   }
 
