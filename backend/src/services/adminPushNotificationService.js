@@ -341,6 +341,17 @@ async function notifyAdminsAboutOrder(order, options = {}) {
     return { success: true, deduped: true };
   }
 
+  // 1. Send Email Notification to Admin
+  try {
+    const emailService = require('./emailService');
+    emailService.sendAdminOrderNotification(order).catch(err => {
+      console.error('[adminPushNotificationService] Failed to send admin order email:', err?.message || err);
+    });
+  } catch (err) {
+    console.error('[adminPushNotificationService] Email service error on order:', err?.message || err);
+  }
+
+  // 2. Send Push Notification to Registered Admin Devices
   const tokens = await listActiveAdminTokens();
   const details = await loadOrderNotificationDetails(order);
   const title = 'New customer order';
@@ -366,6 +377,17 @@ async function notifyAdminsAboutSubscription(subscription, options = {}) {
     return { success: true, deduped: true };
   }
 
+  // 1. Send Email Notification to Admin
+  try {
+    const emailService = require('./emailService');
+    emailService.sendAdminSubscriptionNotification(subscription, options).catch(err => {
+      console.error('[adminPushNotificationService] Failed to send admin subscription email:', err?.message || err);
+    });
+  } catch (err) {
+    console.error('[adminPushNotificationService] Email service error on subscription:', err?.message || err);
+  }
+
+  // 2. Send Push Notification to Registered Admin Devices
   const tokens = await listActiveAdminTokens();
   const details = await loadSubscriptionNotificationDetails(subscription);
   const isTrial = Boolean(options.isTrial);
