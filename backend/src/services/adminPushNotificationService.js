@@ -339,11 +339,9 @@ async function notifyAdminsAboutOrder(order, options = {}) {
   // 1. Send Email Notification to Admin immediately
   try {
     const emailService = require('./emailService');
-    emailService.sendAdminOrderNotification(order).catch(err => {
-      console.error('[adminPushNotificationService] Failed to send admin order email:', err?.message || err);
-    });
+    await emailService.sendAdminOrderNotification(order);
   } catch (err) {
-    console.error('[adminPushNotificationService] Email service error on order:', err?.message || err);
+    console.error('[adminPushNotificationService] Failed to send admin order email:', err?.message || err);
   }
 
   // 2. Reserve event for push notification deduplication
@@ -376,11 +374,9 @@ async function notifyAdminsAboutSubscription(subscription, options = {}) {
   // 1. Send Email Notification to Admin immediately
   try {
     const emailService = require('./emailService');
-    emailService.sendAdminSubscriptionNotification(subscription, options).catch(err => {
-      console.error('[adminPushNotificationService] Failed to send admin subscription email:', err?.message || err);
-    });
+    await emailService.sendAdminSubscriptionNotification(subscription, options);
   } catch (err) {
-    console.error('[adminPushNotificationService] Email service error on subscription:', err?.message || err);
+    console.error('[adminPushNotificationService] Failed to send admin subscription email:', err?.message || err);
   }
 
   // 2. Reserve event for push notification deduplication

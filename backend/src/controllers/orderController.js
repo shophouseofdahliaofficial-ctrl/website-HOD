@@ -544,9 +544,10 @@ const createOrder = async (req, res, next) => {
       await notifyAdminsForOrder(
         {
           id: order.id,
-          orderNumber: order.orderNumber,
-          total: order.total,
-          paymentStatus: order.paymentStatus,
+          orderNumber: order.order_number || order.orderNumber || orderNumber,
+          total: order.total || total,
+          paymentStatus: order.payment_status || order.paymentStatus || 'cod',
+          deliveryAddress: deliveryAddress,
         },
         {
           containsSubscription: hasSubscriptionItem,
