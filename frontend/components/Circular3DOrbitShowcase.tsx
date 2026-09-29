@@ -26,7 +26,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Fashion Silhouette',
     subtitle: 'Avant-Garde Tailored Form · Runway Specimen',
     tag: 'Autumn / Winter 2026',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
   {
@@ -35,7 +35,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Evening Couture',
     subtitle: 'Sculptural Evening Draping · Haute Couture Edition',
     tag: 'Collector Series',
-    modelPath: '/evening+dress+3d+model.glb',
+    modelPath: '/models/evening-dress.hod3d',
     texturePath: '',
   },
   {
@@ -44,7 +44,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Dahlia Signature Archetype',
     subtitle: 'Signature Sculptural Form · Master Edition',
     tag: 'Heritage Archive',
-    modelPath: '/realone.glb',
+    modelPath: '/models/realone.hod3d',
     texturePath: '',
   },
   {
@@ -53,7 +53,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Maison Mannequin',
     subtitle: 'Precision Tailored Form · Collector Edition',
     tag: 'Collector Series',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
   {
@@ -62,7 +62,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Runway Form',
     subtitle: 'Architectural Draping · Archive 2026',
     tag: 'Runway Archive',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
   {
@@ -71,7 +71,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'House Of Dahlia Relic',
     subtitle: 'Timeless Sculptural Presence · Signature Specimen',
     tag: 'Maison Exclusive',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
   {
@@ -80,7 +80,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Velvet Silhouette',
     subtitle: 'Fluid Tailored Anatomy · Edition 07',
     tag: 'Runway Archive',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
   {
@@ -89,7 +89,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Sovereign Form',
     subtitle: 'Grand Proportion & Minimalist Drape',
     tag: 'Limited Haute Couture',
-    modelPath: '/pink+sequin+dress+3d+model.glb',
+    modelPath: '/models/pink-dress.hod3d',
     texturePath: '',
   },
   {
@@ -98,7 +98,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Celestial Mannequin',
     subtitle: 'Kinetic Geometry & Haute Couture Line',
     tag: 'Atelier Capsule',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
   {
@@ -107,7 +107,7 @@ const ITEMS: ShowcaseItem[] = [
     title: 'Elysian Sculpture',
     subtitle: 'Masterpiece Monolith · Eternal Specimen',
     tag: 'Permanent Collection',
-    modelPath: '/fashion+model+3d+model-reduced (1).glb',
+    modelPath: '/models/fashion-model.hod3d',
     texturePath: '',
   },
 ];

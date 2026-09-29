@@ -5,9 +5,13 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import gsap from 'gsap';
 import { textureCache, geometryCache, glbCache } from './ModelViewer3D';
 import styles from './SitePreloader.module.css';
+
+const MASK_KEY = 0x5a;
+const HEADER_MASK_SIZE = 128;
 
 interface SitePreloaderProps {
   onComplete: () => void;
@@ -22,10 +26,10 @@ interface AssetDef {
 }
 
 const ASSETS: AssetDef[] = [
-  { url: '/fashion+model+3d+model-reduced (1).glb', type: 'glb', weight: 25 },
-  { url: '/evening+dress+3d+model.glb', type: 'glb', weight: 25 },
-  { url: '/realone.glb', type: 'glb', weight: 25 },
-  { url: '/pink+sequin+dress+3d+model.glb', type: 'glb', weight: 25 },
+  { url: '/models/fashion-model.hod3d', type: 'glb', weight: 25 },
+  { url: '/models/evening-dress.hod3d', type: 'glb', weight: 25 },
+  { url: '/models/realone.hod3d', type: 'glb', weight: 25 },
+  { url: '/models/pink-dress.hod3d', type: 'glb', weight: 25 },
   { url: '/nature_3dmodel.png', type: 'texture', weight: 3 },
   { url: '/back2.png', type: 'texture', weight: 3 },
   { url: '/whiteback.png', type: 'texture', weight: 3 },
@@ -291,31 +295,61 @@ export default function SitePreloader({ onComplete, onStartReveal, onVideoTrigge
     const fbxLoader = new FBXLoader();
     const gltfLoader = new GLTFLoader();
 
+    try {
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+      gltfLoader.setDRACOLoader(dracoLoader);
+    } catch {
+      // Fallback
+    }
+
     ASSETS.forEach((asset) => {
       if (asset.type === 'glb') {
-        gltfLoader.load(
-          asset.url,
-          (gltf) => {
-            glbCache.set(asset.url, gltf);
+        fetch(asset.url)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.arrayBuffer();
+          })
+          .then((arrayBuffer) => {
+            const uint8 = new Uint8Array(arrayBuffer);
+            const isStandardGltf =
+              uint8.length >= 4 &&
+              uint8[0] === 0x67 &&
+              uint8[1] === 0x6c &&
+              uint8[2] === 0x54 &&
+              uint8[3] === 0x46;
+
+            if (!isStandardGltf) {
+              const maskLen = Math.min(uint8.length, HEADER_MASK_SIZE);
+              for (let i = 0; i < maskLen; i++) {
+                uint8[i] ^= MASK_KEY;
+              }
+            }
+
+            gltfLoader.parse(
+              uint8.buffer,
+              '',
+              (gltf) => {
+                glbCache.set(asset.url, gltf);
+                progressMap.set(asset.url, 1.0);
+                completedCount++;
+                targetPercentRef.current = computeWeightedProgress() * 100;
+                if (completedCount >= totalAssets) {
+                  targetPercentRef.current = 100;
+                }
+              },
+              () => {
+                progressMap.set(asset.url, 1.0);
+                completedCount++;
+                targetPercentRef.current = computeWeightedProgress() * 100;
+              }
+            );
+          })
+          .catch(() => {
             progressMap.set(asset.url, 1.0);
             completedCount++;
             targetPercentRef.current = computeWeightedProgress() * 100;
-            if (completedCount >= totalAssets) {
-              targetPercentRef.current = 100;
-            }
-          },
-          (xhr) => {
-            if (xhr.total > 0) {
-              progressMap.set(asset.url, xhr.loaded / xhr.total);
-              targetPercentRef.current = computeWeightedProgress() * 100;
-            }
-          },
-          () => {
-            progressMap.set(asset.url, 1.0);
-            completedCount++;
-            targetPercentRef.current = computeWeightedProgress() * 100;
-          }
-        );
+          });
       } else if (asset.type === 'texture') {
         if (textureCache.has(asset.url)) {
           progressMap.set(asset.url, 1.0);

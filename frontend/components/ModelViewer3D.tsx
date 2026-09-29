@@ -30,7 +30,7 @@ interface ModelViewer3DProps {
 }
 
 export default function ModelViewer3D({
-  modelPath = '/fashion+model+3d+model-reduced (1).glb',
+  modelPath = '/models/fashion-model.hod3d',
   texturePath = '',
   autoRotateSpeed = 12.0,
   playAnimation = false,
@@ -453,7 +453,7 @@ export default function ModelViewer3D({
         }
 
         // Fetch model as binary ArrayBuffer to support in-memory unmasking/obfuscation
-        fetch(modelPath)
+        fetch(encodeURI(modelPath))
           .then((res) => {
             if (!res.ok) throw new Error(`Failed to fetch model (${res.status})`);
             return res.arrayBuffer();
