@@ -1,5 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
+import '@fontsource-variable/inter';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/800.css';
+import '@fontsource/epilogue';
 import './globals.css';
 import { Inter, Epilogue } from 'next/font/google';
 import localFont from 'next/font/local';
@@ -28,12 +35,14 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+  fallback: ['Inter Variable', 'Inter', 'system-ui', 'sans-serif'],
 });
 
 const epilogue = Epilogue({
   subsets: ['latin'],
   variable: '--font-epilogue',
   display: 'swap',
+  fallback: ['Epilogue', 'sans-serif'],
 });
 
 const itcFenice = localFont({
@@ -175,6 +184,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${epilogue.variable} ${itcFenice.variable} ${chupsItalic.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,300..900;1,300..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+          rel="stylesheet"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

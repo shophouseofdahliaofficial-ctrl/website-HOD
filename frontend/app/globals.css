@@ -1,5 +1,17 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/epilogue';
 @import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,300..900;1,300..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+  --font-inter: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-epilogue: 'Epilogue', sans-serif;
+}
 
 * {
   box-sizing: border-box;
@@ -12,6 +24,10 @@ html {
   overflow-x: clip;
 }
 
+html, body {
+  font-family: var(--font-inter), 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
 body {
   overflow-x: clip;
   max-width: 100vw;
@@ -22,7 +38,6 @@ body {
   letter-spacing: 0;
   margin: 0;
   padding: 0;
-  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Document scrollbars - hidden globally while retaining smooth scroll functionality */

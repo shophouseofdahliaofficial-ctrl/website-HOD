@@ -291,6 +291,60 @@ export default function HorizontalProductGalleryModal({
     };
   }, [isOpen, mounted]);
 
+  // Smooth scroll to a specific image index
+  const scrollToImage = useCallback((index: number) => {
+    const track = trackRef.current;
+    if (!track || images.length === 0) return;
+
+    const clampedIndex = (index + images.length) % images.length;
+    setCurrentIndex(clampedIndex);
+
+    if (clampedIndex === 0) {
+      gsap.to(track, {
+        scrollLeft: 0,
+        duration: 0.55,
+        ease: 'power3.out',
+      });
+      return;
+    }
+
+    if (clampedIndex === images.length - 1) {
+      const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+      gsap.to(track, {
+        scrollLeft: maxScroll,
+        duration: 0.55,
+        ease: 'power3.out',
+      });
+      return;
+    }
+
+    const targetCard = imageCardsRef.current[clampedIndex];
+    if (!targetCard) return;
+
+    const trackRect = track.getBoundingClientRect();
+    const cardRect = targetCard.getBoundingClientRect();
+    const targetScrollLeft = track.scrollLeft + (cardRect.left - trackRect.left) - (trackRect.width / 2 - cardRect.width / 2);
+    const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+
+    gsap.to(track, {
+      scrollLeft: Math.max(0, Math.min(maxScroll, targetScrollLeft)),
+      duration: 0.55,
+      ease: 'power3.out',
+    });
+  }, [images.length]);
+
+  const handlePrev = useCallback(() => {
+    if (images.length <= 1) return;
+    const nextIdx = currentIndex <= 0 ? images.length - 1 : currentIndex - 1;
+    scrollToImage(nextIdx);
+  }, [currentIndex, images.length, scrollToImage]);
+
+  const handleNext = useCallback(() => {
+    if (images.length <= 1) return;
+    const nextIdx = currentIndex >= images.length - 1 ? 0 : currentIndex + 1;
+    scrollToImage(nextIdx);
+  }, [currentIndex, images.length, scrollToImage]);
+
   // Keyboard navigation (Escape to close, Arrow keys to pan)
   useEffect(() => {
     if (!isOpen || !mounted) return;
@@ -300,34 +354,15 @@ export default function HorizontalProductGalleryModal({
         e.preventDefault();
         handleClose();
       } else if (e.key === 'ArrowRight') {
-        scrollToImage(Math.min(images.length - 1, currentIndex + 1));
+        handleNext();
       } else if (e.key === 'ArrowLeft') {
-        scrollToImage(Math.max(0, currentIndex - 1));
+        handlePrev();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, mounted, currentIndex, images.length, handleClose]);
-
-  // Smooth scroll to a specific image index
-  const scrollToImage = (index: number) => {
-    const track = trackRef.current;
-    const targetCard = imageCardsRef.current[index];
-    if (!track || !targetCard) return;
-
-    const trackRect = track.getBoundingClientRect();
-    const cardRect = targetCard.getBoundingClientRect();
-    const targetScrollLeft = track.scrollLeft + (cardRect.left - trackRect.left) - (trackRect.width / 2 - cardRect.width / 2);
-
-    gsap.to(track, {
-      scrollLeft: Math.max(0, targetScrollLeft),
-      duration: 0.55,
-      ease: 'power3.out',
-    });
-
-    setCurrentIndex(index);
-  };
+  }, [isOpen, mounted, handleNext, handlePrev, handleClose]);
 
   // Drag-to-scroll handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -355,7 +390,24 @@ export default function HorizontalProductGalleryModal({
   // Track active item index during user scroll
   const handleTrackScroll = () => {
     const track = trackRef.current;
-    if (!track) return;
+    if (!track || images.length === 0) return;
+
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    if (maxScroll <= 0) {
+      if (currentIndex !== 0) setCurrentIndex(0);
+      return;
+    }
+
+    if (track.scrollLeft <= 20) {
+      if (currentIndex !== 0) setCurrentIndex(0);
+      return;
+    }
+
+    if (track.scrollLeft >= maxScroll - 20) {
+      const lastIdx = images.length - 1;
+      if (currentIndex !== lastIdx) setCurrentIndex(lastIdx);
+      return;
+    }
 
     const trackCenter = track.scrollLeft + track.clientWidth / 2;
     let closestIndex = 0;
@@ -488,8 +540,7 @@ export default function HorizontalProductGalleryModal({
           <button
             type="button"
             className={`${styles.sideNavBtn} ${styles.sideNavLeft}`}
-            onClick={() => scrollToImage(Math.max(0, currentIndex - 1))}
-            disabled={currentIndex === 0}
+            onClick={handlePrev}
             aria-label="Previous image"
           >
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -500,8 +551,7 @@ export default function HorizontalProductGalleryModal({
           <button
             type="button"
             className={`${styles.sideNavBtn} ${styles.sideNavRight}`}
-            onClick={() => scrollToImage(Math.min(images.length - 1, currentIndex + 1))}
-            disabled={currentIndex === images.length - 1}
+            onClick={handleNext}
             aria-label="Next image"
           >
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
